@@ -21,7 +21,7 @@ const HourBackgroud = () => {
 
 const CalendarWeek = ({ style }: { style: string }) => {
   return (
-    <div className={`${style} grid grid-cols-7 overflow-clip`}>
+    <div className={`${style} grid grid-cols-7 overflow-auto`}>
       <DayBackground />
       <DayBackground />
       <DayBackground />
