@@ -1,27 +1,53 @@
+import { ReactNode } from "react";
+
 const range24 = Array.from(new Array(24));
 
 const DayBackground = () => {
   return (
-    <div
-      className={`flex-none relative -top-[${
-        -1440 + 835.63
-      }px] h-[1440px] min-w-min grid grid-cols-1 bg-white text-black`}
-    >
-      {range24.map(() => {
-        // eslint-disable-next-line react/jsx-key
-        return <HourBackgroud />;
+    <div className={`min-w-full grid grid-cols-1 bg-white text-gray-300`}>
+      {range24.map((value) => {
+        return <SquareBG key={value} />;
       })}
     </div>
   );
 };
 
-const HourBackgroud = () => {
-  return <div className={`border-2 border-gray-600 h-${1440 / 24}`}>Hour</div>;
+const SquareBG = ({
+  childrens,
+  style,
+}: {
+  childrens?: ReactNode[];
+  style?: string;
+}) => {
+  return (
+    <div className={`${style} border-2 border-gray-300 h-[60px]`}>
+      {childrens}
+    </div>
+  );
+};
+
+const HoursBackground = () => {
+  return (
+    <div className={`grid grid-cols-1 bg-white text-gray-300`}>
+      {range24.map((value, index) => {
+        return (
+          <SquareBG
+            style="right-0 place-content-end"
+            childrens={[
+              <p key={value}>{`${index < 10 ? `0${index}` : index}:00`}</p>,
+            ]}
+            key={value}
+          />
+        );
+      })}
+    </div>
+  );
 };
 
 const CalendarWeek = ({ style }: { style: string }) => {
   return (
-    <div className={`${style} grid grid-cols-7 overflow-auto`}>
+    <div className={`${style} grid grid-cols-8 overflow-scroll`}>
+      <HoursBackground />
       <DayBackground />
       <DayBackground />
       <DayBackground />
