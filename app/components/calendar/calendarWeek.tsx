@@ -4,9 +4,16 @@ const range24 = Array.from(new Array(24));
 
 const DayBackground = () => {
   return (
-    <div className={`min-w-full grid grid-cols-1 bg-white text-gray-300`}>
-      {range24.map((value) => {
-        return <SquareBG key={value} />;
+    <div className={`grid grid-rows-[repeat(24,64px)] bg-white text-gray-300`}>
+      {range24.map((_value, index) => {
+        return (
+          <SquareBG
+            key={index}
+            style={`row-start-[${index + 1}] col-start-[1] row-span-[${
+              index + 1
+            }]`}
+          />
+        );
       })}
     </div>
   );
@@ -16,7 +23,7 @@ const SquareBG = ({
   childrens,
   style,
 }: {
-  childrens?: ReactNode[];
+  childrens?: ReactNode;
   style?: string;
 }) => {
   return (
@@ -28,15 +35,17 @@ const SquareBG = ({
 
 const HoursBackground = () => {
   return (
-    <div className={`grid grid-cols-1 bg-white text-gray-300`}>
-      {range24.map((value, index) => {
+    <div className={`grid grid-rows-[repeat(24,64px)] bg-white text-gray-300`}>
+      {range24.map((_value, index) => {
         return (
           <SquareBG
-            style="right-0 place-content-end"
-            childrens={[
-              <p key={value}>{`${index < 10 ? `0${index}` : index}:00`}</p>,
-            ]}
-            key={value}
+            style={`row-start-[${index + 1}] col-start-[1] row-span-[${
+              index + 1
+            }]`}
+            childrens={
+              <p key={index}>{`${index < 10 ? `0${index}` : index}:00`}</p>
+            }
+            key={index}
           />
         );
       })}
@@ -46,7 +55,9 @@ const HoursBackground = () => {
 
 const CalendarWeek = ({ style }: { style: string }) => {
   return (
-    <div className={`${style} grid grid-cols-8 overflow-scroll`}>
+    <div
+      className={`${style} grid grid-cols-[50px_repeat(7,1fr)] grid-row-1 overflow-auto`}
+    >
       <HoursBackground />
       <DayBackground />
       <DayBackground />

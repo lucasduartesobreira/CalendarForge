@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { CreateEvent, createEvent } from "./createEventControl";
-import { title } from "process";
 import useLocalStorage from "@/src/localStorageHook";
 
 const CreateEventForm = ({ open }: { open: boolean }) => {
@@ -71,4 +70,3 @@ const CreateEventButton = () => {
 export default CreateEventButton;
 
 export { CreateEventForm };
-
