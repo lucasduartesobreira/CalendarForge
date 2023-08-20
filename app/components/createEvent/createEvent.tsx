@@ -3,12 +3,15 @@ import React, { useState } from "react";
 import { CreateEvent, createEvent } from "./createEventControl";
 import useLocalStorage from "@/src/localStorageHook";
 
+const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
+
 const CreateEventForm = ({ open }: { open: boolean }) => {
   const initialFormState: CreateEvent = {
     title: "",
     endDate: new Date(0),
     startDate: new Date(0),
     description: "",
+    calendar_id: OWN_CALENDAR_ID,
   };
   const [form, setForm] = useState(initialFormState);
   const handleChange =
@@ -21,7 +24,6 @@ const CreateEventForm = ({ open }: { open: boolean }) => {
   const [events, setEvents] = useLocalStorage("events", []);
   const handleSubmit = (__event: any) => {
     const f = createEvent(form);
-    console.log(form);
     events.push(f);
     setEvents(events);
   };
