@@ -27,7 +27,7 @@ const SquareBG = ({
   style?: string;
 }) => {
   return (
-    <div className={`${style} border-2 border-gray-300 h-[60px]`}>
+    <div className={`${style} border-[0.5px] border-gray-300 h-[64px]`}>
       {childrens}
     </div>
   );
