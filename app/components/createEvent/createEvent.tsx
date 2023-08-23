@@ -1,15 +1,24 @@
 "use client";
 import React, { useState } from "react";
-import { CreateEvent, createEvent } from "./createEventControl";
-import useLocalStorage from "@/src/localStorageHook";
+import { CreateEvent, Event, createEvent } from "./createEventControl";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
-const CreateEventForm = ({ open }: { open: boolean }) => {
+const CreateEventForm = ({
+  open,
+  events,
+  setEvents,
+  setOpen,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  events: Event[];
+  setEvents: (events: Event[]) => void;
+}) => {
   const initialFormState: CreateEvent = {
     title: "",
-    endDate: new Date(0),
-    startDate: new Date(0),
+    endDate: Date.now() + 60 * 60 * 1000,
+    startDate: Date.now(),
     description: "",
     calendar_id: OWN_CALENDAR_ID,
   };
@@ -21,11 +30,21 @@ const CreateEventForm = ({ open }: { open: boolean }) => {
       setForm(form);
     };
 
-  const [events, setEvents] = useLocalStorage("events", []);
+  //const [events, setEvents] = useLocalStorage("events", [] as Event[]);
+  //const [events, setEvents] = useState([] as Event[]);
+
   const handleSubmit = (__event: any) => {
-    const f = createEvent(form);
-    events.push(f);
+    __event.preventDefault();
+
+    let dateNow = Date.now();
+    form.endDate = dateNow + 60 * 60 * 1000;
+    form.startDate = dateNow;
+
+    const event = createEvent(form);
+    events.push(event);
     setEvents(events);
+    setOpen(false);
+    console.log("clicked");
   };
 
   return (
@@ -54,7 +73,13 @@ const CreateEventForm = ({ open }: { open: boolean }) => {
   );
 };
 
-const CreateEventButton = () => {
+const CreateEventButton = ({
+  setEvents,
+  events,
+}: {
+  setEvents: (events: Event[]) => void;
+  events: Event[];
+}) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="">
@@ -64,7 +89,12 @@ const CreateEventButton = () => {
       >
         Create Event
       </button>
-      <CreateEventForm open={open}></CreateEventForm>
+      <CreateEventForm
+        open={open}
+        setOpen={setOpen}
+        setEvents={setEvents}
+        events={events}
+      ></CreateEventForm>
     </div>
   );
 };

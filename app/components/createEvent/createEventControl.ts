@@ -1,9 +1,7 @@
-import useLocalStorage from "@/src/localStorageHook";
-
 type Event = {
   id: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: number;
+  endDate: number;
   title: string;
   description: string;
   calendar_id: string;
@@ -25,4 +23,3 @@ const createEvent = (event: CreateEvent): Event => {
 
 export { createEvent };
 export type { CreateEvent, Event };
-
