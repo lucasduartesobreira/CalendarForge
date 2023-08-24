@@ -41,8 +41,8 @@ const CreateEventForm = ({
     form.startDate = dateNow;
 
     const event = createEvent(form);
-    events.push(event);
-    setEvents(events);
+    const newEvents = [...events, event];
+    setEvents(newEvents);
     setOpen(false);
     console.log("clicked");
   };
