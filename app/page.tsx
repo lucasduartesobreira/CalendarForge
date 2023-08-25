@@ -1,5 +1,5 @@
 "use client";
-import useLocalStorage from "@/src/localStorageHook";
+import useLocalStorage from "@/hooks/localStorageHook";
 import CalendarWeek from "./components/calendar/calendarWeek";
 import CreateEventButton from "./components/createEvent/createEvent";
 import { Event } from "./components/createEvent/createEventControl";
