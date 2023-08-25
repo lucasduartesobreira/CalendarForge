@@ -52,7 +52,7 @@ const CreateEventForm = ({
       <form
         hidden={false}
         onSubmit={handleSubmit}
-        className="text-gray-500 fixed border-2 rounded-md top-1/2 left-1/2 bg-white flex flex-col"
+        className="z-[1000] text-gray-500 fixed border-2 rounded-md top-1/2 left-1/2 bg-white flex flex-col"
       >
         <label>
           Text
