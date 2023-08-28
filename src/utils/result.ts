@@ -1,8 +1,10 @@
-type Ok<O> = { ok: O };
-type Err<E> = { err: E };
+type Operations = { isOk: () => boolean };
 
-const Ok = <O>(ok: O): Ok<O> => ({ ok });
-const Err = <E>(err: E): Err<E> => ({ err });
+type Ok<O> = { ok: O } & Operations;
+type Err<E> = { err: E } & Operations;
+
+const Ok = <O>(ok: O): Ok<O> => ({ ok, isOk: () => true });
+const Err = <E>(err: E): Err<E> => ({ err, isOk: () => false });
 
 type Result<O, E> = Ok<O> | Err<E>;
 
