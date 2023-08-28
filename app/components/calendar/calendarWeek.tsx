@@ -104,11 +104,13 @@ const HoursBackground = () => {
       {range24.map((_value, index) => {
         return (
           <SquareBG
-            style={`row-start-[${index + 1}] col-start-[1] row-span-[${
+            style={`${rowStartClass[index]} col-start-[1] row-span-[${
               index + 1
             }]`}
             childrens={
-              <p key={index}>{`${index < 10 ? `0${index}` : index}:00`}</p>
+              <p key={index} className="text-black">{`${
+                index < 10 ? `0${index}` : index
+              }:00`}</p>
             }
             key={index}
           />
