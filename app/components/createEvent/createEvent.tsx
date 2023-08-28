@@ -1,55 +1,44 @@
 "use client";
-import React, { useState } from "react";
-import { CreateEvent, createEvent } from "./createEventControl";
-import { CalendarEvent, EventStorage } from "@/services/events/events";
+import React, { useContext, useState } from "react";
+import { CreateEvent } from "./createEventControl";
+import { StorageContext } from "@/hooks/dataHook";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
-const CreateEventForm = ({
-  open,
-  events,
-  setEvents,
-  setOpen,
-}: {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  events: CalendarEvent[];
-  setEvents: (events: CalendarEvent[]) => void;
-}) => {
-  const initialFormState: CreateEvent = {
-    title: "",
-    endDate: Date.now() + 60 * 60 * 1000,
-    startDate: Date.now(),
-    description: "",
-    calendar_id: OWN_CALENDAR_ID,
-  };
+const initialFormState: CreateEvent = {
+  title: "",
+  endDate: Date.now() + 60 * 60 * 1000,
+  startDate: Date.now(),
+  description: "",
+  calendar_id: OWN_CALENDAR_ID,
+};
+
+const CreateEventForm = ({ setOpen }: { setOpen: (open: boolean) => void }) => {
   const [form, setForm] = useState(initialFormState);
-  const handleChange =
-    <A extends keyof Omit<CreateEvent, "endDate" | "startDate">>(prop: A) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      form[prop] = event.target.value;
-      setForm(form);
+  const storageContext = useContext(StorageContext);
+  if (storageContext.isSome()) {
+    const { eventsStorage } = storageContext.unwrap();
+
+    const handleChange =
+      <A extends keyof Omit<CreateEvent, "endDate" | "startDate">>(prop: A) =>
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        form[prop] = event.target.value;
+        setForm(form);
+      };
+
+    const handleSubmit = (submitEvent: any) => {
+      submitEvent.preventDefault();
+
+      let dateNow = Date.now();
+      form.endDate = dateNow + 60 * 60 * 1000;
+      form.startDate = dateNow;
+
+      eventsStorage.add(form);
+      setOpen(false);
+      console.log("clicked");
     };
 
-  //const [events, setEvents] = useLocalStorage("events", [] as Event[]);
-  //const [events, setEvents] = useState([] as Event[]);
-
-  const handleSubmit = (__event: any) => {
-    __event.preventDefault();
-
-    let dateNow = Date.now();
-    form.endDate = dateNow + 60 * 60 * 1000;
-    form.startDate = dateNow;
-
-    const event = createEvent(form);
-    const newEvents = [...events, event];
-    setEvents(newEvents);
-    setOpen(false);
-    console.log("clicked");
-  };
-
-  return (
-    open && (
+    return (
       <form
         hidden={false}
         onSubmit={handleSubmit}
@@ -70,17 +59,13 @@ const CreateEventForm = ({
           value={"Save"}
         />
       </form>
-    )
-  );
+    );
+  }
+
+  return null;
 };
 
-const CreateEventButton = ({
-  setEvents,
-  events,
-}: {
-  setEvents: (events: CalendarEvent[]) => void;
-  events: CalendarEvent[];
-}) => {
+const CreateEventButton = () => {
   const [open, setOpen] = useState(false);
   return (
     <div className="">
@@ -90,12 +75,7 @@ const CreateEventButton = ({
       >
         Create Event
       </button>
-      <CreateEventForm
-        open={open}
-        setOpen={setOpen}
-        setEvents={setEvents}
-        events={events}
-      ></CreateEventForm>
+      {open && <CreateEventForm setOpen={setOpen}></CreateEventForm>}
     </div>
   );
 };
