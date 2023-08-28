@@ -23,7 +23,10 @@ class EventStorage {
   }
 
   add(event: Omit<CalendarEvent, "id">): Result<CalendarEvent, null> {
-    const eventWithId = { id: "a", ...event };
+    const eventWithId = {
+      id: Buffer.from(Date.now().toString()).toString("base64"),
+      ...event,
+    };
     this.actions.set(eventWithId.id, eventWithId);
     return Ok(eventWithId);
   }
