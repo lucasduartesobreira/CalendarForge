@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { CreateEvent, Event, createEvent } from "./createEventControl";
+import { CreateEvent, createEvent } from "./createEventControl";
+import { CalendarEvent } from "@/services/events/events";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
@@ -12,8 +13,8 @@ const CreateEventForm = ({
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
-  events: Event[];
-  setEvents: (events: Event[]) => void;
+  events: CalendarEvent[];
+  setEvents: (events: CalendarEvent[]) => void;
 }) => {
   const initialFormState: CreateEvent = {
     title: "",
@@ -77,8 +78,8 @@ const CreateEventButton = ({
   setEvents,
   events,
 }: {
-  setEvents: (events: Event[]) => void;
-  events: Event[];
+  setEvents: (events: CalendarEvent[]) => void;
+  events: CalendarEvent[];
 }) => {
   const [open, setOpen] = useState(false);
   return (

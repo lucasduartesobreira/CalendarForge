@@ -1,15 +1,8 @@
-type Event = {
-  id: string;
-  startDate: number;
-  endDate: number;
-  title: string;
-  description: string;
-  calendar_id: string;
-};
+import { CalendarEvent } from "@/services/events/events";
 
-type CreateEvent = Omit<Event, "id">;
+type CreateEvent = Omit<CalendarEvent, "id">;
 
-const createEvent = (event: CreateEvent): Event => {
+const createEvent = (event: CreateEvent): CalendarEvent => {
   const id = new Date(Date.now()).toUTCString();
   const hashedId = Buffer.from(id).toString("base64");
 
@@ -22,4 +15,4 @@ const createEvent = (event: CreateEvent): Event => {
 };
 
 export { createEvent };
-export type { CreateEvent, Event };
+export type { CreateEvent };
