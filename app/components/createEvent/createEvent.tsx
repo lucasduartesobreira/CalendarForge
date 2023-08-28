@@ -84,7 +84,7 @@ const CreateEventButton = ({
   return (
     <div className="">
       <button
-        className="absolute bottom-8 right-8 w-24 h-24 rounded-s-full rounded-e-full bg-blue-600"
+        className="absolute bottom-8 right-8 w-24 h-24 z-[1000] rounded-s-full rounded-e-full bg-blue-600"
         onClick={() => setOpen(!open)}
       >
         Create Event
