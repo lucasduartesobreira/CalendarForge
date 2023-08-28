@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useState } from "react";
-import useLocalStorage from "./localStorageHook";
+import { None, Some, Option } from "@/utils/option";
 
 export type MapOrEntries<K, V> = Map<K, V> | [K, V][];
 
@@ -20,8 +21,8 @@ type Return<K, V> = [
 export function useMap<K, V>(
   key: string,
   initialState: MapOrEntries<K, V> = new Map(),
-): Return<K, V> {
-  const [map, setMap] = useState(new Map());
+): Option<Return<K, V>> {
+  const [map, setMap] = useState<Map<K, V>>();
 
   useEffect(() => {
     const value = window.localStorage.getItem(key);
@@ -39,7 +40,9 @@ export function useMap<K, V>(
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(key, JSON.stringify(Array.from(map)));
+    if (map) {
+      window.localStorage.setItem(key, JSON.stringify(Array.from(map)));
+    }
   }, [map]);
 
   const actions: Actions<K, V> = {
@@ -68,5 +71,8 @@ export function useMap<K, V>(
     }, []),
   };
 
-  return [map, actions];
+  if (map != undefined) {
+    return Some<Return<K, V>>([map, actions]);
+  }
+  return None();
 }
