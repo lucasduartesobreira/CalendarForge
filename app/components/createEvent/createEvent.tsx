@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { CreateEvent, createEvent } from "./createEventControl";
-import { CalendarEvent } from "@/services/events/events";
+import { CalendarEvent, EventStorage } from "@/services/events/events";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 

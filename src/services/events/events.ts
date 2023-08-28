@@ -11,11 +11,11 @@ type CalendarEvent = {
 };
 
 class EventStorage {
-  private events: Map<string, CalendarEvent>;
+  private events: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">;
   private actions: Actions<string, CalendarEvent>;
 
   constructor(
-    events: Map<string, CalendarEvent>,
+    events: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">,
     actions: Actions<string, CalendarEvent>,
   ) {
     this.events = events;
