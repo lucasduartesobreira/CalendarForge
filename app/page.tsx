@@ -10,25 +10,21 @@ const Home = () => {
   const [state] = useLocalStorage("events", [] as CalendarEvent[]);
   const data = useDataStorage();
 
-  if (data.isSome()) {
-    return (
-      <StorageContext.Provider value={data}>
-        <main className="h-full flex flex-col">
-          <div className="flex-none h-[48px] bg-red-500">Navbar</div>
-          <div className="flex overflow-hidden">
-            <div className="w-[15%]">Side Bar</div>
-            <div className="w-[85%] max-h-[100%]">
-              <CalendarWeek style={"h-[100%] max-h-[100%]"} state={state} />
-            </div>
+  return (
+    <StorageContext.Provider value={data}>
+      <main className="h-full flex flex-col">
+        <div className="flex-none h-[48px] bg-red-500">Navbar</div>
+        <div className="flex overflow-hidden">
+          <div className="w-[15%]">Side Bar</div>
+          <div className="w-[85%] max-h-[100%]">
+            <CalendarWeek style={"h-[100%] max-h-[100%]"} state={state} />
           </div>
-          <CreateEventButton />
-          <SideBar />
-        </main>
-      </StorageContext.Provider>
-    );
-  }
-
-  return <h1>Error, cannot create storage</h1>;
+        </div>
+        <CreateEventButton />
+        <SideBar />
+      </main>
+    </StorageContext.Provider>
+  );
 };
 
 export default Home;
