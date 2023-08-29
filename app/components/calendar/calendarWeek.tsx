@@ -1,6 +1,7 @@
 "use client";
+import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useContext, useEffect, useState } from "react";
 
 const range24 = Array.from(new Array(24));
 
@@ -126,23 +127,29 @@ const HoursBackground = () => {
   );
 };
 
-const CalendarWeek = ({
-  style,
-  state: events,
-}: {
-  style: string;
-  state: CalendarEvent[];
-}) => {
+const CalendarWeek = ({ style }: { style: string }) => {
   const dateToday = new Date();
   const firstDayOfTheWeek = new Date(dateToday.getDate() - dateToday.getDay());
+  firstDayOfTheWeek.setHours(0, 0, 0, 0);
 
-  const weekEvents = events?.filter(
-    (event) => event.startDate > firstDayOfTheWeek.getTime(),
-  );
+  const storageContext = useContext(StorageContext);
+
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  useEffect(() => {
+    if (storageContext.isSome()) {
+      const { eventsStorage } = storageContext.unwrap();
+      setEvents(
+        eventsStorage.filter(
+          (event) => event.startDate > firstDayOfTheWeek.getTime(),
+        ),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageContext]);
 
   const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
 
-  let weekEventsByDay = weekEvents?.reduce((acc, event) => {
+  let weekEventsByDay = events.reduce((acc, event) => {
     acc.at(new Date(event.startDate).getDay())?.push(event);
     return acc;
   }, initial);

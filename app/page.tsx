@@ -1,13 +1,10 @@
 "use client";
-import useLocalStorage from "@/hooks/localStorageHook";
 import CalendarWeek from "./components/calendar/calendarWeek";
 import CreateEventButton from "./components/createEvent/createEvent";
 import SideBar from "./components/sideBar/SideBar";
-import { CalendarEvent } from "@/services/events/events";
 import { StorageContext, useDataStorage } from "@/hooks/dataHook";
 
 const Home = () => {
-  const [state] = useLocalStorage("events", [] as CalendarEvent[]);
   const data = useDataStorage();
 
   return (
@@ -17,7 +14,7 @@ const Home = () => {
         <div className="flex overflow-hidden">
           <div className="w-[15%]">Side Bar</div>
           <div className="w-[85%] max-h-[100%]">
-            <CalendarWeek style={"h-[100%] max-h-[100%]"} state={state} />
+            <CalendarWeek style={"h-[100%] max-h-[100%]"} />
           </div>
         </div>
         <CreateEventButton />
