@@ -12,13 +12,12 @@ const Home = () => {
       <main className="h-full flex flex-col">
         <div className="flex-none h-[48px] bg-red-500">Navbar</div>
         <div className="flex overflow-hidden">
-          <div className="w-[15%]">Side Bar</div>
+          <SideBar className="w-[15%]" />
           <div className="w-[85%] max-h-[100%]">
             <CalendarWeek style={"h-[100%] max-h-[100%]"} />
           </div>
         </div>
         <CreateEventButton />
-        <SideBar />
       </main>
     </StorageContext.Provider>
   );

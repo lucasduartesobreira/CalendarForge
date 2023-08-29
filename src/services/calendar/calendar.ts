@@ -117,8 +117,8 @@ class CalendarStorage {
     return Err(CalendarStorage.RemoveCalendarError);
   }
 
-  getCalendars() {
-    console.log(this.calendars);
+  getCalendars(): Calendar[] {
+    return Array.from(this.calendars.values());
   }
 }
 

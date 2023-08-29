@@ -1,26 +1,26 @@
 import { StorageContext } from "@/hooks/dataHook";
-import { useContext } from "react";
+import { DetailedHTMLProps, useContext } from "react";
 
-const SideBar = () => {
+const SideBar = (
+  args: DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>,
+) => {
   const storageContext = useContext(StorageContext);
 
   if (storageContext.isSome()) {
     const { calendarsStorage: storage } = storageContext.unwrap();
     return (
-      <div>
-        <button
-          onClick={() => {
-            const dateNow = Date.now();
-
-            storage?.addCalendar({
-              id: `${dateNow}`,
-              timezone: 0,
-              name: "Some calendar",
-            });
-          }}
-        >
-          Sla
-        </button>
+      <div
+        {...args}
+        className={`${args.className} grid grid-rows-[auto_48px] grid-cols-[auto]`}
+      >
+        <div className="overflow-auto row-start-1">
+          <ul className="">
+            {storage.getCalendars().map((calendar, index) => (
+              <li key={index}>{calendar.name}</li>
+            ))}
+          </ul>
+        </div>
+        <button className="row-start-2">New Calendar</button>
       </div>
     );
   }
