@@ -1,9 +1,10 @@
 "use client";
-import React, { useContext, useState } from "react";
+import React, { RefObject, useContext, useRef, useState } from "react";
 import { StorageContext } from "@/hooks/dataHook";
 import { CreateEvent } from "@/services/events/events";
 import OutsideClick from "../utils/outsideClick";
 import { getHTMLDateTime } from "@/utils/date";
+import { Option, Some } from "@/utils/option";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
@@ -18,9 +19,11 @@ const initialFormState: CreateEvent = {
 const CreateEventForm = ({
   setOpen,
   initialForm,
+  blockdRefs,
 }: {
   setOpen: (open: boolean) => void;
   initialForm: CreateEvent;
+  blockdRefs: Option<RefObject<any>[]>;
 }) => {
   const [form, setForm] = useState(initialForm);
   const storageContext = useContext(StorageContext);
@@ -58,6 +61,7 @@ const CreateEventForm = ({
         doSomething={() => {
           setOpen(false);
         }}
+        refs={blockdRefs}
       >
         <form
           hidden={false}
@@ -110,9 +114,11 @@ const CreateEventForm = ({
 
 const CreateEventButton = () => {
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef(null);
   return (
     <div className="">
       <button
+        ref={buttonRef}
         className="absolute bottom-8 right-8 w-24 h-24 z-[1000] rounded-s-full rounded-e-full bg-blue-600"
         onClick={() => setOpen(!open)}
       >
@@ -122,6 +128,7 @@ const CreateEventButton = () => {
         <CreateEventForm
           setOpen={setOpen}
           initialForm={initialFormState}
+          blockdRefs={Some([buttonRef])}
         ></CreateEventForm>
       )}
     </div>
