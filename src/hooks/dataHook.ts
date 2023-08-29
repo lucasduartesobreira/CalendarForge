@@ -18,8 +18,6 @@ export function useDataStorage(): Option<Storages> {
   const [clientData, setClientData] = useState<Option<Storages>>(None());
 
   const hasWindow = typeof window !== "undefined";
-  const eventsHookExists = eventsHook.isSome();
-  const calendarsHookExists = calendarsHook.isSome();
 
   useEffect(() => {
     if (eventsHook.isSome() && calendarsHook.isSome()) {
@@ -33,7 +31,7 @@ export function useDataStorage(): Option<Storages> {
       );
       setClientData(Some({ eventsStorage, calendarsStorage }));
     }
-  }, [hasWindow, eventsHookExists, calendarsHookExists]);
+  }, [hasWindow, eventsHook]);
 
   const memoized = useMemo(() => {
     return clientData;
