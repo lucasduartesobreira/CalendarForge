@@ -64,6 +64,17 @@ class EventStorage {
     return Err(Symbol("Event not found"));
   }
 
+  filter(predicate: (event: CalendarEvent) => boolean) {
+    const result = [];
+    for (const event of this.events.values()) {
+      if (predicate(event)) {
+        result.push(event);
+      }
+    }
+
+    return result;
+  }
+
   update(eventId: string, event: UpdateEvent) {
     const eventFound = this.events.get(eventId);
     if (eventFound == undefined) {
