@@ -1,7 +1,9 @@
 "use client";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
+import { None, Option, Some } from "@/utils/option";
 import { ReactNode, useContext, useEffect, useState } from "react";
+import UpdateEventForm from "../events/updateEvent/updateEvent";
 
 const range24 = Array.from(new Array(24));
 
@@ -36,9 +38,11 @@ const rowStartClass = [
 const DayBackground = ({
   day,
   events,
+  setSelectedEvent,
 }: {
   day: number;
   events: CalendarEvent[];
+  setSelectedEvent: (event: Option<CalendarEvent>) => void;
 }) => {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
@@ -82,7 +86,16 @@ const DayBackground = ({
               }`}
             >
               {events.map((event) => {
-                return <div key={event.id}>{event.title}</div>;
+                return (
+                  <div
+                    key={event.id}
+                    onClick={() => {
+                      setSelectedEvent(Some(event));
+                    }}
+                  >
+                    {event.title}
+                  </div>
+                );
               })}
             </div>
           );
@@ -135,6 +148,9 @@ const CalendarWeek = ({ style }: { style: string }) => {
   const storageContext = useContext(StorageContext);
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Option<CalendarEvent>>(
+    None(),
+  );
   useEffect(() => {
     if (storageContext.isSome()) {
       const { eventsStorage } = storageContext.unwrap();
@@ -162,31 +178,44 @@ const CalendarWeek = ({ style }: { style: string }) => {
       <DayBackground
         day={1}
         events={weekEventsByDay ? weekEventsByDay[0] : []}
+        setSelectedEvent={setSelectedEvent}
       />
       <DayBackground
         day={2}
         events={weekEventsByDay ? weekEventsByDay[1] : []}
+        setSelectedEvent={setSelectedEvent}
       />
       <DayBackground
         day={3}
         events={weekEventsByDay ? weekEventsByDay[2] : []}
+        setSelectedEvent={setSelectedEvent}
       />
       <DayBackground
         day={4}
         events={weekEventsByDay ? weekEventsByDay[3] : []}
+        setSelectedEvent={setSelectedEvent}
       />
       <DayBackground
         day={5}
         events={weekEventsByDay ? weekEventsByDay[4] : []}
+        setSelectedEvent={setSelectedEvent}
       />
       <DayBackground
         day={6}
         events={weekEventsByDay ? weekEventsByDay[5] : []}
+        setSelectedEvent={setSelectedEvent}
       />
       <DayBackground
         day={7}
         events={weekEventsByDay ? weekEventsByDay[6] : []}
+        setSelectedEvent={setSelectedEvent}
       />
+      {selectedEvent.isSome() && (
+        <UpdateEventForm
+          setOpen={() => setSelectedEvent(None())}
+          initialForm={selectedEvent.unwrap()}
+        ></UpdateEventForm>
+      )}
     </div>
   );
 };
