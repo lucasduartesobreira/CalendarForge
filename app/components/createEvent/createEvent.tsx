@@ -1,7 +1,7 @@
 "use client";
 import React, { useContext, useState } from "react";
-import { CreateEvent } from "./createEventControl";
 import { StorageContext } from "@/hooks/dataHook";
+import { CreateEvent } from "@/services/events/events";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 

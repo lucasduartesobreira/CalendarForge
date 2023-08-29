@@ -10,6 +10,9 @@ type CalendarEvent = {
   calendar_id: string;
 };
 
+type CreateEvent = Omit<CalendarEvent, "id">;
+type UpdateEvent = Partial<CreateEvent>;
+
 class EventStorage {
   private events: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">;
   private actions: Actions<string, CalendarEvent>;
@@ -22,7 +25,7 @@ class EventStorage {
     this.actions = actions;
   }
 
-  add(event: Omit<CalendarEvent, "id">): Result<CalendarEvent, null> {
+  add(event: CreateEvent): Result<CalendarEvent, null> {
     const eventWithId = {
       id: Buffer.from(Date.now().toString()).toString("base64"),
       ...event,
@@ -61,7 +64,7 @@ class EventStorage {
     return Err(Symbol("Event not found"));
   }
 
-  update(eventId: string, event: Partial<Omit<CalendarEvent, "id">>) {
+  update(eventId: string, event: UpdateEvent) {
     const eventFound = this.events.get(eventId);
     if (eventFound == undefined) {
       return Err(Symbol("Event not found"));
@@ -82,5 +85,5 @@ class EventStorage {
   }
 }
 
-export type { CalendarEvent };
+export type { CalendarEvent, CreateEvent, UpdateEvent };
 export { EventStorage };
