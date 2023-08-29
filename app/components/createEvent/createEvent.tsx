@@ -2,6 +2,8 @@
 import React, { useContext, useState } from "react";
 import { StorageContext } from "@/hooks/dataHook";
 import { CreateEvent } from "@/services/events/events";
+import OutsideClick from "../utils/outsideClick";
+import { getHTMLDateTime } from "@/utils/date";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
@@ -13,8 +15,14 @@ const initialFormState: CreateEvent = {
   calendar_id: OWN_CALENDAR_ID,
 };
 
-const CreateEventForm = ({ setOpen }: { setOpen: (open: boolean) => void }) => {
-  const [form, setForm] = useState(initialFormState);
+const CreateEventForm = ({
+  setOpen,
+  initialForm,
+}: {
+  setOpen: (open: boolean) => void;
+  initialForm: CreateEvent;
+}) => {
+  const [form, setForm] = useState(initialForm);
   const storageContext = useContext(StorageContext);
   if (storageContext.isSome()) {
     const { eventsStorage } = storageContext.unwrap();
@@ -39,48 +47,61 @@ const CreateEventForm = ({ setOpen }: { setOpen: (open: boolean) => void }) => {
 
       eventsStorage.add(form);
       setOpen(false);
-      console.log("clicked");
     };
+    const startDate = new Date(initialForm.startDate);
+    startDate.setSeconds(0, 0);
+    const endDate = new Date(initialForm.endDate);
+    endDate.setSeconds(0, 0);
 
     return (
-      <form
-        hidden={false}
-        onSubmit={handleSubmit}
-        className="z-[1000] text-gray-500 fixed border-2 rounded-md top-1/2 left-1/2 bg-white flex flex-col"
+      <OutsideClick
+        doSomething={() => {
+          setOpen(false);
+        }}
       >
-        <label>
-          Text
+        <form
+          hidden={false}
+          onSubmit={handleSubmit}
+          className="z-[1000] text-gray-500 fixed border-2 rounded-md top-1/2 left-1/2 bg-white flex flex-col"
+        >
+          <label>
+            Text
+            <input
+              placeholder="Title"
+              defaultValue={initialForm.title}
+              className="text-black m-2 bg-gray-200"
+              onChange={handleChangeText("title")}
+              type="text"
+            />
+            <input
+              placeholder="Description"
+              defaultValue={initialForm.description}
+              className="text-black m-2 bg-gray-200"
+              onChange={handleChangeText("description")}
+              type="text"
+            />
+            <input
+              placeholder=""
+              defaultValue={getHTMLDateTime(startDate)}
+              className="text-black m-2 bg-gray-200"
+              onChange={handleChangeDates("startDate")}
+              type="datetime-local"
+            />
+            <input
+              placeholder=""
+              defaultValue={getHTMLDateTime(endDate)}
+              className="text-black m-2 bg-gray-200"
+              onChange={handleChangeDates("endDate")}
+              type="datetime-local"
+            />
+          </label>
           <input
-            placeholder="Title"
-            className="text-black m-2 bg-gray-200"
-            onChange={handleChangeText("title")}
-            type="text"
+            type="submit"
+            className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
+            value={"Save"}
           />
-          <input
-            placeholder="Description"
-            className="text-black m-2 bg-gray-200"
-            onChange={handleChangeText("description")}
-            type="text"
-          />
-          <input
-            placeholder=""
-            className="text-black m-2 bg-gray-200"
-            onChange={handleChangeDates("startDate")}
-            type="datetime-local"
-          />
-          <input
-            placeholder=""
-            className="text-black m-2 bg-gray-200"
-            onChange={handleChangeDates("endDate")}
-            type="datetime-local"
-          />
-        </label>
-        <input
-          type="submit"
-          className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
-          value={"Save"}
-        />
-      </form>
+        </form>
+      </OutsideClick>
     );
   }
 
@@ -97,7 +118,12 @@ const CreateEventButton = () => {
       >
         Create Event
       </button>
-      {open && <CreateEventForm setOpen={setOpen}></CreateEventForm>}
+      {open && (
+        <CreateEventForm
+          setOpen={setOpen}
+          initialForm={initialFormState}
+        ></CreateEventForm>
+      )}
     </div>
   );
 };
