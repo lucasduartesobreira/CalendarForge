@@ -1,12 +1,8 @@
 import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent, CreateEvent } from "@/services/events/events";
+import { getHTMLDateTime } from "@/utils/date";
 import { useContext, useState } from "react";
-
-function getHTMLDateTime(date: Date) {
-  var localdt = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return localdt.toISOString().slice(0, -1);
-}
 
 const UpdateEventForm = ({
   setOpen,
