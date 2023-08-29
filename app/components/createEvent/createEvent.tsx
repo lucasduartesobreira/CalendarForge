@@ -19,19 +19,23 @@ const CreateEventForm = ({ setOpen }: { setOpen: (open: boolean) => void }) => {
   if (storageContext.isSome()) {
     const { eventsStorage } = storageContext.unwrap();
 
-    const handleChange =
+    const handleChangeText =
       <A extends keyof Omit<CreateEvent, "endDate" | "startDate">>(prop: A) =>
       (event: React.ChangeEvent<HTMLInputElement>) => {
         form[prop] = event.target.value;
         setForm(form);
       };
 
+    const handleChangeDates =
+      <A extends keyof Pick<CreateEvent, "endDate" | "startDate">>(prop: A) =>
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        const target = new Date(event.target.value);
+        form[prop] = target.getTime();
+        setForm(form);
+      };
+
     const handleSubmit = (submitEvent: any) => {
       submitEvent.preventDefault();
-
-      let dateNow = Date.now();
-      form.endDate = dateNow + 60 * 60 * 1000;
-      form.startDate = dateNow;
 
       eventsStorage.add(form);
       setOpen(false);
@@ -49,8 +53,26 @@ const CreateEventForm = ({ setOpen }: { setOpen: (open: boolean) => void }) => {
           <input
             placeholder="Title"
             className="text-black m-2 bg-gray-200"
-            onChange={handleChange("title")}
+            onChange={handleChangeText("title")}
             type="text"
+          />
+          <input
+            placeholder="Description"
+            className="text-black m-2 bg-gray-200"
+            onChange={handleChangeText("description")}
+            type="text"
+          />
+          <input
+            placeholder=""
+            className="text-black m-2 bg-gray-200"
+            onChange={handleChangeDates("startDate")}
+            type="datetime-local"
+          />
+          <input
+            placeholder=""
+            className="text-black m-2 bg-gray-200"
+            onChange={handleChangeDates("endDate")}
+            type="datetime-local"
           />
         </label>
         <input
