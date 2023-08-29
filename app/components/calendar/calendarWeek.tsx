@@ -1,6 +1,6 @@
 "use client";
+import { CalendarEvent } from "@/services/events/events";
 import { ReactNode, useEffect, useState } from "react";
-import { Event } from "../createEvent/createEventControl";
 
 const range24 = Array.from(new Array(24));
 
@@ -32,7 +32,13 @@ const rowStartClass = [
   "row-start-[25]",
 ];
 
-const DayBackground = ({ day, events }: { day: number; events: Event[] }) => {
+const DayBackground = ({
+  day,
+  events,
+}: {
+  day: number;
+  events: CalendarEvent[];
+}) => {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     setIsClient(true);
@@ -50,7 +56,7 @@ const DayBackground = ({ day, events }: { day: number; events: Event[] }) => {
 
       hourEvent.push(event);
       return acc;
-    }, new Map<number, Event[]>())
+    }, new Map<number, CalendarEvent[]>())
     .entries();
   let eventsPerHour = Array.from(eventsMap);
   return (
@@ -125,7 +131,7 @@ const CalendarWeek = ({
   state: events,
 }: {
   style: string;
-  state: Event[];
+  state: CalendarEvent[];
 }) => {
   const dateToday = new Date();
   const firstDayOfTheWeek = new Date(dateToday.getDate() - dateToday.getDay());
@@ -134,7 +140,7 @@ const CalendarWeek = ({
     (event) => event.startDate > firstDayOfTheWeek.getTime(),
   );
 
-  const initial: Event[][] = [[], [], [], [], [], [], []];
+  const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
 
   let weekEventsByDay = weekEvents?.reduce((acc, event) => {
     acc.at(new Date(event.startDate).getDay())?.push(event);
