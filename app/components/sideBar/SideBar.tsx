@@ -12,7 +12,7 @@ import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
 
 const initialCalendar: CreateCalendar = { name: "", timezone: 0 };
 
-const CalendarForm = ({
+const CreateCalendarForm = ({
   refs,
   setOpen,
 }: {
@@ -69,7 +69,9 @@ const CalendarForm = ({
               <option value={-6}>(GMT-6:00)</option>
               <option value={-5}>(GMT-5:00)</option>
               <option value={-4}>(GMT-4:00)</option>
-              <option value={-3}>(GMT-3:00)</option>
+              <option value={-3} selected>
+                (GMT-3:00)
+              </option>
               <option value={-2}>(GMT-2:00)</option>
               <option value={-1}>(GMT-1:00)</option>
               <option value={0}>(GMT0:00)</option>
@@ -131,7 +133,9 @@ const SideBar = (
       >
         New Calendar
       </button>
-      {open && <CalendarForm setOpen={setOpen} refs={Some([refButton])} />}
+      {open && (
+        <CreateCalendarForm setOpen={setOpen} refs={Some([refButton])} />
+      )}
     </div>
   );
 };
