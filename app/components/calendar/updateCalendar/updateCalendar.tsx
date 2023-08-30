@@ -1,6 +1,10 @@
 import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
-import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
+import {
+  Calendar,
+  CreateCalendar,
+  Timezones,
+} from "@/services/calendar/calendar";
 import { RefObject, useContext, useState } from "react";
 import { Option } from "@/utils/option";
 
@@ -13,9 +17,10 @@ const UpdateCalendarForm = ({
 }: {
   refs: Option<RefObject<any>[]>;
   setOpen: (open: boolean) => void;
-  initialCalendar: CreateCalendar;
+  initialCalendar: Calendar;
 }) => {
-  const [form, setForm] = useState(initialCalendar);
+  const { id, ...initialForm } = initialCalendar;
+  const [form, setForm] = useState(initialForm);
   const storageContext = useContext(StorageContext);
 
   if (storageContext.isSome()) {
@@ -29,7 +34,7 @@ const UpdateCalendarForm = ({
       >
         <form
           onSubmit={() => {
-            calendarsStorage.addCalendar(form);
+            calendarsStorage.updateCalendar(id, form);
             setOpen(false);
           }}
           className="fixed top-1/2 left-1/2 text-gray-500 flex flex-col gap-[4px] p-4 bg-white rounded-md"

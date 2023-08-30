@@ -71,6 +71,7 @@ const validateTypes = <A extends Record<string, any>>(
 };
 
 type CreateCalendar = Omit<Calendar, "id">;
+type UpdateCalendar = Partial<CreateCalendar>;
 
 class CalendarStorage {
   private static validator: ValidatorType<Calendar> = {
@@ -128,6 +129,26 @@ class CalendarStorage {
 
   getCalendars(): Calendar[] {
     return Array.from(this.calendars.values());
+  }
+
+  updateCalendar(calendarsId: string, calendar: UpdateCalendar) {
+    const calendarFound = this.calendars.get(calendarsId);
+    if (calendarFound == undefined) {
+      return Err(Symbol("Event not found"));
+    }
+
+    const newCalendar: Calendar = {
+      id: calendarsId,
+      name: calendar.name ?? calendarFound.name,
+      timezone: calendar.timezone ?? calendarFound.timezone,
+    };
+
+    const validated = validateTypes(newCalendar, CalendarStorage.validator);
+    if (validated.isOk()) {
+      this.actions.set(calendarsId, newCalendar);
+    }
+
+    return validated;
   }
 }
 

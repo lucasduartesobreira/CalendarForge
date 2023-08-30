@@ -7,8 +7,13 @@ import {
   useState,
 } from "react";
 import OutsideClick from "../utils/outsideClick";
-import { Option, Some } from "@/utils/option";
-import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
+import { None, Option, Some } from "@/utils/option";
+import {
+  Calendar,
+  CreateCalendar,
+  Timezones,
+} from "@/services/calendar/calendar";
+import UpdateCalendarForm from "../calendar/updateCalendar/updateCalendar";
 
 const initialCalendar: CreateCalendar = { name: "", timezone: 0 };
 
@@ -106,6 +111,9 @@ const SideBar = (
 ) => {
   const storageContext = useContext(StorageContext);
   const [open, setOpen] = useState(false);
+  const [selectedCalendar, setSelectedCalendar] = useState<Option<Calendar>>(
+    None(),
+  );
   const refButton = useRef(null);
 
   return (
@@ -119,9 +127,29 @@ const SideBar = (
             {storageContext
               .unwrap()
               .calendarsStorage.getCalendars()
-              .map((calendar, index) => (
-                <li key={index}>{calendar.name}</li>
-              ))}
+              .map((calendar, index) => {
+                return (
+                  <li key={index}>
+                    {calendar.name}{" "}
+                    <button
+                      className="text-yellow-100"
+                      onClick={() => {
+                        console.log(calendar);
+                        setSelectedCalendar(Some(calendar));
+                      }}
+                    >
+                      Edit
+                    </button>
+                    {selectedCalendar.isSome() && (
+                      <UpdateCalendarForm
+                        setOpen={(arg: boolean) => setSelectedCalendar(None())}
+                        refs={None()}
+                        initialCalendar={selectedCalendar.unwrap()}
+                      />
+                    )}
+                  </li>
+                );
+              })}
           </ul>
         )}
       </div>
