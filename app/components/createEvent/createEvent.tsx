@@ -55,6 +55,10 @@ const CreateEventForm = ({
     startDate.setSeconds(0, 0);
     const endDate = new Date(initialForm.endDate);
     endDate.setSeconds(0, 0);
+    const defaultCalendar = calendarsStorage.findDefault();
+    const defaultValue = defaultCalendar.isSome()
+      ? defaultCalendar.unwrap().id
+      : undefined;
 
     return (
       <OutsideClick
@@ -104,12 +108,15 @@ const CreateEventForm = ({
               form.calendar_id = event.target.value;
               setForm(form);
             }}
+            defaultValue={defaultValue}
           >
-            {calendarsStorage.getCalendars().map((value, index) => (
-              <option key={index} value={value.id}>
-                {value.name}
-              </option>
-            ))}
+            {calendarsStorage.getCalendars().map((value, index) => {
+              return (
+                <option key={index} value={value.id}>
+                  {value.name}
+                </option>
+              );
+            })}
           </select>
           <input
             type="submit"

@@ -1,4 +1,5 @@
 import { Actions } from "@/hooks/mapHook";
+import { None, Some } from "@/utils/option";
 import { Err, Ok, Result } from "@/utils/result";
 import { TypeOfTag } from "typescript";
 
@@ -170,6 +171,16 @@ class CalendarStorage {
     }
 
     return validated;
+  }
+
+  findDefault() {
+    const calendars = this.calendars.values();
+    for (const calendar of calendars) {
+      if (calendar.default) {
+        return Some(calendar);
+      }
+    }
+    return None();
   }
 }
 
