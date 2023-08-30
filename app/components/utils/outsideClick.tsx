@@ -23,7 +23,7 @@ const OutsideClick = <Fn extends () => void>({
               otherRef.current && !otherRef.current.contains(event.target),
           );
       if (
-        ref.current &&
+        ref.current != null &&
         !ref.current.contains(event.target) &&
         validateOtherRefs
       ) {

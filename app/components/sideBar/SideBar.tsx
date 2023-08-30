@@ -134,19 +134,11 @@ const SideBar = (
                     <button
                       className="text-yellow-100"
                       onClick={() => {
-                        console.log(calendar);
                         setSelectedCalendar(Some(calendar));
                       }}
                     >
                       Edit
                     </button>
-                    {selectedCalendar.isSome() && (
-                      <UpdateCalendarForm
-                        setOpen={(arg: boolean) => setSelectedCalendar(None())}
-                        refs={None()}
-                        initialCalendar={selectedCalendar.unwrap()}
-                      />
-                    )}
                   </li>
                 );
               })}
@@ -162,6 +154,13 @@ const SideBar = (
       </button>
       {open && (
         <CreateCalendarForm setOpen={setOpen} refs={Some([refButton])} />
+      )}
+      {selectedCalendar.isSome() && (
+        <UpdateCalendarForm
+          setOpen={(_arg: boolean) => setSelectedCalendar(None())}
+          refs={None()}
+          initialCalendar={selectedCalendar.unwrap()}
+        />
       )}
     </div>
   );
