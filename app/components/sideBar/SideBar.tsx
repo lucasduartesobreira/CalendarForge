@@ -59,6 +59,7 @@ const CreateCalendarForm = ({
 
                 setForm(form);
               }}
+              defaultValue={-new Date().getTimezoneOffset() / 60}
             >
               <option value={-12}>(GMT-12:00)</option>
               <option value={-11}>(GMT-11:00)</option>
@@ -69,9 +70,7 @@ const CreateCalendarForm = ({
               <option value={-6}>(GMT-6:00)</option>
               <option value={-5}>(GMT-5:00)</option>
               <option value={-4}>(GMT-4:00)</option>
-              <option value={-3} selected>
-                (GMT-3:00)
-              </option>
+              <option value={-3}>(GMT-3:00)</option>
               <option value={-2}>(GMT-2:00)</option>
               <option value={-1}>(GMT-1:00)</option>
               <option value={0}>(GMT0:00)</option>
