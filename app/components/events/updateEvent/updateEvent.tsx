@@ -2,6 +2,7 @@ import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent, CreateEvent } from "@/services/events/events";
 import { getHTMLDateTime } from "@/utils/date";
+import { None } from "@/utils/option";
 import { useContext, useState } from "react";
 
 const UpdateEventForm = ({
@@ -40,14 +41,13 @@ const UpdateEventForm = ({
     };
 
     return (
-      <OutsideClick doSomething={() => setOpen(false)}>
+      <OutsideClick doSomething={() => setOpen(false)} refs={None()}>
         <form
           hidden={false}
           onSubmit={handleSubmit}
-          className="z-[1000] text-gray-500 fixed border-2 rounded-md top-1/2 left-1/2 bg-white flex flex-col"
+          className="z-[1000] text-gray-500 fixed border-2 p-[8px]rounded-md top-1/2 left-1/2 bg-white flex flex-col"
         >
           <label>
-            Text
             <input
               placeholder="Title"
               defaultValue={initialForm.title}
@@ -82,6 +82,15 @@ const UpdateEventForm = ({
             className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
             value={"Save"}
           />
+          <button
+            className="absolute right-[10px] text-red-500"
+            onClick={() => {
+              setOpen(false);
+              eventsStorage.remove(id);
+            }}
+          >
+            Delete
+          </button>
         </form>
       </OutsideClick>
     );
