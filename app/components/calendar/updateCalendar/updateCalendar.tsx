@@ -55,7 +55,7 @@ const UpdateCalendarForm = ({
 
                 setForm(form);
               }}
-              value={form.timezone}
+              defaultValue={form.timezone}
             >
               <option value={-12}>(GMT-12:00)</option>
               <option value={-11}>(GMT-11:00)</option>
