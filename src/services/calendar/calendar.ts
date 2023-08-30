@@ -131,9 +131,16 @@ class CalendarStorage {
     "There is no calendar registered with this id",
   );
 
+  static RemoveDefaultCalendarError = Symbol(
+    "Not allowed to delete the default calendar",
+  );
+
   removeCalendar(id: string): Result<Calendar, symbol> {
     const calendar = this.calendars.get(id);
     if (calendar !== undefined) {
+      if (!calendar.default) {
+        return Err(CalendarStorage.RemoveDefaultCalendarError);
+      }
       this.actions.remove(id);
       return Ok(calendar);
     }
