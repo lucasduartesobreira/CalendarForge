@@ -31,7 +31,7 @@ export function useDataStorage(): Option<Storages> {
       );
       setClientData(Some({ eventsStorage, calendarsStorage }));
     }
-  }, [hasWindow, eventsHook]);
+  }, [hasWindow, eventsHook, calendarsHook]);
 
   const memoized = useMemo(() => {
     return clientData;

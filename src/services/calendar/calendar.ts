@@ -70,6 +70,8 @@ const validateTypes = <A extends Record<string, any>>(
     : Err("Missing properties or property with wrong type");
 };
 
+type CreateCalendar = Omit<Calendar, "id">;
+
 class CalendarStorage {
   private static validator: ValidatorType<Calendar> = {
     id: { optional: false, type: "string" },
@@ -96,12 +98,19 @@ class CalendarStorage {
     this.actions = actions;
   }
 
-  addCalendar(calendar: Calendar): Result<Calendar, string> {
-    const validated = validateTypes(calendar, CalendarStorage.validator);
-    if (validated.isOk() && !this.calendars.has(calendar.id))
-      this.actions.set(calendar.id, calendar);
+  addCalendar(calendar: CreateCalendar): Result<Calendar, string> {
+    const id = Buffer.from(Date.now().toString()).toString("base64");
+    const { id: _id, ...validator } = CalendarStorage.validator;
+    const validated = validateTypes(calendar, validator);
+    if (validated.isOk()) {
+      const calendarCreated = { id, ...calendar };
+      this.actions.set(id, calendarCreated);
+      return Ok(calendarCreated);
+    }
 
-    return validated;
+    const { err } = validated as Err<string>;
+
+    return Err(err);
   }
 
   static RemoveCalendarError = Symbol(
@@ -123,4 +132,4 @@ class CalendarStorage {
 }
 
 export { CalendarStorage };
-export type { Calendar, Timezones };
+export type { Calendar, CreateCalendar, Timezones };
