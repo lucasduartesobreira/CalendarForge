@@ -45,6 +45,24 @@ class EventStorage {
     return Ok(event);
   }
 
+  removeAll(
+    predicate: (event: CalendarEvent) => boolean,
+  ): Result<CalendarEvent[], symbol> {
+    const events = this.events.entries();
+    const removed = [] as CalendarEvent[];
+    const notRemoved = [] as [string, CalendarEvent][];
+    for (const [id, event] of events) {
+      if (predicate(event)) {
+        removed.push(event);
+      } else {
+        notRemoved.push([id, event]);
+      }
+    }
+    this.actions.setAll(notRemoved);
+
+    return Ok(removed);
+  }
+
   findById(eventId: string): Result<CalendarEvent, symbol> {
     const event = this.events.get(eventId);
     if (event == undefined) {

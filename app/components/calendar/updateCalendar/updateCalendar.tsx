@@ -1,14 +1,8 @@
 import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
-import {
-  Calendar,
-  CreateCalendar,
-  Timezones,
-} from "@/services/calendar/calendar";
+import { Calendar, Timezones } from "@/services/calendar/calendar";
 import { RefObject, useContext, useState } from "react";
 import { Option } from "@/utils/option";
-
-const range24 = Array.from(new Array(24));
 
 const UpdateCalendarForm = ({
   refs,
@@ -24,7 +18,7 @@ const UpdateCalendarForm = ({
   const storageContext = useContext(StorageContext);
 
   if (storageContext.isSome()) {
-    const { calendarsStorage } = storageContext.unwrap();
+    const { calendarsStorage, eventsStorage } = storageContext.unwrap();
     return (
       <OutsideClick
         doSomething={() => {
@@ -37,7 +31,7 @@ const UpdateCalendarForm = ({
             calendarsStorage.updateCalendar(id, form);
             setOpen(false);
           }}
-          className="fixed top-1/2 left-1/2 text-gray-500 flex flex-col gap-[4px] p-4 bg-white rounded-md"
+          className="fixed top-1/2 left-1/2 text-gray-500 p-[8px] flex flex-col gap-[4px] p-4 bg-white rounded-md"
         >
           <input
             title="name"
@@ -95,6 +89,19 @@ const UpdateCalendarForm = ({
             className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
             value={"Save"}
           />
+          <button
+            className="absolute right-[8px] text-red-500"
+            onClick={() => {
+              setOpen(false);
+              calendarsStorage.removeCalendar(id);
+              const eventsRemoved = eventsStorage.removeAll(
+                (event) => event.calendar_id === id,
+              );
+              console.log(eventsRemoved);
+            }}
+          >
+            Delete
+          </button>
         </form>
       </OutsideClick>
     );
