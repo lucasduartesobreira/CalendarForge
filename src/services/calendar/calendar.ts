@@ -33,6 +33,7 @@ type Calendar = {
   id: string;
   name: string;
   timezone: Timezones;
+  default: boolean;
 };
 
 type ValidatorType<A> = {
@@ -70,7 +71,7 @@ const validateTypes = <A extends Record<string, any>>(
     : Err("Missing properties or property with wrong type");
 };
 
-type CreateCalendar = Omit<Calendar, "id">;
+type CreateCalendar = Omit<Calendar, "id" | "default">;
 type UpdateCalendar = Partial<CreateCalendar>;
 
 class CalendarStorage {
@@ -84,6 +85,7 @@ class CalendarStorage {
       },
     },
     name: { optional: false, type: "string" },
+    default: { optional: false, type: "boolean" },
   };
 
   static StorageKey = "calendars";
@@ -97,6 +99,17 @@ class CalendarStorage {
   ) {
     this.calendars = calendars;
     this.actions = actions;
+
+    if (Array.from(calendars.values()).length === 0) {
+      const id = Buffer.from(Date.now().toString()).toString("base64");
+      const timezone = (-new Date().getTimezoneOffset() / 60) as Timezones;
+      this.actions.set(id, {
+        id,
+        name: "Default Calendar",
+        timezone,
+        default: true,
+      });
+    }
   }
 
   addCalendar(calendar: CreateCalendar): Result<Calendar, string> {
@@ -104,7 +117,7 @@ class CalendarStorage {
     const { id: _id, ...validator } = CalendarStorage.validator;
     const validated = validateTypes(calendar, validator);
     if (validated.isOk()) {
-      const calendarCreated = { id, ...calendar };
+      const calendarCreated = { id, default: false, ...calendar };
       this.actions.set(id, calendarCreated);
       return Ok(calendarCreated);
     }
@@ -141,6 +154,7 @@ class CalendarStorage {
       id: calendarsId,
       name: calendar.name ?? calendarFound.name,
       timezone: calendar.timezone ?? calendarFound.timezone,
+      default: false,
     };
 
     const validated = validateTypes(newCalendar, CalendarStorage.validator);
