@@ -28,7 +28,7 @@ const CreateEventForm = ({
   const [form, setForm] = useState(initialForm);
   const storageContext = useContext(StorageContext);
   if (storageContext.isSome()) {
-    const { eventsStorage } = storageContext.unwrap();
+    const { eventsStorage, calendarsStorage } = storageContext.unwrap();
 
     const handleChangeText =
       <A extends keyof Omit<CreateEvent, "endDate" | "startDate">>(prop: A) =>
@@ -99,6 +99,18 @@ const CreateEventForm = ({
               type="datetime-local"
             />
           </label>
+          <select
+            onChange={(event) => {
+              form.calendar_id = event.target.value;
+              setForm(form);
+            }}
+          >
+            {calendarsStorage.getCalendars().map((value, index) => (
+              <option key={index} value={value.id}>
+                {value.name}
+              </option>
+            ))}
+          </select>
           <input
             type="submit"
             className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
