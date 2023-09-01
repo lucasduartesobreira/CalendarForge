@@ -14,6 +14,7 @@ import {
   Timezones,
 } from "@/services/calendar/calendar";
 import UpdateCalendarForm from "../calendar/updateCalendar/updateCalendar";
+import { Actions } from "@/hooks/mapHook";
 
 const initialCalendar: CreateCalendar = { name: "", timezone: 0 };
 
@@ -107,8 +108,19 @@ const CreateCalendarForm = ({
 };
 
 const SideBar = (
-  args: DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>,
+  args: DetailedHTMLProps<
+    React.HTMLAttributes<HTMLDivElement>,
+    HTMLDivElement
+  > & {
+    viewableCalendarsState: Option<
+      [
+        Omit<Map<string, boolean>, "set" | "clear" | "delete">,
+        Actions<string, boolean>,
+      ]
+    >;
+  },
 ) => {
+  const { viewableCalendarsState, ...arg } = args;
   const storageContext = useContext(StorageContext);
   const [open, setOpen] = useState(false);
   const [selectedCalendar, setSelectedCalendar] = useState<Option<Calendar>>(
@@ -118,18 +130,35 @@ const SideBar = (
 
   return (
     <div
-      {...args}
+      {...arg}
       className={`${args.className} grid grid-rows-[auto_48px] grid-cols-[auto]`}
     >
       <div className="overflow-auto row-start-1">
-        {storageContext.isSome() && (
+        {storageContext.isSome() && viewableCalendarsState.isSome() && (
           <ul className="">
             {storageContext
               .unwrap()
               .calendarsStorage.getCalendars()
               .map((calendar, index) => {
+                const [viewableCalendars, setViewableCalendars] =
+                  viewableCalendarsState.unwrap();
+                if (!viewableCalendars.has(calendar.id))
+                  setViewableCalendars.set(calendar.id, true);
+
+                const defaultChecked =
+                  viewableCalendars.get(calendar.id) ?? true;
                 return (
                   <li key={index}>
+                    <input
+                      type="checkbox"
+                      onChange={(event) => {
+                        setViewableCalendars.set(
+                          calendar.id,
+                          event.target.checked,
+                        );
+                      }}
+                      defaultChecked={defaultChecked}
+                    ></input>
                     {calendar.name}{" "}
                     <button
                       className="text-yellow-100"

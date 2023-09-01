@@ -4,6 +4,7 @@ import { CalendarEvent } from "@/services/events/events";
 import { None, Option, Some } from "@/utils/option";
 import { ReactNode, useContext, useEffect, useState } from "react";
 import UpdateEventForm from "../events/updateEvent/updateEvent";
+import { Actions } from "@/hooks/mapHook";
 
 const range24 = Array.from(new Array(24));
 
@@ -143,9 +144,16 @@ const HoursBackground = () => {
 const CalendarWeek = ({
   style,
   startDate,
+  viewableCalendarsState,
 }: {
   style: string;
   startDate: Date;
+  viewableCalendarsState: Option<
+    [
+      Omit<Map<string, boolean>, "set" | "clear" | "delete">,
+      Actions<string, boolean>,
+    ]
+  >;
 }) => {
   const storageContext = useContext(StorageContext);
 
@@ -154,7 +162,7 @@ const CalendarWeek = ({
     None(),
   );
   useEffect(() => {
-    if (storageContext.isSome()) {
+    if (storageContext.isSome() && viewableCalendarsState.isSome()) {
       const { eventsStorage } = storageContext.unwrap();
       const lastDayOfTheWeek = new Date(
         startDate.getTime() + 6 * 24 * 60 * 60 * 1000,
@@ -163,6 +171,8 @@ const CalendarWeek = ({
       setEvents(
         eventsStorage.filter(
           (event) =>
+            (viewableCalendarsState.unwrap()[0].get(event.calendar_id) ??
+              true) &&
             event.startDate >= startDate.getTime() &&
             event.endDate >= startDate.getTime() &&
             event.startDate <= lastDayOfTheWeek.getTime() &&
@@ -171,7 +181,7 @@ const CalendarWeek = ({
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageContext, startDate]);
+  }, [storageContext, startDate, viewableCalendarsState]);
 
   const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
 
