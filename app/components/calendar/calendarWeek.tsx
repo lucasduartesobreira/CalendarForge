@@ -140,11 +140,13 @@ const HoursBackground = () => {
   );
 };
 
-const CalendarWeek = ({ style }: { style: string }) => {
-  const dateToday = new Date();
-  const firstDayOfTheWeek = new Date(dateToday.getDate() - dateToday.getDay());
-  firstDayOfTheWeek.setHours(0, 0, 0, 0);
-
+const CalendarWeek = ({
+  style,
+  startDate,
+}: {
+  style: string;
+  startDate: Date;
+}) => {
   const storageContext = useContext(StorageContext);
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -154,14 +156,22 @@ const CalendarWeek = ({ style }: { style: string }) => {
   useEffect(() => {
     if (storageContext.isSome()) {
       const { eventsStorage } = storageContext.unwrap();
+      const lastDayOfTheWeek = new Date(
+        startDate.getTime() + 6 * 24 * 60 * 60 * 1000,
+      );
+      lastDayOfTheWeek.setHours(23, 59, 59, 999);
       setEvents(
         eventsStorage.filter(
-          (event) => event.startDate > firstDayOfTheWeek.getTime(),
+          (event) =>
+            event.startDate >= startDate.getTime() &&
+            event.endDate >= startDate.getTime() &&
+            event.startDate <= lastDayOfTheWeek.getTime() &&
+            event.endDate <= lastDayOfTheWeek.getTime(),
         ),
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageContext]);
+  }, [storageContext, startDate]);
 
   const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
 
