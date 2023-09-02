@@ -2,7 +2,13 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import { None, Option, Some } from "@/utils/option";
-import { ReactNode, useContext, useEffect, useState } from "react";
+import {
+  ReactNode,
+  startTransition,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import UpdateEventForm from "../events/updateEvent/updateEvent";
 import { Actions } from "@/hooks/mapHook";
 
@@ -36,6 +42,24 @@ const rowStartClass = [
   "row-start-[25]",
 ];
 
+const startAndHeight = (startDate: Date, endDate: Date) => {
+  const [startHour, startMinute] = [
+    startDate.getHours(),
+    startDate.getMinutes(),
+  ];
+
+  const startPosition =
+    startHour * 64 + Math.floor(startMinute / 15) * (64 / 4);
+
+  const timeDiffInMinutes =
+    (endDate.getTime() - startDate.getTime()) / (60 * 1000);
+  const blockSizeInFifteenMinutes = Math.floor(timeDiffInMinutes / 15);
+  const fixForMinimal = Math.max(blockSizeInFifteenMinutes, 1);
+  const height = fixForMinimal * (64 / 4);
+
+  return { top: startPosition, height };
+};
+
 const DayBackground = ({
   day,
   events,
@@ -66,7 +90,9 @@ const DayBackground = ({
     .entries();
   let eventsPerHour = Array.from(eventsMap);
   return (
-    <div className={`grid grid-rows-[repeat(24,64px)] bg-white text-gray-300`}>
+    <div
+      className={`grid grid-rows-[repeat(24,64px)] relative bg-white text-gray-300`}
+    >
       {range24.map((_value, index) => {
         return (
           <SquareBG
@@ -78,24 +104,22 @@ const DayBackground = ({
       {isClient &&
         eventsPerHour.map(([hours, events], index) => {
           return (
-            <div
-              key={`day${day}${index}`}
-              className={`col-start-1 col-span-1 ${
-                rowStartClass[hours]
-              } relative z-[100] bottom-0 bg-purple-500  row-start-${
-                hours + 1
-              }`}
-            >
+            <div key={`day${day}${index}`} className={`static`}>
               {events.map((event) => {
                 return (
-                  <div
+                  <button
                     key={event.id}
                     onClick={() => {
                       setSelectedEvent(Some(event));
                     }}
+                    className="flex absolute z-[100] w-[100%] bottom-0 bg-purple-500 justify-start"
+                    style={startAndHeight(
+                      new Date(event.startDate),
+                      new Date(event.endDate),
+                    )}
                   >
                     {event.title}
-                  </div>
+                  </button>
                 );
               })}
             </div>
