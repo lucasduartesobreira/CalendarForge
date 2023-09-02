@@ -25,7 +25,16 @@ const CreateEventForm = ({
   initialForm: CreateEvent;
   blockdRefs: Option<RefObject<any>[]>;
 }) => {
-  const [form, setForm] = useState(initialForm);
+  const initialStartDate = new Date(initialForm.startDate);
+  const initialEndDate = new Date(initialForm.endDate);
+  initialStartDate.setSeconds(0, 0);
+  initialEndDate.setSeconds(0, 0);
+
+  const [form, setForm] = useState({
+    ...initialForm,
+    startDate: initialStartDate.getTime(),
+    endDate: initialEndDate.getTime(),
+  });
   const storageContext = useContext(StorageContext);
   if (storageContext.isSome()) {
     const { eventsStorage, calendarsStorage } = storageContext.unwrap();
