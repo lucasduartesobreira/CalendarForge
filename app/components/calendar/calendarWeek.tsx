@@ -103,20 +103,25 @@ const DayBackground = ({
       })}
       {isClient &&
         eventsPerHour.map(([hours, events], index) => {
+          console.log(events);
           return (
             <div key={`day${day}${index}`} className={`static`}>
-              {events.map((event) => {
+              {events.map((event, eventIndex) => {
                 return (
                   <button
                     key={event.id}
                     onClick={() => {
                       setSelectedEvent(Some(event));
                     }}
-                    className="flex absolute z-[100] w-[100%] bottom-0 bg-purple-500 justify-start"
-                    style={startAndHeight(
-                      new Date(event.startDate),
-                      new Date(event.endDate),
-                    )}
+                    className="flex absolute z-[100] bottom-0 bg-purple-500 justify-start"
+                    style={{
+                      ...startAndHeight(
+                        new Date(event.startDate),
+                        new Date(event.endDate),
+                      ),
+                      width: `${100 / events.length}%`,
+                      left: `${(100 / events.length) * eventIndex}%`,
+                    }}
                   >
                     {event.title}
                   </button>
