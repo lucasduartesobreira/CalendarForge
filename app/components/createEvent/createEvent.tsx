@@ -1,5 +1,11 @@
 "use client";
-import React, { RefObject, useContext, useRef, useState } from "react";
+import React, {
+  RefObject,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { StorageContext } from "@/hooks/dataHook";
 import { CreateEvent } from "@/services/events/events";
 import OutsideClick from "../utils/outsideClick";
@@ -36,6 +42,15 @@ const CreateEventForm = ({
     endDate: initialEndDate.getTime(),
   });
   const storageContext = useContext(StorageContext);
+  let defaultValue: string | undefined = undefined;
+
+  useEffect(() => {
+    if (defaultValue) {
+      form.calendar_id = defaultValue;
+      setForm(form);
+    }
+  }, []);
+
   if (storageContext.isSome()) {
     const { eventsStorage, calendarsStorage } = storageContext.unwrap();
 
@@ -65,7 +80,7 @@ const CreateEventForm = ({
     const endDate = new Date(initialForm.endDate);
     endDate.setSeconds(0, 0);
     const defaultCalendar = calendarsStorage.findDefault();
-    const defaultValue = defaultCalendar.isSome()
+    defaultValue = defaultCalendar.isSome()
       ? defaultCalendar.unwrap().id
       : undefined;
 
