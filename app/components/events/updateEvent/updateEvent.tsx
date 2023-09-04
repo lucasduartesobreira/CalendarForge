@@ -19,7 +19,14 @@ const UpdateEventForm = ({
     const { eventsStorage, calendarsStorage } = storageContext.unwrap();
 
     const handleChangeText =
-      <A extends keyof Omit<CreateEvent, "endDate" | "startDate">>(prop: A) =>
+      <
+        A extends keyof Omit<
+          CreateEvent,
+          "endDate" | "startDate" | "notifications"
+        >,
+      >(
+        prop: A,
+      ) =>
       (event: React.ChangeEvent<HTMLInputElement>) => {
         form[prop] = event.target.value;
         setForm(form);

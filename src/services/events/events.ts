@@ -1,6 +1,12 @@
 import { Actions } from "@/hooks/mapHook";
 import { Err, Ok, Result } from "@/utils/result";
 
+type EventNotification = {
+  from: "start" | "end";
+  time: number;
+  timescale: "minutes" | "hours" | "week" | "month";
+};
+
 type CalendarEvent = {
   id: string;
   startDate: number;
@@ -8,6 +14,7 @@ type CalendarEvent = {
   title: string;
   description: string;
   calendar_id: string;
+  notifications: EventNotification[];
 };
 
 type CreateEvent = Omit<CalendarEvent, "id">;
@@ -106,6 +113,7 @@ class EventStorage {
       startDate: event.startDate ?? eventFound.startDate,
       calendar_id: event.calendar_id ?? eventFound.calendar_id,
       description: event.description ?? eventFound.description,
+      notifications: event.notifications ?? eventFound.notifications,
     };
 
     this.actions.set(eventId, newEvent);

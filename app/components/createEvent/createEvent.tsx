@@ -20,6 +20,7 @@ const initialFormState: CreateEvent = {
   startDate: Date.now(),
   description: "",
   calendar_id: OWN_CALENDAR_ID,
+  notifications: [],
 };
 
 const CreateEventForm = ({
@@ -55,7 +56,14 @@ const CreateEventForm = ({
     const { eventsStorage, calendarsStorage } = storageContext.unwrap();
 
     const handleChangeText =
-      <A extends keyof Omit<CreateEvent, "endDate" | "startDate">>(prop: A) =>
+      <
+        A extends keyof Omit<
+          CreateEvent,
+          "endDate" | "startDate" | "notifications"
+        >,
+      >(
+        prop: A,
+      ) =>
       (event: React.ChangeEvent<HTMLInputElement>) => {
         form[prop] = event.target.value;
         setForm(form);
