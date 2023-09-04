@@ -123,9 +123,7 @@ class CalendarStorage {
       return Ok(calendarCreated);
     }
 
-    const { err } = validated as Err<string>;
-
-    return Err(err);
+    return validated;
   }
 
   static RemoveCalendarError = Symbol(
