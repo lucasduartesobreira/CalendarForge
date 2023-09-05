@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { StorageContext } from "@/hooks/dataHook";
-import { CreateEvent, EventNotification } from "@/services/events/events";
+import { CreateEvent } from "@/services/events/events";
 import OutsideClick from "../utils/outsideClick";
 import { getHTMLDateTime } from "@/utils/date";
 import { Option, Some } from "@/utils/option";

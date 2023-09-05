@@ -4,6 +4,11 @@ import { CalendarEvent, CreateEvent } from "@/services/events/events";
 import { getHTMLDateTime } from "@/utils/date";
 import { None } from "@/utils/option";
 import { useContext, useState } from "react";
+import {
+  NewEventNotificationForm,
+  UpdateNotificationForm,
+  initialNotification,
+} from "../notifications/eventNotificationsForm";
 
 const UpdateEventForm = ({
   setOpen,
@@ -98,6 +103,37 @@ const UpdateEventForm = ({
               </option>
             ))}
           </select>
+          <div className="relative flex flex-col m-2 bg-gray-100 min-h-[24px]">
+            {form.notifications.map((notification, index) => (
+              <UpdateNotificationForm
+                notification={notification}
+                key={index}
+                onChangeTime={(time) => {
+                  form.notifications[index].time = time;
+                  setForm({ ...form });
+                }}
+                onChangeTimescale={(timescale) => {
+                  form.notifications[index].timescale = timescale;
+                  setForm({ ...form });
+                }}
+                onChangeFrom={(from) => {
+                  form.notifications[index].from = from;
+                  setForm({ ...form });
+                }}
+                onDelete={() => {
+                  form.notifications.splice(index, 1);
+                  setForm({ ...form });
+                }}
+              />
+            ))}
+            <NewEventNotificationForm
+              onSubmit={(notification) => {
+                form.notifications.push(notification);
+                setForm({ ...form });
+              }}
+              resetNotification={initialNotification}
+            ></NewEventNotificationForm>
+          </div>
           <input
             type="submit"
             className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
