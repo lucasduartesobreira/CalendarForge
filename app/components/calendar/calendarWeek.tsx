@@ -2,13 +2,7 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import { None, Option, Some } from "@/utils/option";
-import {
-  ReactNode,
-  startTransition,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { ReactNode, useContext, useEffect, useState } from "react";
 import UpdateEventForm from "../events/updateEvent/updateEvent";
 import { Actions } from "@/hooks/mapHook";
 
@@ -102,8 +96,7 @@ const DayBackground = ({
         );
       })}
       {isClient &&
-        eventsPerHour.map(([hours, events], index) => {
-          console.log(events);
+        eventsPerHour.map(([_hours, events], index) => {
           return (
             <div key={`day${day}${index}`} className={`static`}>
               {events.map((event, eventIndex) => {

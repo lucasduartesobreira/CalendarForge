@@ -122,5 +122,5 @@ class EventStorage {
   }
 }
 
-export type { CalendarEvent, CreateEvent, UpdateEvent };
+export type { CalendarEvent, CreateEvent, UpdateEvent, EventNotification };
 export { EventStorage };
