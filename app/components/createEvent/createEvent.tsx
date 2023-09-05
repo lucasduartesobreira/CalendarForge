@@ -7,7 +7,11 @@ import React, {
   useState,
 } from "react";
 import { StorageContext } from "@/hooks/dataHook";
-import { CreateEvent } from "@/services/events/events";
+import {
+  CalendarEvent,
+  CreateEvent,
+  EventColors,
+} from "@/services/events/events";
 import OutsideClick from "../utils/outsideClick";
 import { getHTMLDateTime } from "@/utils/date";
 import { Option, Some } from "@/utils/option";
@@ -26,6 +30,7 @@ const initialFormState: CreateEvent = {
   description: "",
   calendar_id: OWN_CALENDAR_ID,
   notifications: [],
+  color: "#7a5195",
 };
 
 const CreateEventForm = ({
@@ -66,7 +71,7 @@ const CreateEventForm = ({
       <
         A extends keyof Omit<
           CreateEvent,
-          "endDate" | "startDate" | "notifications"
+          "endDate" | "startDate" | "notifications" | "color"
         >,
       >(
         prop: A,
@@ -148,6 +153,7 @@ const CreateEventForm = ({
               form.calendar_id = event.target.value;
               setForm(form);
             }}
+            className="m-2"
             defaultValue={defaultValue}
           >
             {calendarsStorage.getCalendars().map((value, index) => {
@@ -157,6 +163,21 @@ const CreateEventForm = ({
                 </option>
               );
             })}
+          </select>
+          <select
+            value={form.color}
+            onChange={(event) => {
+              form.color = event.target.value as CalendarEvent["color"];
+              setForm({ ...form });
+            }}
+            className="m-2"
+            style={{ color: form.color }}
+          >
+            {EventColors.map((color, index) => (
+              <option key={index} value={color} style={{ color }}>
+                Event Color
+              </option>
+            ))}
           </select>
           <div className="relative flex flex-col m-2 bg-gray-100 min-h-[24px]">
             {form.notifications.map((notification, index) => (

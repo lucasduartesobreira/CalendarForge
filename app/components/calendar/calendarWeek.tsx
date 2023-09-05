@@ -106,7 +106,7 @@ const DayBackground = ({
                     onClick={() => {
                       setSelectedEvent(Some(event));
                     }}
-                    className="flex absolute z-[100] bottom-0 bg-purple-500 justify-start"
+                    className="flex absolute z-[100] bottom-0 justify-start"
                     style={{
                       ...startAndHeight(
                         new Date(event.startDate),
@@ -114,6 +114,7 @@ const DayBackground = ({
                       ),
                       width: `${100 / events.length}%`,
                       left: `${(100 / events.length) * eventIndex}%`,
+                      backgroundColor: event.color ?? "#7a5195",
                     }}
                   >
                     {event.title}

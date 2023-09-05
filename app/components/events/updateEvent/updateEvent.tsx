@@ -1,6 +1,10 @@
 import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
-import { CalendarEvent, CreateEvent } from "@/services/events/events";
+import {
+  CalendarEvent,
+  CreateEvent,
+  EventColors,
+} from "@/services/events/events";
 import { getHTMLDateTime } from "@/utils/date";
 import { None } from "@/utils/option";
 import { useContext, useState } from "react";
@@ -27,7 +31,7 @@ const UpdateEventForm = ({
       <
         A extends keyof Omit<
           CreateEvent,
-          "endDate" | "startDate" | "notifications"
+          "endDate" | "startDate" | "notifications" | "color"
         >,
       >(
         prop: A,
@@ -100,6 +104,20 @@ const UpdateEventForm = ({
             {calendarsStorage.getCalendars().map((value, index) => (
               <option key={index} value={value.id}>
                 {value.name}
+              </option>
+            ))}
+          </select>
+          <select
+            defaultValue={form.color}
+            onChange={(event) => {
+              form.color = event.target.value as CalendarEvent["color"];
+              setForm({ ...form });
+            }}
+            style={{ color: form.color }}
+          >
+            {EventColors.map((color, index) => (
+              <option key={index} value={color} style={{ color }}>
+                Event Color
               </option>
             ))}
           </select>

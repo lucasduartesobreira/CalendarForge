@@ -7,6 +7,22 @@ type EventNotification = {
   timescale: "minutes" | "hours" | "week" | "month";
 };
 
+const COLORS = [
+  "#003f5c",
+  "#374c80",
+  "#7a5195",
+  "#bc5090",
+  "#ef5675",
+  "#ff764a",
+  "#ffa600",
+] as const;
+
+type FromTupleToUnion<Some> = Some extends readonly [infer A, ...infer B]
+  ? A | FromTupleToUnion<B>
+  : Some extends readonly [infer A]
+  ? A
+  : never;
+
 type CalendarEvent = {
   id: string;
   startDate: number;
@@ -15,10 +31,27 @@ type CalendarEvent = {
   description: string;
   calendar_id: string;
   notifications: EventNotification[];
+  color: FromTupleToUnion<typeof COLORS>;
 };
 
 type CreateEvent = Omit<CalendarEvent, "id">;
 type UpdateEvent = Partial<CreateEvent>;
+
+const fix = <T extends CalendarEvent[K], K extends keyof CalendarEvent>(
+  def: T,
+  key: K,
+  events: IterableIterator<[string, CalendarEvent]>,
+) => {
+  const final = [] as [string, CalendarEvent][];
+  for (const [id, event] of events) {
+    if (event[key] == null) {
+      event[key] = def;
+    }
+    final.push([id, event]);
+  }
+
+  return final;
+};
 
 class EventStorage {
   private events: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">;
@@ -114,6 +147,7 @@ class EventStorage {
       calendar_id: event.calendar_id ?? eventFound.calendar_id,
       description: event.description ?? eventFound.description,
       notifications: event.notifications ?? eventFound.notifications,
+      color: event.color ?? eventFound.color,
     };
 
     this.actions.set(eventId, newEvent);
@@ -123,4 +157,4 @@ class EventStorage {
 }
 
 export type { CalendarEvent, CreateEvent, UpdateEvent, EventNotification };
-export { EventStorage };
+export { EventStorage, COLORS as EventColors };
