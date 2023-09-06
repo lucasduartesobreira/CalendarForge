@@ -53,9 +53,27 @@ const fix = <T extends CalendarEvent[K], K extends keyof CalendarEvent>(
   return final;
 };
 
+type TypeOfArray<T> = T extends Array<infer InsideType> ? InsideType : never;
+type InputAndOutput<T extends (...args: any) => any> = {
+  input: Parameters<T>;
+  output: ReturnType<T>;
+};
+
+type Subscribed = {
+  add: ((eventData: InputAndOutput<EventStorage["add"]>) => void)[];
+  remove: ((eventData: InputAndOutput<EventStorage["remove"]>) => void)[];
+  removeAll: ((dunno: { output: [Result<CalendarEvent, symbol>] }) => void)[];
+  update: ((
+    eventData: InputAndOutput<EventStorage["update"]> & {
+      found: Option<CalendarEvent>;
+    },
+  ) => void)[];
+};
+
 class EventStorage {
   private events: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">;
   private actions: Actions<string, CalendarEvent>;
+  private subscribed: Subscribed;
 
   constructor(
     events: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">,
@@ -63,6 +81,23 @@ class EventStorage {
   ) {
     this.events = events;
     this.actions = actions;
+    this.subscribed = {
+      add: [],
+      remove: [],
+      removeAll: [],
+      update: [],
+    };
+  }
+
+  subscribe<
+    Handler extends TypeOfArray<HandlerList>,
+    HandlerList extends Subscribed[E],
+    E extends keyof Subscribed,
+  >(event: E, handler: Handler) {
+    this.subscribed[event] = [
+      ...this.subscribed[event],
+      handler,
+    ] as Subscribed[E];
   }
 
   add(event: CreateEvent): Result<CalendarEvent, null> {
@@ -71,7 +106,13 @@ class EventStorage {
       ...event,
     };
     this.actions.set(eventWithId.id, eventWithId);
-    return Ok(eventWithId);
+    const result = Ok(eventWithId);
+
+    const inputEventHandler: [event: CalendarEvent] = [eventWithId];
+    this.subscribed.add.forEach((handler) => {
+      handler({ input: inputEventHandler, output: result });
+    });
+    return result;
   }
 
   remove(eventId: string): Result<CalendarEvent, symbol> {
@@ -151,8 +192,21 @@ class EventStorage {
     };
 
     this.actions.set(eventId, newEvent);
+    const result = Ok(newEvent);
 
-    return Ok(newEvent);
+    const inputEventHandler: [eventId: string, event: UpdateEvent] = [
+      eventId,
+      event,
+    ];
+    this.subscribed.update.forEach((handler) => {
+      handler({
+        input: inputEventHandler,
+        output: result,
+        found: Some(eventFound),
+      });
+    });
+
+    return result;
   }
 }
 
