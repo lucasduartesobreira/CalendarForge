@@ -68,21 +68,22 @@ const DayBackground = ({
     setIsClient(true);
   }, []);
 
-  let eventsMap = events
-    .filter((_value, index) => index <= 24)
-    .reduce((acc, event) => {
-      let eventDate = new Date(event.startDate);
-      let hourEvent = acc.get(eventDate.getHours());
-      if (hourEvent == undefined) {
-        acc.set(eventDate.getHours(), [event]);
-        return acc;
+  const eventsMap = events.sort((a, b) => a.startDate - b.startDate);
+  const conflicts = events.reduce((acc, event, index, array) => {
+    const toSearch = array.slice(index + 1);
+    toSearch.forEach((possibleConflict) => {
+      if (possibleConflict.startDate < event.endDate) {
+        const zIndex = acc.get(possibleConflict.id);
+        if (!zIndex) {
+          acc.set(possibleConflict.id, 1);
+        } else {
+          acc.set(possibleConflict.id, zIndex + 1);
+        }
       }
+    });
 
-      hourEvent.push(event);
-      return acc;
-    }, new Map<number, CalendarEvent[]>())
-    .entries();
-  let eventsPerHour = Array.from(eventsMap);
+    return acc;
+  }, new Map<string, number>());
   return (
     <div
       className={`grid grid-rows-[repeat(24,64px)] relative bg-white text-gray-300`}
@@ -96,31 +97,31 @@ const DayBackground = ({
         );
       })}
       {isClient &&
-        eventsPerHour.map(([_hours, events], index) => {
+        eventsMap.map((event, index) => {
+          const conflictNumber = conflicts.get(event.id);
+          const left = 10 * (conflicts.get(event.id) ?? 0);
+          const width = 100 / (conflictNumber ?? 1) - left;
           return (
             <div key={`day${day}${index}`} className={`static`}>
-              {events.map((event, eventIndex) => {
-                return (
-                  <button
-                    key={event.id}
-                    onClick={() => {
-                      setSelectedEvent(Some(event));
-                    }}
-                    className="flex absolute z-[100] bottom-0 justify-start"
-                    style={{
-                      ...startAndHeight(
-                        new Date(event.startDate),
-                        new Date(event.endDate),
-                      ),
-                      width: `${100 / events.length}%`,
-                      left: `${(100 / events.length) * eventIndex}%`,
-                      backgroundColor: event.color ?? "#7a5195",
-                    }}
-                  >
-                    {event.title}
-                  </button>
-                );
-              })}
+              <button
+                key={event.id}
+                onClick={() => {
+                  setSelectedEvent(Some(event));
+                }}
+                className="flex absolute bottom-0 justify-start"
+                style={{
+                  ...startAndHeight(
+                    new Date(event.startDate),
+                    new Date(event.endDate),
+                  ),
+                  width: `${width}%`,
+                  left: `${left}%`,
+                  zIndex: `${index}`,
+                  backgroundColor: event.color ?? "#7a5195",
+                }}
+              >
+                {event.title}
+              </button>
             </div>
           );
         })}
