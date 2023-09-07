@@ -5,6 +5,7 @@ const initialNotification: EventNotification = {
   from: "start",
   time: 5,
   timescale: "minutes",
+  id: "",
 };
 
 const UpdateNotificationForm = ({
@@ -129,6 +130,8 @@ const NewEventNotificationForm = ({
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
+          const newId = Buffer.from(Date.now().toString()).toString("base64");
+          newNotification.id = newId;
           onSubmit(newNotification);
           setNewNotification({ ...resetNotification });
         }}

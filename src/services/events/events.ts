@@ -1,7 +1,9 @@
 import { Actions } from "@/hooks/mapHook";
 import { Err, Ok, Result } from "@/utils/result";
+import { Option, Some } from "@/utils/option";
 
 type EventNotification = {
+  id: string;
   from: "start" | "end";
   time: number;
   timescale: "minutes" | "hours" | "week" | "month";
@@ -62,7 +64,7 @@ type InputAndOutput<T extends (...args: any) => any> = {
 type Subscribed = {
   add: ((eventData: InputAndOutput<EventStorage["add"]>) => void)[];
   remove: ((eventData: InputAndOutput<EventStorage["remove"]>) => void)[];
-  removeAll: ((dunno: { output: [Result<CalendarEvent, symbol>] }) => void)[];
+  removeAll: ((dunno: { output: [Result<CalendarEvent[], symbol>] }) => void)[];
   update: ((
     eventData: InputAndOutput<EventStorage["update"]> & {
       found: Option<CalendarEvent>;
@@ -140,8 +142,13 @@ class EventStorage {
       }
     }
     this.actions.setAll(notRemoved);
+    const result = Ok(removed);
 
-    return Ok(removed);
+    this.subscribed.removeAll.forEach((handler) => {
+      handler({ output: [result] });
+    });
+
+    return result;
   }
 
   findById(eventId: string): Result<CalendarEvent, symbol> {
@@ -207,6 +214,10 @@ class EventStorage {
     });
 
     return result;
+  }
+
+  sync(map: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">) {
+    this.events = new Map(map);
   }
 }
 

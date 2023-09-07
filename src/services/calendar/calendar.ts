@@ -180,6 +180,10 @@ class CalendarStorage {
     }
     return None();
   }
+
+  sync(map: Omit<Map<string, Calendar>, "set" | "clear" | "delete">) {
+    this.calendars = new Map(map);
+  }
 }
 
 export { CalendarStorage };
