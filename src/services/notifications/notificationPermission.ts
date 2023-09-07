@@ -5,14 +5,14 @@ export class NotificationManager {
   private notifications: Map<EventNotification["id"], NodeJS.Timeout>;
   constructor() {
     this.notifications = new Map();
-    if (Notification?.permission !== "granted") {
+    if (Notification == null || !("Notification" in window)) {
+      console.log("This browser does not support notifications.");
+    } else if (Notification.permission !== "granted") {
       Notification.requestPermission((permission) => {
         if (permission === "granted") {
           console.log("Permission granted");
         }
       });
-    } else if (Notification == null) {
-      console.log("This browser does not support notifications.");
     }
   }
 

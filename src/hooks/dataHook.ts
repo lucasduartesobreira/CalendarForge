@@ -14,7 +14,6 @@ type Storages = {
 const StorageContext = createContext<Option<Storages>>(None());
 
 export function useDataStorage(): Option<Storages> {
-  const notificationManager = new NotificationManager();
   const eventsHook = useMap<string, CalendarEvent>("eventsMap", new Map());
 
   const calendarsHook = useMap<string, Calendar>("calendars");
@@ -25,6 +24,7 @@ export function useDataStorage(): Option<Storages> {
 
   useEffect(() => {
     if (eventsHook.isSome() && calendarsHook.isSome()) {
+      const notificationManager = new NotificationManager();
       const [eventsMap, eventsActions] = eventsHook.unwrap();
       const eventsStorage = new EventStorage(eventsMap, eventsActions);
       eventsStorage.subscribe("add", ({ output }) => {
