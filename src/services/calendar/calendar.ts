@@ -1,6 +1,6 @@
-import { Actions } from "@/hooks/mapHook";
 import { None, Some } from "@/utils/option";
 import { Err, Ok, Result } from "@/utils/result";
+import { MapLocalStorage } from "@/utils/storage";
 import { TypeOfTag } from "typescript";
 
 type Timezones =
@@ -91,20 +91,14 @@ class CalendarStorage {
 
   static StorageKey = "calendars";
 
-  private calendars: Omit<Map<string, Calendar>, "set" | "clear" | "delete">;
-  private actions: Actions<string, Calendar>;
+  private map: MapLocalStorage<string, Calendar>;
 
-  constructor(
-    calendars: Omit<Map<string, Calendar>, "set" | "clear" | "delete">,
-    actions: Actions<string, Calendar>,
-  ) {
-    this.calendars = calendars;
-    this.actions = actions;
-
-    if (Array.from(calendars.values()).length === 0) {
+  private constructor(mapLocalStorage: MapLocalStorage<string, Calendar>) {
+    this.map = mapLocalStorage;
+    if (this.map.values().length === 0) {
       const id = Buffer.from(Date.now().toString()).toString("base64");
       const timezone = (-new Date().getTimezoneOffset() / 60) as Timezones;
-      this.actions.set(id, {
+      this.map.set(id, {
         id,
         name: "Default Calendar",
         timezone,
@@ -113,13 +107,41 @@ class CalendarStorage {
     }
   }
 
+  static new(forceUpdate: () => void) {
+    const id = Buffer.from(Date.now().toString()).toString("base64");
+    const timezone = (-new Date().getTimezoneOffset() / 60) as Timezones;
+
+    const localStorage = MapLocalStorage.new(
+      "calendars",
+      forceUpdate,
+      new Map([
+        [
+          id,
+          {
+            id,
+            name: "Default Calendar",
+            timezone,
+            default: true,
+          },
+        ],
+      ]),
+    );
+
+    if (localStorage.isOk()) {
+      const unwrapedLocalStorage = localStorage.unwrap();
+      return Ok(new CalendarStorage(unwrapedLocalStorage));
+    }
+
+    return localStorage;
+  }
+
   addCalendar(calendar: CreateCalendar): Result<Calendar, string> {
     const id = Buffer.from(Date.now().toString()).toString("base64");
     const { id: _id, ...validator } = CalendarStorage.validator;
     const validated = validateTypes(calendar, validator);
     if (validated.isOk()) {
       const calendarCreated = { id, default: false, ...calendar };
-      this.actions.set(id, calendarCreated);
+      this.map.set(id, calendarCreated);
       return Ok(calendarCreated);
     }
 
@@ -135,26 +157,29 @@ class CalendarStorage {
   );
 
   removeCalendar(id: string): Result<Calendar, symbol> {
-    const calendar = this.calendars.get(id);
-    if (calendar !== undefined) {
-      if (!calendar.default) {
+    const calendar = this.map.get(id);
+    if (calendar.isSome()) {
+      const calendarFound = calendar.unwrap();
+      if (!calendarFound.default) {
         return Err(CalendarStorage.RemoveDefaultCalendarError);
       }
-      this.actions.remove(id);
-      return Ok(calendar);
+      this.map.remove(id);
+      return Ok(calendarFound);
     }
     return Err(CalendarStorage.RemoveCalendarError);
   }
 
   getCalendars(): Calendar[] {
-    return Array.from(this.calendars.values());
+    return this.map.values();
   }
 
   updateCalendar(calendarsId: string, calendar: UpdateCalendar) {
-    const calendarFound = this.calendars.get(calendarsId);
-    if (calendarFound == undefined) {
+    const calendarGet = this.map.get(calendarsId);
+    if (!calendarGet.isSome()) {
       return Err(Symbol("Event not found"));
     }
+
+    const calendarFound = calendarGet.unwrap();
 
     const newCalendar: Calendar = {
       id: calendarsId,
@@ -165,14 +190,14 @@ class CalendarStorage {
 
     const validated = validateTypes(newCalendar, CalendarStorage.validator);
     if (validated.isOk()) {
-      this.actions.set(calendarsId, newCalendar);
+      this.map.set(calendarsId, newCalendar);
     }
 
     return validated;
   }
 
   findDefault() {
-    const calendars = this.calendars.values();
+    const calendars = this.map.values();
     for (const calendar of calendars) {
       if (calendar.default) {
         return Some(calendar);
@@ -181,8 +206,8 @@ class CalendarStorage {
     return None();
   }
 
-  sync(map: Omit<Map<string, Calendar>, "set" | "clear" | "delete">) {
-    this.calendars = new Map(map);
+  sync() {
+    this.map.syncLocalStorage();
   }
 }
 

@@ -24,8 +24,6 @@ const StorageContext = createContext<Option<Storages>>(None());
 export function useDataStorage(): Option<Storages> {
   const eventsHook = useMap<string, CalendarEvent>("eventsMap", new Map());
 
-  const calendarsHook = useMap<string, Calendar>("calendars");
-
   const [, updateState] = useState<{}>();
   const forceUpdate = useCallback(() => updateState({}), []);
 
@@ -33,10 +31,19 @@ export function useDataStorage(): Option<Storages> {
     Option<EventTemplateStorage>
   >(None());
 
+  const [calendarStorage, setCalendarStorage] = useState<
+    Option<CalendarStorage>
+  >(None());
+
   useEffect(() => {
     const newTemplateStorage = EventTemplateStorage.new(forceUpdate);
     if (newTemplateStorage.isOk()) {
       setTemplateStorage(Some(newTemplateStorage.unwrap()));
+    }
+
+    const newCalendarStorage = CalendarStorage.new(forceUpdate);
+    if (newCalendarStorage.isOk()) {
+      setCalendarStorage(Some(newCalendarStorage.unwrap()));
     }
   }, [forceUpdate]);
 
@@ -44,12 +51,12 @@ export function useDataStorage(): Option<Storages> {
 
   const hasWindow = typeof window !== "undefined";
   const update =
-    eventsHook.isSome() && calendarsHook.isSome() && templateStorage.isSome();
+    eventsHook.isSome() && calendarStorage.isSome() && templateStorage.isSome();
 
   useEffect(() => {
     if (
       eventsHook.isSome() &&
-      calendarsHook.isSome() &&
+      calendarStorage.isSome() &&
       templateStorage.isSome()
     ) {
       const notificationManager = new NotificationManager();
@@ -96,15 +103,10 @@ export function useDataStorage(): Option<Storages> {
         });
       }
 
-      const [calendarsMap, calendarsActions] = calendarsHook.unwrap();
-      const calendarsStorage = new CalendarStorage(
-        calendarsMap,
-        calendarsActions,
-      );
       setClientData(
         Some({
           eventsStorage,
-          calendarsStorage,
+          calendarsStorage: calendarStorage.unwrap(),
           eventsTemplateStorage: templateStorage.unwrap(),
         }),
       );
@@ -112,13 +114,12 @@ export function useDataStorage(): Option<Storages> {
   }, [update]);
 
   useEffect(() => {
-    if (clientData.isSome() && eventsHook.isSome() && calendarsHook.isSome()) {
-      const { eventsStorage, calendarsStorage } = clientData.unwrap();
+    if (clientData.isSome() && eventsHook.isSome()) {
+      const { eventsStorage } = clientData.unwrap();
       eventsStorage.sync(eventsHook.unwrap()[0]);
-      calendarsStorage.sync(calendarsHook.unwrap()[0]);
       setClientData(Some({ ...clientData.unwrap() }));
     }
-  }, [hasWindow, eventsHook, calendarsHook]);
+  }, [hasWindow, eventsHook]);
 
   const memoized = useMemo(() => {
     return clientData;
