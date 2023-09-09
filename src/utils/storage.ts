@@ -51,23 +51,33 @@ export class MapLocalStorage<K, V> {
   private map: Map<K, V>;
   private path: string;
   forceRender: () => void;
-  private constructor(path: string, forceRender: () => void) {
-    const localStorageItemsString = localStorage.getItem(path);
-    const localStorageItems: Array<[K, V]> = localStorageItemsString
-      ? JSON.parse(localStorageItemsString)
-      : [];
 
-    this.map = new Map(localStorageItems);
+  private constructor(
+    path: string,
+    forceRender: () => void,
+    initialValue: Map<K, V> | IterableIterator<[K, V]> = new Map(),
+  ) {
     this.path = path;
     this.forceRender = forceRender;
+
+    const localStorageItemsString = localStorage.getItem(path);
+    if (localStorageItemsString) {
+      const parsed: Array<[K, V]> = JSON.parse(localStorageItemsString);
+      const initialData = parsed.length === 0 ? initialValue : parsed;
+      this.map = new Map(initialData);
+    } else {
+      this.map = new Map(initialValue);
+      this.syncLocalStorage();
+    }
   }
 
   static new<K, V>(
     path: string,
     forceRender: () => void,
+    initialValue: Map<K, V> | IterableIterator<[K, V]> = new Map(),
   ): Result<MapLocalStorage<K, V>, symbol> {
     if (typeof window != "undefined")
-      return Ok(new MapLocalStorage<K, V>(path, forceRender));
+      return Ok(new MapLocalStorage<K, V>(path, forceRender, initialValue));
 
     return Err(Symbol("Cannot create a storage on serverside"));
   }
