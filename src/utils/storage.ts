@@ -151,6 +151,10 @@ export class MapLocalStorage<K, V> {
     return filtered;
   }
 
+  values() {
+    return Array.from(this.map.values());
+  }
+
   private thisMapToString() {
     return Array.from(this.map.entries());
   }
