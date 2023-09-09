@@ -1,14 +1,22 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { CalendarEvent, EventStorage } from "@/services/events/events";
 import { useMap } from "@/hooks/mapHook";
-import { createContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { None, Some, Option } from "@/utils/option";
 import { Calendar, CalendarStorage } from "@/services/calendar/calendar";
 import { NotificationManager } from "@/services/notifications/notificationPermission";
+import { EventTemplateStorage } from "@/services/events/eventTemplates";
 
 type Storages = {
   eventsStorage: EventStorage;
   calendarsStorage: CalendarStorage;
+  eventsTemplateStorage: EventTemplateStorage;
 };
 
 const StorageContext = createContext<Option<Storages>>(None());
@@ -17,13 +25,33 @@ export function useDataStorage(): Option<Storages> {
   const eventsHook = useMap<string, CalendarEvent>("eventsMap", new Map());
 
   const calendarsHook = useMap<string, Calendar>("calendars");
+
+  const [, updateState] = useState<{}>();
+  const forceUpdate = useCallback(() => updateState({}), []);
+
+  const [templateStorage, setTemplateStorage] = useState<
+    Option<EventTemplateStorage>
+  >(None());
+
+  useEffect(() => {
+    const newTemplateStorage = EventTemplateStorage.new(forceUpdate);
+    if (newTemplateStorage.isOk()) {
+      setTemplateStorage(Some(newTemplateStorage.unwrap()));
+    }
+  }, [forceUpdate]);
+
   const [clientData, setClientData] = useState<Option<Storages>>(None());
 
   const hasWindow = typeof window !== "undefined";
-  const update = eventsHook.isSome() && calendarsHook.isSome();
+  const update =
+    eventsHook.isSome() && calendarsHook.isSome() && templateStorage.isSome();
 
   useEffect(() => {
-    if (eventsHook.isSome() && calendarsHook.isSome()) {
+    if (
+      eventsHook.isSome() &&
+      calendarsHook.isSome() &&
+      templateStorage.isSome()
+    ) {
       const notificationManager = new NotificationManager();
       const [eventsMap, eventsActions] = eventsHook.unwrap();
       const eventsStorage = new EventStorage(eventsMap, eventsActions);
@@ -73,7 +101,13 @@ export function useDataStorage(): Option<Storages> {
         calendarsMap,
         calendarsActions,
       );
-      setClientData(Some({ eventsStorage, calendarsStorage }));
+      setClientData(
+        Some({
+          eventsStorage,
+          calendarsStorage,
+          eventsTemplateStorage: templateStorage.unwrap(),
+        }),
+      );
     }
   }, [update]);
 
