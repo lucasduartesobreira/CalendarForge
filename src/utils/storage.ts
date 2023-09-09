@@ -92,7 +92,7 @@ export class MapLocalStorage<K, V> {
   @forceRender
   @syncStorage
   setNotDefined(key: K, value: V) {
-    if (this.map.has(key)) {
+    if (!this.map.has(key)) {
       this.map.set(key, value);
       return Ok(value);
     }
@@ -113,7 +113,7 @@ export class MapLocalStorage<K, V> {
   @syncStorage
   remove(key: K) {
     const value = this.map.get(key);
-    if (key != null) {
+    if (value != null) {
       this.map.delete(key);
       return Ok(value);
     }
