@@ -179,33 +179,35 @@ const CalendarWeek = ({
     ]
   >;
 }) => {
-  const storageContext = useContext(StorageContext);
+  const { storages: storages, listeners } = useContext(StorageContext);
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Option<CalendarEvent>>(
     None(),
   );
   useEffect(() => {
-    if (storageContext.isSome() && viewableCalendarsState.isSome()) {
-      const { eventsStorage } = storageContext.unwrap();
+    if (storages.isSome() && viewableCalendarsState.isSome()) {
+      const { eventsStorage } = storages.unwrap();
       const lastDayOfTheWeek = new Date(
         startDate.getTime() + 6 * 24 * 60 * 60 * 1000,
       );
       lastDayOfTheWeek.setHours(23, 59, 59, 999);
       setEvents(
-        eventsStorage.filter(
-          (event) =>
-            (viewableCalendarsState.unwrap()[0].get(event.calendar_id) ??
-              true) &&
-            event.startDate >= startDate.getTime() &&
-            event.endDate >= startDate.getTime() &&
-            event.startDate <= lastDayOfTheWeek.getTime() &&
-            event.endDate <= lastDayOfTheWeek.getTime(),
-        ),
+        eventsStorage
+          .filter(
+            (event) =>
+              (viewableCalendarsState.unwrap()[0].get(event.calendar_id) ??
+                true) &&
+              event.startDate >= startDate.getTime() &&
+              event.endDate >= startDate.getTime() &&
+              event.startDate <= lastDayOfTheWeek.getTime() &&
+              event.endDate <= lastDayOfTheWeek.getTime(),
+          )
+          .map(([, value]) => value),
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageContext, startDate, viewableCalendarsState]);
+  }, [listeners, startDate, viewableCalendarsState]);
 
   const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
 

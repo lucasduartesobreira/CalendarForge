@@ -27,10 +27,10 @@ const CreateCalendarForm = ({
   setOpen: (open: boolean) => void;
 }) => {
   const [form, setForm] = useState(initialCalendar);
-  const storageContext = useContext(StorageContext);
+  const { storages: storages } = useContext(StorageContext);
 
-  if (storageContext.isSome()) {
-    const { calendarsStorage } = storageContext.unwrap();
+  if (storages.isSome()) {
+    const { calendarsStorage } = storages.unwrap();
     return (
       <OutsideClick
         doSomething={() => {
@@ -122,11 +122,28 @@ const SideBar = (
   },
 ) => {
   const { viewableCalendarsState, ...arg } = args;
-  const storageContext = useContext(StorageContext);
+  const [calendars, setCalendars] = useState<Option<Map<string, boolean>>>(
+    None(),
+  );
+  const [actions, setActions] = useState<Option<Actions<string, boolean>>>(
+    None(),
+  );
+  const { storages } = useContext(StorageContext);
   const [open, setOpen] = useState(false);
   const [selectedCalendar, setSelectedCalendar] = useState<Option<Calendar>>(
     None(),
   );
+
+  useEffect(() => {
+    if (viewableCalendarsState.isSome()) {
+      const [viewableCalendars, viewableCalendarsActions] =
+        viewableCalendarsState.unwrap();
+      setCalendars(Some(viewableCalendars as any));
+
+      setActions(Some(viewableCalendarsActions));
+    }
+  }, [viewableCalendarsState]);
+
   const refButton = useRef(null);
 
   return (
@@ -135,16 +152,13 @@ const SideBar = (
       className={`${args.className} grid grid-rows-[auto_48px] grid-cols-[auto]`}
     >
       <div className="overflow-auto row-start-1">
-        {storageContext.isSome() && viewableCalendarsState.isSome() && (
+        {storages.isSome() && calendars.isSome() && actions.isSome() && (
           <ul className="">
-            {storageContext
+            {storages
               .unwrap()
               .calendarsStorage.getCalendars()
               .map((calendar, index) => {
-                const [viewableCalendars, setViewableCalendars] =
-                  viewableCalendarsState.unwrap();
-                if (!viewableCalendars.has(calendar.id))
-                  setViewableCalendars.set(calendar.id, true);
+                const viewableCalendars = calendars.unwrap();
 
                 const defaultChecked =
                   viewableCalendars.get(calendar.id) ?? true;
@@ -153,10 +167,7 @@ const SideBar = (
                     <input
                       type="checkbox"
                       onChange={(event) => {
-                        setViewableCalendars.set(
-                          calendar.id,
-                          event.target.checked,
-                        );
+                        actions.unwrap().set(calendar.id, event.target.checked);
                       }}
                       defaultChecked={defaultChecked}
                     ></input>

@@ -1,6 +1,6 @@
-import { Actions } from "@/hooks/mapHook";
 import { Err, Ok, Result } from "@/utils/result";
 import { Option, Some } from "@/utils/option";
+import { MapLocalStorage } from "@/utils/storage";
 
 type EventNotification = {
   id: string;
@@ -73,22 +73,33 @@ type Subscribed = {
 };
 
 class EventStorage {
-  private events: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">;
-  private actions: Actions<string, CalendarEvent>;
+  private map: MapLocalStorage<CalendarEvent["id"], CalendarEvent>;
   private subscribed: Subscribed;
 
-  constructor(
-    events: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">,
-    actions: Actions<string, CalendarEvent>,
+  private constructor(
+    map: MapLocalStorage<CalendarEvent["id"], CalendarEvent>,
   ) {
-    this.events = events;
-    this.actions = actions;
+    this.map = map;
     this.subscribed = {
       add: [],
       remove: [],
       removeAll: [],
       update: [],
     };
+  }
+
+  static new(forceUpdate: () => void) {
+    const localStorage = MapLocalStorage.new<
+      CalendarEvent["id"],
+      CalendarEvent
+    >("eventsMap", forceUpdate);
+
+    if (localStorage.isOk()) {
+      const unwrapedLocalStorage = localStorage.unwrap();
+      return Ok(new EventStorage(unwrapedLocalStorage));
+    }
+
+    return localStorage;
   }
 
   subscribe<
@@ -107,8 +118,7 @@ class EventStorage {
       id: Buffer.from(Date.now().toString()).toString("base64"),
       ...event,
     };
-    this.actions.set(eventWithId.id, eventWithId);
-    const result = Ok(eventWithId);
+    const result = this.map.set(eventWithId.id, eventWithId);
 
     const inputEventHandler: [event: CalendarEvent] = [eventWithId];
     this.subscribed.add.forEach((handler) => {
@@ -118,50 +128,30 @@ class EventStorage {
   }
 
   remove(eventId: string): Result<CalendarEvent, symbol> {
-    const event = this.events.get(eventId);
-    if (event == undefined) {
-      return Err(Symbol("Event not found"));
-    }
-
-    this.actions.remove(eventId);
-
-    return Ok(event);
+    const result = this.map.remove(eventId);
+    return result;
   }
 
   removeAll(
     predicate: (event: CalendarEvent) => boolean,
   ): Result<CalendarEvent[], symbol> {
-    const events = this.events.entries();
-    const removed = [] as CalendarEvent[];
-    const notRemoved = [] as [string, CalendarEvent][];
-    for (const [id, event] of events) {
-      if (predicate(event)) {
-        removed.push(event);
-      } else {
-        notRemoved.push([id, event]);
-      }
-    }
-    this.actions.setAll(notRemoved);
-    const result = Ok(removed);
+    const result = this.map.removeAll(predicate);
+    const resultMapped = Ok(result.unwrap().map(([, value]) => value));
 
     this.subscribed.removeAll.forEach((handler) => {
-      handler({ output: [result] });
+      handler({ output: [resultMapped] });
     });
 
-    return result;
+    return resultMapped;
   }
 
-  findById(eventId: string): Result<CalendarEvent, symbol> {
-    const event = this.events.get(eventId);
-    if (event == undefined) {
-      return Err(Symbol("Event not found"));
-    }
-
-    return Ok(event);
+  findById(eventId: string): Option<CalendarEvent> {
+    const event = this.map.get(eventId);
+    return event;
   }
 
   find(predicate: (event: CalendarEvent) => boolean) {
-    for (const event of this.events.values()) {
+    for (const event of this.map.values()) {
       if (predicate(event)) {
         return Ok(event);
       }
@@ -171,21 +161,18 @@ class EventStorage {
   }
 
   filter(predicate: (event: CalendarEvent) => boolean) {
-    const result = [];
-    for (const event of this.events.values()) {
-      if (predicate(event)) {
-        result.push(event);
-      }
-    }
+    const filtered = this.map.filter(predicate);
 
-    return result;
+    return filtered;
   }
 
   update(eventId: string, event: UpdateEvent) {
-    const eventFound = this.events.get(eventId);
-    if (eventFound == undefined) {
+    const eventFromGet = this.map.get(eventId);
+    if (!eventFromGet.isSome()) {
       return Err(Symbol("Event not found"));
     }
+
+    const eventFound = eventFromGet.unwrap();
 
     const newEvent: CalendarEvent = {
       id: eventId,
@@ -198,9 +185,7 @@ class EventStorage {
       color: event.color ?? eventFound.color,
     };
 
-    this.actions.set(eventId, newEvent);
-    const result = Ok(newEvent);
-
+    const result = this.map.set(eventId, newEvent);
     const inputEventHandler: [eventId: string, event: UpdateEvent] = [
       eventId,
       event,
@@ -216,8 +201,12 @@ class EventStorage {
     return result;
   }
 
-  sync(map: Omit<Map<string, CalendarEvent>, "set" | "clear" | "delete">) {
-    this.events = new Map(map);
+  values() {
+    return this.map.values();
+  }
+
+  sync() {
+    this.map.syncLocalStorage();
   }
 }
 

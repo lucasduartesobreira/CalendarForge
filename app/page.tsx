@@ -22,6 +22,19 @@ const Home = () => {
     setStartDate(firstDayOfTheWeek);
   }, []);
 
+  useEffect(() => {
+    if (data.storages.isSome() && viewableCalendarsState.isSome()) {
+      const { calendarsStorage } = data.storages.unwrap();
+      const calendars = calendarsStorage.getCalendars();
+      const [viewableCalendars, actions] = viewableCalendarsState.unwrap();
+      const fixedCalendars = calendars.reduce((acc, calendar) => {
+        acc.get(calendar.id) ?? acc.set(calendar.id, true);
+        return acc;
+      }, new Map(viewableCalendars));
+      actions.setAll(fixedCalendars);
+    }
+  }, [data.listeners]);
+
   const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
   return (
     <StorageContext.Provider value={data}>

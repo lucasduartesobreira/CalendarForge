@@ -15,10 +15,10 @@ const UpdateCalendarForm = ({
 }) => {
   const { id, ...initialForm } = initialCalendar;
   const [form, setForm] = useState(initialForm);
-  const storageContext = useContext(StorageContext);
+  const { storages } = useContext(StorageContext);
 
-  if (storageContext.isSome()) {
-    const { calendarsStorage, eventsStorage } = storageContext.unwrap();
+  if (storages.isSome()) {
+    const { calendarsStorage, eventsStorage } = storages.unwrap();
     return (
       <OutsideClick
         doSomething={() => {

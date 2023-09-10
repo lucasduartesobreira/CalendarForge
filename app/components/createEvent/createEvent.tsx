@@ -53,7 +53,7 @@ const CreateEventForm = ({
     startDate: initialStartDate.getTime(),
     endDate: initialEndDate.getTime(),
   });
-  const storageContext = useContext(StorageContext);
+  const { storages } = useContext(StorageContext);
   let defaultValue: string | undefined = undefined;
 
   useEffect(() => {
@@ -64,8 +64,8 @@ const CreateEventForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (storageContext.isSome()) {
-    const { eventsStorage, calendarsStorage } = storageContext.unwrap();
+  if (storages.isSome()) {
+    const { eventsStorage, calendarsStorage } = storages.unwrap();
 
     const handleChangeText =
       <

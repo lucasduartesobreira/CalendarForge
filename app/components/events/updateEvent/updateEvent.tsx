@@ -21,11 +21,11 @@ const UpdateEventForm = ({
   setOpen: (open: boolean) => void;
   initialForm: CalendarEvent;
 }) => {
-  const storageContext = useContext(StorageContext);
+  const { storages } = useContext(StorageContext);
   const { id, ...initialFormState } = initialForm;
   const [form, setForm] = useState(initialFormState);
-  if (storageContext.isSome()) {
-    const { eventsStorage, calendarsStorage } = storageContext.unwrap();
+  if (storages.isSome()) {
+    const { eventsStorage, calendarsStorage } = storages.unwrap();
 
     const handleChangeText =
       <
