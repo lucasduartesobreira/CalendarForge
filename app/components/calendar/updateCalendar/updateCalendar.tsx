@@ -27,7 +27,9 @@ const UpdateCalendarForm = ({
         refs={refs}
       >
         <form
-          onSubmit={() => {
+          onSubmit={(ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
             calendarsStorage.updateCalendar(id, form);
             setOpen(false);
           }}
