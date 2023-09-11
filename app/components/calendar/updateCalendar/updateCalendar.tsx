@@ -31,7 +31,7 @@ const UpdateCalendarForm = ({
             calendarsStorage.updateCalendar(id, form);
             setOpen(false);
           }}
-          className="fixed top-1/2 left-1/2 text-gray-500 p-[8px] flex flex-col gap-[4px] p-4 bg-white rounded-md"
+          className="fixed z-[2000] top-1/2 left-1/2 text-gray-500 p-[8px] flex flex-col gap-[4px] p-4 bg-white rounded-md"
         >
           <input
             title="name"
