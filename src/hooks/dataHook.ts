@@ -20,59 +20,48 @@ type Storages = {
 
 type StorageContext = {
   storages: Option<Storages>;
-  listeners: StateUpdate;
+  listeners: StorageListeners;
+};
+
+type StorageListeners = {
+  [Key in keyof Storages as `${Key}Listener`]: StateUpdate;
 };
 
 const StorageContext = createContext<StorageContext>({
   storages: None(),
-  listeners: undefined,
+  listeners: {
+    eventsStorageListener: undefined,
+    calendarsStorageListener: undefined,
+    eventsTemplateStorageListener: undefined,
+  },
 });
 type StateUpdate = {} | undefined;
 
-export function useDataStorage(): StorageContext {
+const useForceUpdate = () => {
   const [stateUpdated, updateState] = useState<{}>();
   const forceUpdate = useCallback(() => updateState({}), []);
+  return [stateUpdated, forceUpdate] as const;
+};
 
-  const [templateStorage, setTemplateStorage] = useState<
-    Option<EventTemplateStorage>
-  >(None());
-
-  const [calendarStorage, setCalendarStorage] = useState<
-    Option<CalendarStorage>
-  >(None());
-  const [eventsStorage, setEventsStorage] = useState<Option<EventStorage>>(
-    None(),
-  );
-
-  useEffect(() => {
-    const newTemplateStorage = EventTemplateStorage.new(forceUpdate);
-    if (newTemplateStorage.isOk()) {
-      setTemplateStorage(Some(newTemplateStorage.unwrap()));
-    }
-
-    const newCalendarStorage = CalendarStorage.new(forceUpdate);
-    if (newCalendarStorage.isOk()) {
-      setCalendarStorage(Some(newCalendarStorage.unwrap()));
-    }
-
-    const newEventsStorage = EventStorage.new(forceUpdate);
-    if (newEventsStorage.isOk()) {
-      setEventsStorage(Some(newEventsStorage.unwrap()));
-    }
-  }, [forceUpdate]);
+export function useDataStorage(): StorageContext {
+  const [calendarsUpdated, forceCalendarUpdate] = useForceUpdate();
+  const [eventsUpdated, forceEventsUpdate] = useForceUpdate();
+  const [templatesUpdated, forceTemplatesUpdate] = useForceUpdate();
 
   const [clientData, setClientData] = useState<Option<Storages>>(None());
 
-  const update =
-    eventsStorage.isSome() &&
-    calendarStorage.isSome() &&
-    templateStorage.isSome();
+  const eventsStorage = EventStorage.new(forceEventsUpdate);
+  const calendarStorage = CalendarStorage.new(forceCalendarUpdate);
+  const templateStorage = EventTemplateStorage.new(forceTemplatesUpdate);
+
+  const isDataReady =
+    eventsStorage.isOk() && calendarStorage.isOk() && templateStorage.isOk();
 
   useEffect(() => {
     if (
-      eventsStorage.isSome() &&
-      calendarStorage.isSome() &&
-      templateStorage.isSome()
+      eventsStorage.isOk() &&
+      calendarStorage.isOk() &&
+      templateStorage.isOk()
     ) {
       const notificationManager = new NotificationManager();
       const eventsStorageSome = eventsStorage.unwrap();
@@ -125,14 +114,18 @@ export function useDataStorage(): StorageContext {
         }),
       );
     }
-  }, [update]);
+  }, [isDataReady]);
 
   const memoized: StorageContext = useMemo(() => {
     return {
       storages: clientData,
-      listeners: stateUpdated,
+      listeners: {
+        eventsTemplateStorageListener: templatesUpdated,
+        calendarsStorageListener: calendarsUpdated,
+        eventsStorageListener: eventsUpdated,
+      },
     };
-  }, [clientData, stateUpdated]);
+  }, [clientData, calendarsUpdated, eventsUpdated, templatesUpdated]);
 
   return memoized;
 }

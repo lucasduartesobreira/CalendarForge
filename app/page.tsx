@@ -33,7 +33,7 @@ const Home = () => {
       }, new Map(viewableCalendars));
       actions.setAll(fixedCalendars);
     }
-  }, [data.listeners]);
+  }, [data.listeners.calendarsStorageListener]);
 
   const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
   return (
