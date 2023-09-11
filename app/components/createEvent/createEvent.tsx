@@ -53,6 +53,8 @@ const CreateEventForm = ({
     startDate: initialStartDate.getTime(),
     endDate: initialEndDate.getTime(),
   });
+
+  const [selectedTemplate, setSelectedTemplate] = useState<string>();
   const { storages } = useContext(StorageContext);
   let defaultValue: string | undefined = undefined;
 
@@ -65,7 +67,11 @@ const CreateEventForm = ({
   }, []);
 
   if (storages.isSome()) {
-    const { eventsStorage, calendarsStorage } = storages.unwrap();
+    const {
+      eventsStorage,
+      calendarsStorage,
+      eventsTemplateStorage: templateStorage,
+    } = storages.unwrap();
 
     const handleChangeText =
       <
@@ -78,7 +84,7 @@ const CreateEventForm = ({
       ) =>
       (event: React.ChangeEvent<HTMLInputElement>) => {
         form[prop] = event.target.value;
-        setForm(form);
+        setForm({ ...form });
       };
 
     const handleChangeDates =
@@ -86,7 +92,7 @@ const CreateEventForm = ({
       (event: React.ChangeEvent<HTMLInputElement>) => {
         const target = new Date(event.target.value);
         form[prop] = target.getTime();
-        setForm(form);
+        setForm({ ...form });
       };
 
     const handleSubmit = (submitEvent: any) => {
@@ -121,28 +127,28 @@ const CreateEventForm = ({
             Text
             <input
               placeholder="Title"
-              defaultValue={initialForm.title}
+              value={form.title}
               className="text-black m-2 bg-gray-200"
               onChange={handleChangeText("title")}
               type="text"
             />
             <input
               placeholder="Description"
-              defaultValue={initialForm.description}
+              value={form.description}
               className="text-black m-2 bg-gray-200"
               onChange={handleChangeText("description")}
               type="text"
             />
             <input
               placeholder=""
-              defaultValue={getHTMLDateTime(startDate)}
+              value={getHTMLDateTime(new Date(form.startDate))}
               className="text-black m-2 bg-gray-200"
               onChange={handleChangeDates("startDate")}
               type="datetime-local"
             />
             <input
               placeholder=""
-              defaultValue={getHTMLDateTime(endDate)}
+              value={getHTMLDateTime(new Date(form.endDate))}
               className="text-black m-2 bg-gray-200"
               onChange={handleChangeDates("endDate")}
               type="datetime-local"
@@ -151,10 +157,10 @@ const CreateEventForm = ({
           <select
             onChange={(event) => {
               form.calendar_id = event.target.value;
-              setForm(form);
+              setForm({ ...form });
             }}
             className="m-2"
-            defaultValue={defaultValue}
+            value={form.calendar_id}
           >
             {calendarsStorage.getCalendars().map((value, index) => {
               return (
@@ -210,6 +216,33 @@ const CreateEventForm = ({
               resetNotification={initialNotification}
             ></NewEventNotificationForm>
           </div>
+          <select
+            value={selectedTemplate}
+            className="absolute right-[8px] w-[25%]"
+            onChange={(ev) => {
+              ev.preventDefault();
+              const selectedValue = ev.currentTarget.value;
+              setSelectedTemplate(selectedValue);
+              const template = templateStorage
+                .findById(selectedValue)
+                .unwrap() as CalendarEvent;
+              console.log(template);
+              setForm({
+                ...template,
+                startDate: form.startDate,
+                endDate: form.endDate,
+              });
+            }}
+          >
+            <option value={undefined}></option>
+            {templateStorage.all().map((template, index) => {
+              return (
+                <option key={index} value={template.id}>
+                  {template.title}
+                </option>
+              );
+            })}
+          </select>
           <input
             type="submit"
             className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"

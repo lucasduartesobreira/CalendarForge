@@ -25,7 +25,8 @@ const UpdateEventForm = ({
   const { id, ...initialFormState } = initialForm;
   const [form, setForm] = useState(initialFormState);
   if (storages.isSome()) {
-    const { eventsStorage, calendarsStorage } = storages.unwrap();
+    const { eventsStorage, calendarsStorage, eventsTemplateStorage } =
+      storages.unwrap();
 
     const handleChangeText =
       <
@@ -157,15 +158,27 @@ const UpdateEventForm = ({
             className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
             value={"Save"}
           />
-          <button
-            className="absolute right-[10px] text-red-500"
-            onClick={() => {
-              setOpen(false);
-              eventsStorage.remove(id);
-            }}
-          >
-            Delete
-          </button>
+          <div className="absolute flex flex-row-reverse gap-[4px] right-0">
+            <button
+              className="text-red-500"
+              onClick={() => {
+                setOpen(false);
+                eventsStorage.remove(id);
+              }}
+            >
+              Delete
+            </button>
+            <button
+              className="text-yellow-500"
+              onClick={() => {
+                setOpen(false);
+                const { startDate: _sd, endDate: _ed, ...template } = form;
+                eventsTemplateStorage.add(template);
+              }}
+            >
+              + Template
+            </button>
+          </div>
         </form>
       </OutsideClick>
     );

@@ -96,10 +96,7 @@ const UpdateCalendarForm = ({
             onClick={() => {
               setOpen(false);
               calendarsStorage.removeCalendar(id);
-              const eventsRemoved = eventsStorage.removeAll(
-                (event) => event.calendar_id === id,
-              );
-              console.log(eventsRemoved);
+              eventsStorage.removeAll((event) => event.calendar_id === id);
             }}
           >
             Delete

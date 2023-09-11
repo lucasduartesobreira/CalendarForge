@@ -1,12 +1,11 @@
-import { CreateEvent } from "@/services/events/events";
+import { CalendarEvent } from "@/services/events/events";
 import { idGenerator } from "@/utils/idGenerator";
-import { Ok } from "@/utils/result";
+import { Ok, Result } from "@/utils/result";
+import { Option } from "@/utils/option";
 import { MapLocalStorage } from "@/utils/storage";
 
-export const INITIAL_TEMPLATE: CreateEvent & { id: string } = {
+export const INITIAL_TEMPLATE: EventTemplate = {
   id: "",
-  startDate: 0,
-  endDate: 0,
   title: "",
   description: "",
   calendar_id: "",
@@ -14,7 +13,7 @@ export const INITIAL_TEMPLATE: CreateEvent & { id: string } = {
   color: "#7a5195",
 };
 
-export type EventTemplate = typeof INITIAL_TEMPLATE;
+export type EventTemplate = Omit<CalendarEvent, "startDate" | "endDate">;
 
 type CreateTemplate = Omit<EventTemplate, "id">;
 export class EventTemplateStorage {
@@ -37,12 +36,20 @@ export class EventTemplateStorage {
 
   add(template: CreateTemplate) {
     const id = idGenerator();
-    const newTemplate = { ...template, id };
+    const newTemplate = { ...template, id } satisfies EventTemplate;
     this.eventTemplates.set(id, newTemplate);
     return Ok(newTemplate);
   }
 
+  findById(id: EventTemplate["id"]): Option<EventTemplate> {
+    return this.eventTemplates.get(id);
+  }
+
+  delete(id: EventTemplate["id"]): Result<EventTemplate, symbol> {
+    return this.eventTemplates.remove(id);
+  }
+
   all() {
-    return this.eventTemplates.filter(() => true);
+    return this.eventTemplates.values();
   }
 }
