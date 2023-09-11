@@ -160,7 +160,7 @@ class CalendarStorage {
     const calendar = this.map.get(id);
     if (calendar.isSome()) {
       const calendarFound = calendar.unwrap();
-      if (!calendarFound.default) {
+      if (calendarFound.default) {
         return Err(CalendarStorage.RemoveDefaultCalendarError);
       }
       this.map.remove(id);
