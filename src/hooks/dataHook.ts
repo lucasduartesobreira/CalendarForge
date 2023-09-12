@@ -11,11 +11,13 @@ import { None, Some, Option } from "@/utils/option";
 import { CalendarStorage } from "@/services/calendar/calendar";
 import { NotificationManager } from "@/services/notifications/notificationPermission";
 import { EventTemplateStorage } from "@/services/events/eventTemplates";
+import { ProjectStorage } from "@/services/projects/projectsStorage";
 
 type Storages = {
   eventsStorage: EventStorage;
   calendarsStorage: CalendarStorage;
   eventsTemplateStorage: EventTemplateStorage;
+  projectsStorage: ProjectStorage;
 };
 
 type StorageContext = {
@@ -33,6 +35,7 @@ const StorageContext = createContext<StorageContext>({
     eventsStorageListener: undefined,
     calendarsStorageListener: undefined,
     eventsTemplateStorageListener: undefined,
+    projectsStorageListener: undefined,
   },
 });
 type StateUpdate = {} | undefined;
@@ -47,22 +50,23 @@ export function useDataStorage(): StorageContext {
   const [calendarsUpdated, forceCalendarUpdate] = useForceUpdate();
   const [eventsUpdated, forceEventsUpdate] = useForceUpdate();
   const [templatesUpdated, forceTemplatesUpdate] = useForceUpdate();
+  const [projectsUpdated, forceProjectsUpdate] = useForceUpdate();
 
   const [clientData, setClientData] = useState<Option<Storages>>(None());
 
   const eventsStorage = EventStorage.new(forceEventsUpdate);
   const calendarStorage = CalendarStorage.new(forceCalendarUpdate);
   const templateStorage = EventTemplateStorage.new(forceTemplatesUpdate);
+  const projectsStorage = ProjectStorage.new(forceProjectsUpdate);
 
   const isDataReady =
-    eventsStorage.isOk() && calendarStorage.isOk() && templateStorage.isOk();
+    eventsStorage.isOk() &&
+    calendarStorage.isOk() &&
+    templateStorage.isOk() &&
+    projectsStorage.isOk();
 
   useEffect(() => {
-    if (
-      eventsStorage.isOk() &&
-      calendarStorage.isOk() &&
-      templateStorage.isOk()
-    ) {
+    if (isDataReady) {
       const notificationManager = new NotificationManager();
       const eventsStorageSome = eventsStorage.unwrap();
       eventsStorageSome.subscribe("add", ({ output }) => {
@@ -111,6 +115,7 @@ export function useDataStorage(): StorageContext {
           eventsStorage: eventsStorageSome,
           calendarsStorage: calendarStorage.unwrap(),
           eventsTemplateStorage: templateStorage.unwrap(),
+          projectsStorage: projectsStorage.unwrap(),
         }),
       );
     }
@@ -123,9 +128,16 @@ export function useDataStorage(): StorageContext {
         eventsTemplateStorageListener: templatesUpdated,
         calendarsStorageListener: calendarsUpdated,
         eventsStorageListener: eventsUpdated,
+        projectsStorageListener: projectsUpdated,
       },
     };
-  }, [clientData, calendarsUpdated, eventsUpdated, templatesUpdated]);
+  }, [
+    clientData,
+    calendarsUpdated,
+    eventsUpdated,
+    templatesUpdated,
+    projectsUpdated,
+  ]);
 
   return memoized;
 }
