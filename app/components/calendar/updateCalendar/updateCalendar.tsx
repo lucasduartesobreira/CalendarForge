@@ -2,7 +2,8 @@ import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { Calendar, Timezones } from "@/services/calendar/calendar";
 import { RefObject, useContext, useState } from "react";
-import { Option } from "@/utils/option";
+import { None, Option } from "@/utils/option";
+import { EventTemplate } from "@/services/events/eventTemplates";
 
 const UpdateCalendarForm = ({
   refs,
@@ -16,9 +17,16 @@ const UpdateCalendarForm = ({
   const { id, ...initialForm } = initialCalendar;
   const [form, setForm] = useState(initialForm);
   const { storages } = useContext(StorageContext);
+  const [selectedTemplate, setSelectedTemplate] = useState<
+    Option<EventTemplate>
+  >(None());
 
   if (storages.isSome()) {
-    const { calendarsStorage, eventsStorage } = storages.unwrap();
+    const { calendarsStorage, eventsStorage, eventsTemplateStorage } =
+      storages.unwrap();
+    const templates = eventsTemplateStorage
+      .all()
+      .filter((template) => template.calendar_id === id);
     return (
       <OutsideClick
         doSomething={() => {
@@ -86,6 +94,16 @@ const UpdateCalendarForm = ({
               <option value={12}>(GMT12:00)</option>
             </select>
           </label>
+          {templates.length > 0 && (
+            <label>
+              Templates
+              <div className="text-black m-2 bg-gray-200">
+                {templates.map((template) => (
+                  <div key={template.id}>{template.title}</div>
+                ))}
+              </div>
+            </label>
+          )}
           <input
             type="submit"
             className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
