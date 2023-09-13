@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useReducer, useState } from "react";
 import CalendarWeek from "./components/calendar/calendarWeek";
 import CreateEventButton from "./components/createEvent/createEvent";
 import SideBar from "./components/sideBar/SideBar";
@@ -71,19 +71,30 @@ const useDate = () => {
   return [startDate, setStartDate] as const;
 };
 
+const ProjectsContent = () => {
+  return <div>Projects</div>;
+};
+
 const Home = () => {
   const data = useDataStorage();
   const [startDate, setStartDate] = useDate();
+  const [menuType, setMenuType] = useState<"calendar" | "projects">("calendar");
 
   return (
     <StorageContext.Provider value={data}>
       <main className="h-full flex flex-col">
         <NavBar>
-          <nav className="col-start-1">Navbar</nav>
-          <WeekNavigation startDate={startDate} setStartDate={setStartDate} />
+          <nav className="col-start-1 flex gap-2">
+            <button onClick={() => setMenuType("calendar")}>Calendar</button>
+            <button onClick={() => setMenuType("projects")}>Projects</button>
+          </nav>
+          {menuType === "calendar" && (
+            <WeekNavigation startDate={startDate} setStartDate={setStartDate} />
+          )}
         </NavBar>
         <Content>
-          <CalendarContent startDate={startDate} />
+          {menuType === "calendar" && <CalendarContent startDate={startDate} />}
+          {menuType === "projects" && <ProjectsContent />}
         </Content>
       </main>
     </StorageContext.Provider>
