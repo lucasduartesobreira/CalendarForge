@@ -1,11 +1,12 @@
 "use client";
-import { useContext, useEffect, useReducer, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import CalendarWeek from "./components/calendar/calendarWeek";
 import CreateEventButton from "./components/createEvent/createEvent";
 import SideBar from "./components/sideBar/SideBar";
 import { StorageContext, useDataStorage } from "@/hooks/dataHook";
 import { useMap } from "@/hooks/mapHook";
 import { WeekNavigation } from "./components/calendar/navBar";
+import ProjectsSideBar from "@/components/projects/sidebar/sideBar";
 
 const NavBar = ({ children }: { children: any }) => {
   return (
@@ -15,7 +16,7 @@ const NavBar = ({ children }: { children: any }) => {
   );
 };
 
-const Content = ({ children }: { children: any }) => {
+const FlexContent = ({ children }: { children: any }) => {
   return <div className="flex relative overflow-hidden">{children}</div>;
 };
 
@@ -72,7 +73,14 @@ const useDate = () => {
 };
 
 const ProjectsContent = () => {
-  return <div>Projects</div>;
+  return (
+    <>
+      <ProjectsSideBar.SideBar>
+        <div>Projects Sidebar</div>
+      </ProjectsSideBar.SideBar>
+      <div>Projects</div>
+    </>
+  );
 };
 
 const Home = () => {
@@ -92,10 +100,10 @@ const Home = () => {
             <WeekNavigation startDate={startDate} setStartDate={setStartDate} />
           )}
         </NavBar>
-        <Content>
+        <FlexContent>
           {menuType === "calendar" && <CalendarContent startDate={startDate} />}
           {menuType === "projects" && <ProjectsContent />}
-        </Content>
+        </FlexContent>
       </main>
     </StorageContext.Provider>
   );
