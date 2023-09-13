@@ -17,7 +17,7 @@ const NavBar = ({ children }: { children: any }) => {
 };
 
 const FlexContent = ({ children }: { children: any }) => {
-  return <div className="flex relative overflow-hidden">{children}</div>;
+  return <div className="flex relative overflow-hidden h-full">{children}</div>;
 };
 
 const CalendarContent = ({ startDate }: { startDate: Date }) => {
@@ -76,7 +76,8 @@ const ProjectsContent = () => {
   return (
     <>
       <ProjectsSideBar.SideBar>
-        <div>Projects Sidebar</div>
+        <ProjectsSideBar.Content />
+        <ProjectsSideBar.AddNew />
       </ProjectsSideBar.SideBar>
       <div>Projects</div>
     </>
