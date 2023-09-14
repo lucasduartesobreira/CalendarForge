@@ -1,7 +1,7 @@
 import { idGenerator } from "@/utils/idGenerator";
-import { None, Some } from "@/utils/option";
+import { None, Option, Some } from "@/utils/option";
 import { Err, Ok, Result } from "@/utils/result";
-import { MapLocalStorage } from "@/utils/storage";
+import { MapLocalStorage, StorageActions } from "@/utils/storage";
 import { TypeOfTag } from "typescript";
 
 type Timezones =
@@ -51,7 +51,7 @@ type ValidatorType<A> = {
 const validateTypes = <A extends Record<string, any>>(
   a: A,
   b: ValidatorType<A>,
-): Result<A, string> => {
+): Result<A, symbol> => {
   const isValid = Object.entries(b).filter(([key, value]) => {
     const newK = key as keyof typeof b;
     const { optional, type, validator } = value;
@@ -70,13 +70,13 @@ const validateTypes = <A extends Record<string, any>>(
 
   return isValid
     ? Ok(a)
-    : Err("Missing properties or property with wrong type");
+    : Err(Symbol("Missing properties or property with wrong type"));
 };
 
 type CreateCalendar = Omit<Calendar, "id" | "default">;
 type UpdateCalendar = Partial<CreateCalendar>;
 
-class CalendarStorage {
+class CalendarStorage implements StorageActions<Calendar["id"], Calendar> {
   private static validator: ValidatorType<Calendar> = {
     id: { optional: false, type: "string" },
     timezone: {
@@ -108,6 +108,16 @@ class CalendarStorage {
     }
   }
 
+  findById(id: string): Option<Calendar> {
+    return this.map.get(id);
+  }
+  filteredValues(predicate: (value: Calendar) => boolean): Calendar[] {
+    return this.map.filter(predicate).map(([, calendar]) => calendar);
+  }
+  all(): Calendar[] {
+    return this.map.values();
+  }
+
   static new(forceUpdate: () => void) {
     const id = Buffer.from(Date.now().toString()).toString("base64");
     const timezone = (-new Date().getTimezoneOffset() / 60) as Timezones;
@@ -136,7 +146,7 @@ class CalendarStorage {
     return localStorage;
   }
 
-  addCalendar(calendar: CreateCalendar): Result<Calendar, string> {
+  add(calendar: CreateCalendar): Result<Calendar, symbol> {
     const id = Buffer.from(Date.now().toString()).toString("base64");
     const { id: _id, ...validator } = CalendarStorage.validator;
     const validated = validateTypes(calendar, validator);
@@ -150,10 +160,6 @@ class CalendarStorage {
           ...calendarCreated,
           id: newId,
         });
-      }
-
-      if (!result.isOk()) {
-        return Err(result.unwrap_err().toString());
       }
 
       return result;
@@ -170,7 +176,7 @@ class CalendarStorage {
     "Not allowed to delete the default calendar",
   );
 
-  removeCalendar(id: string): Result<Calendar, symbol> {
+  remove(id: string): Result<Calendar, symbol> {
     const calendar = this.map.get(id);
     if (calendar.isSome()) {
       const calendarFound = calendar.unwrap();
@@ -183,23 +189,19 @@ class CalendarStorage {
     return Err(CalendarStorage.RemoveCalendarError);
   }
 
-  removeAll(
-    predicate: (value: Calendar) => boolean,
-  ): Result<Calendar[], symbol> {
+  removeAll(predicate: (value: Calendar) => boolean): Calendar[] {
     const result = this.map.removeAll(
       (value) => !value.default && predicate(value),
     );
-    if (result.isOk()) {
-      return Ok(result.unwrap().map(([, calendar]) => calendar));
-    }
-    return Err(Symbol("Unreachable"));
+
+    return result.unwrap().map(([, calendar]) => calendar);
   }
 
   getCalendars(): Calendar[] {
     return this.map.values();
   }
 
-  updateCalendar(calendarsId: string, calendar: UpdateCalendar) {
+  update(calendarsId: string, calendar: UpdateCalendar) {
     const calendarGet = this.map.get(calendarsId);
     if (!calendarGet.isSome()) {
       return Err(Symbol("Event not found"));

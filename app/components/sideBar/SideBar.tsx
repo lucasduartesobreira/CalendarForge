@@ -40,7 +40,7 @@ const CreateCalendarForm = ({
       >
         <form
           onSubmit={() => {
-            calendarsStorage.addCalendar(form);
+            calendarsStorage.add(form);
             setOpen(false);
           }}
           className="fixed z-[2000] top-1/2 left-1/2 text-gray-500 flex flex-col gap-[4px] p-4 bg-white rounded-md"

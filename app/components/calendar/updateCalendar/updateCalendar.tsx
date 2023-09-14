@@ -49,7 +49,7 @@ const UpdateCalendarForm = ({
             onSubmit={(ev) => {
               ev.preventDefault();
               ev.stopPropagation();
-              calendarsStorage.updateCalendar(id, form);
+              calendarsStorage.update(id, form);
               setOpen(false);
             }}
             className="fixed z-[2001] top-1/2 left-1/2 text-gray-500 p-[8px] flex flex-col gap-[4px] p-4 bg-white rounded-md"
@@ -136,7 +136,7 @@ const UpdateCalendarForm = ({
               className="absolute right-[8px] text-red-500"
               onClick={() => {
                 setOpen(false);
-                calendarsStorage.removeCalendar(id);
+                calendarsStorage.remove(id);
                 eventsStorage.removeAll((event) => event.calendar_id === id);
               }}
             >
