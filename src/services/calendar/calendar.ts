@@ -169,6 +169,18 @@ class CalendarStorage {
     return Err(CalendarStorage.RemoveCalendarError);
   }
 
+  removeAll(
+    predicate: (value: Calendar) => boolean,
+  ): Result<Calendar[], symbol> {
+    const result = this.map.removeAll(
+      (value) => !value.default && predicate(value),
+    );
+    if (result.isOk()) {
+      return Ok(result.unwrap().map(([, calendar]) => calendar));
+    }
+    return Err(Symbol("Unreachable"));
+  }
+
   getCalendars(): Calendar[] {
     return this.map.values();
   }

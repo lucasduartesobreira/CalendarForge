@@ -1,15 +1,19 @@
-import { RefObject, useEffect, useRef } from "react";
+import { PropsWithChildren, RefObject, useEffect, useRef } from "react";
 import { Option } from "@/utils/option";
 
 const OutsideClick = <Fn extends () => void>({
   doSomething,
   refs,
   children,
+  ...props
 }: {
   doSomething: Fn;
   refs: Option<RefObject<any>[]>;
-  children: any;
-}) => {
+  children: PropsWithChildren;
+} & React.DetailedHTMLProps<
+  React.HTMLAttributes<HTMLDivElement>,
+  HTMLDivElement
+>) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,7 +42,11 @@ const OutsideClick = <Fn extends () => void>({
     };
   });
 
-  return <div ref={ref}>{children}</div>;
+  return (
+    <div {...props} ref={ref}>
+      {children}
+    </div>
+  );
 };
 
 export default OutsideClick;
