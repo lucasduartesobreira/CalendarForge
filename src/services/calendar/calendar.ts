@@ -1,3 +1,4 @@
+import { idGenerator } from "@/utils/idGenerator";
 import { None, Some } from "@/utils/option";
 import { Err, Ok, Result } from "@/utils/result";
 import { MapLocalStorage } from "@/utils/storage";
@@ -141,8 +142,21 @@ class CalendarStorage {
     const validated = validateTypes(calendar, validator);
     if (validated.isOk()) {
       const calendarCreated = { id, default: false, ...calendar };
-      this.map.set(id, calendarCreated);
-      return Ok(calendarCreated);
+      let result = this.map.setNotDefined(id, calendarCreated);
+      let retries = 0;
+      while (!result.isOk() && retries < 100) {
+        const newId = idGenerator(Date.now() + retries);
+        result = this.map.setNotDefined(newId, {
+          ...calendarCreated,
+          id: newId,
+        });
+      }
+
+      if (!result.isOk()) {
+        return Err(result.unwrap_err().toString());
+      }
+
+      return result;
     }
 
     return validated;

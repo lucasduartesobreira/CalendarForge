@@ -1,8 +1,9 @@
 import { CreateCalendarForm } from "@/components/calendar/forms/createCalendar";
+import { UpdateProjectCalendarForm } from "@/components/calendar/forms/updateCalendar";
 import OutsideClick from "@/components/utils/outsideClick";
 import { CreateCalendar } from "@/services/calendar/calendar";
 import { Project } from "@/services/projects/projectsStorage";
-import { Option, Some } from "@/utils/option";
+import { None, Option, Some } from "@/utils/option";
 import { AddValue } from "@/utils/storage";
 import React, { FormEvent, RefObject, useRef, useState } from "react";
 
@@ -40,6 +41,10 @@ export const CreateProjectForm = ({
   );
 
   const [openAddCalendar, setOpenAddCalendar] = useState(false);
+
+  const [editCalendar, setEditCalendar] = useState<
+    Option<[CreateCalendar, number]>
+  >(None());
 
   const ref = useRef(null);
 
@@ -83,7 +88,41 @@ export const CreateProjectForm = ({
           ) : null}
           <div>
             {localCalendars.map((calendar, index) => {
-              return <div key={index}>{calendar.name}</div>;
+              return (
+                <div key={index} className="flex w-full gap-2">
+                  <a className="w-[75%]">{calendar.name}</a>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setEditCalendar(
+                          Some([calendar, index] satisfies [
+                            CreateCalendar,
+                            number,
+                          ]),
+                        );
+                        setOpenAddCalendar(false);
+                      }}
+                      className="text-yellow-500"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setLocalCalendars((calendars) =>
+                          calendars.filter((_value, i) => i !== index),
+                        );
+                      }}
+                      className="text-red-600"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              );
             })}
           </div>
         </label>
@@ -92,10 +131,11 @@ export const CreateProjectForm = ({
             e.stopPropagation();
             e.preventDefault();
             setOpenAddCalendar(!openAddCalendar);
+            setEditCalendar(None());
           }}
           className="text-blue-500"
         >
-          +
+          + Add Calendar
         </button>
         <input
           value={"Save"}
@@ -114,6 +154,19 @@ export const CreateProjectForm = ({
           refs={refs.isSome() ? Some([...refs.unwrap(), ref]) : Some([ref])}
           outsideClickHandler={() => {
             setOpenForm(false);
+          }}
+        />
+      )}
+      {editCalendar.isSome() && (
+        <UpdateProjectCalendarForm
+          refs={refs.isSome() ? Some([...refs.unwrap(), ref]) : Some([ref])}
+          setOpen={() => setEditCalendar(None())}
+          initialCalendar={editCalendar.unwrap()[0]}
+          onSubmit={(calendar) => {
+            setLocalCalendars((calendars) => {
+              calendars[editCalendar.unwrap()[1]] = calendar;
+              return calendars;
+            });
           }}
         />
       )}
