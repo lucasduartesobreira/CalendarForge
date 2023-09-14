@@ -2,16 +2,9 @@ import { CreateCalendarForm } from "@/components/calendar/forms/createCalendar";
 import OutsideClick from "@/components/utils/outsideClick";
 import { CreateCalendar } from "@/services/calendar/calendar";
 import { Project } from "@/services/projects/projectsStorage";
-import { idGenerator } from "@/utils/idGenerator";
-import { None, Option, Some } from "@/utils/option";
+import { Option, Some } from "@/utils/option";
 import { AddValue } from "@/utils/storage";
-import React, {
-  FormEvent,
-  RefObject,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { FormEvent, RefObject, useRef, useState } from "react";
 
 export const CreateProjectForm = ({
   setOpenForm,
@@ -63,7 +56,7 @@ export const CreateProjectForm = ({
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          onSubmit(e, form, localCalendars);
+          onSubmit(e, form, [projectCalendar, ...localCalendars]);
           setOpenForm(false);
         }}
         ref={ref}

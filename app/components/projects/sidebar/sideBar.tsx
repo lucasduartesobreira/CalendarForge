@@ -1,4 +1,4 @@
-import { StorageContext, Storages } from "@/hooks/dataHook";
+import { StorageContext } from "@/hooks/dataHook";
 import { PropsWithChildren, useContext, useRef, useState } from "react";
 import { CreateProjectForm } from "../forms/createProject";
 import { Some } from "@/utils/option";
@@ -56,10 +56,10 @@ const AddNew = () => {
             }}
             fixProjectCalendar={(form, localCalendars) => {
               localCalendars.name = `${form.title} Calendar`;
-              return localCalendars;
+              return { ...localCalendars };
             }}
-            initialCalendars={[{ name: "", timezone: -3 }]}
-            onSubmit={(e, form, localCalendars) => {
+            initialCalendars={[]}
+            onSubmit={(_e, form, localCalendars) => {
               const calendarsSaved = localCalendars.reduce(
                 (acc, calendar) => {
                   if (!acc.isOk()) {
