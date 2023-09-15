@@ -1,49 +1,78 @@
-type Option<T> = Something<T> | Nothing;
+type OptionT<T> = { kind: "some"; value: T } | { kind: "none"; value: never };
 
-class Something<T> {
-  private value: T;
-  constructor(value: T) {
+declare let myNever: never;
+class Option<T> {
+  value: OptionT<T>;
+  constructor(value: OptionT<T>) {
     this.value = value;
   }
 
   isSome(): this is Something<T> {
-    return true;
+    return this.value.kind === "some";
   }
 
-  unwrap(): T {
-    return this.value;
+  unwrap(): T | never {
+    if (this.value.kind === "some") {
+      return this.value.value;
+    }
+
+    throw "Cannot unwrap a Something";
+  }
+
+  map<B>(f: (value: T) => B) {
+    if (this.value.kind === "some") {
+      return Some(f(this.value.value));
+    } else if (this.value.kind === "none") {
+      return None();
+    } else {
+      throw "unreachable";
+    }
+  }
+
+  mapOrElse<B>(onNothing: () => B, onSome: (value: T) => B): B {
+    if (this.value.kind === "some") {
+      return onSome(this.value.value);
+    } else if (this.value.kind === "none") {
+      return onNothing();
+    } else {
+      throw "unreachable";
+    }
+  }
+
+  unwrapOrElse(onNone: () => T) {
+    if (this.value.kind === "some") {
+      return this.value.value;
+    } else if (this.value.kind === "none") {
+      return onNone();
+    } else {
+      throw "unreachable";
+    }
   }
 }
 
-class Nothing {
-  constructor() {}
+class Something<T> extends Option<T> {
+  constructor(value: T) {
+    super({ kind: "some", value });
+  }
+
+  unwrap(): T {
+    return super.value.value;
+  }
+}
+
+class Nothing extends Option<never> {
+  constructor() {
+    super({ kind: "none", value: myNever });
+  }
 
   isSome<T>(): this is Something<T> {
     return false;
-  }
-
-  unwrap(): never {
-    throw new Error("Trying to unwrap a None");
   }
 }
 
 const Some = <T>(some: T): Option<T> => new Something(some);
 const None = (): Option<never> => new Nothing();
 
-const map = <T, B>(option: Option<T>, f: (value: T) => B) => {
-  if (option.isSome()) {
-    return Some(f(option.unwrap()));
-  }
-  return option;
-};
-
-const unwrapOrElse = <T>(option: Option<T>, onNone: () => T) => {
-  if (option.isSome()) {
-    return option.unwrap();
-  }
-  return onNone();
-};
-
-export { None, Some, map, unwrapOrElse };
+export { None, Some };
 
 export type { Option };
