@@ -2,7 +2,12 @@ import { CalendarEvent } from "@/services/events/events";
 import { idGenerator } from "@/utils/idGenerator";
 import * as R from "@/utils/result";
 import * as O from "@/utils/option";
-import { MapLocalStorage } from "@/utils/storage";
+import { MapLocalStorage, StorageActions } from "@/utils/storage";
+import {
+  BetterEventEmitter,
+  EventArg,
+  MyEventEmitter,
+} from "@/utils/eventEmitter";
 
 export const INITIAL_TEMPLATE: EventTemplate = {
   id: "",
@@ -18,10 +23,40 @@ export type EventTemplate = Omit<CalendarEvent, "startDate" | "endDate">;
 export type CreateTemplate = Omit<EventTemplate, "id">;
 export type UpdateTemplate = Partial<CreateTemplate>;
 
-export class EventTemplateStorage {
+export class EventTemplateStorage
+  implements BetterEventEmitter<EventTemplate["id"], EventTemplate>
+{
   private eventTemplates: MapLocalStorage<string, EventTemplate>;
+  private eventEmitter: MyEventEmitter;
   private constructor(storage: MapLocalStorage<string, EventTemplate>) {
     this.eventTemplates = storage;
+    this.eventEmitter = new MyEventEmitter();
+  }
+  emit<
+    This extends StorageActions<string, EventTemplate>,
+    Event extends keyof StorageActions<string, EventTemplate>,
+  >(event: Event, args: EventArg<Event, This>): void {
+    this.eventEmitter.emit(event, args);
+  }
+  on<
+    This extends StorageActions<string, EventTemplate>,
+    Event extends keyof StorageActions<string, EventTemplate>,
+  >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
+    this.eventEmitter.on(event, handler);
+  }
+  remove(id: string): R.Result<EventTemplate, symbol> {
+    return this.eventTemplates.remove(id);
+  }
+  removeAll(predicate: (value: EventTemplate) => boolean): EventTemplate[] {
+    return this.eventTemplates
+      .removeAll(predicate)
+      .unwrap()
+      .map(([, value]) => value);
+  }
+  filteredValues(
+    predicate: (value: EventTemplate) => boolean,
+  ): EventTemplate[] {
+    return this.eventTemplates.filterValues(predicate);
   }
 
   static new(forceUpdate: () => void) {
