@@ -165,7 +165,7 @@ export class MapLocalStorage<K, V> {
 }
 
 export type AddValue<V> = Omit<V, "id">;
-export type UpdateValue<V> = AddValue<V>;
+export type UpdateValue<V> = Partial<AddValue<V>>;
 export interface StorageActions<K, V extends Record<string, any> & { id: K }> {
   add(value: AddValue<V>): Result<V, symbol>;
   update(id: K, updateValue: UpdateValue<V>): Result<V, symbol>;
