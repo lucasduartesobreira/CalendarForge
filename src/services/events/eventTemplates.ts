@@ -30,10 +30,7 @@ export class EventTemplateStorage {
       path,
       forceUpdate,
     );
-    if (newStorage.isOk()) {
-      return R.Ok(new EventTemplateStorage(newStorage.unwrap()));
-    }
-    return newStorage;
+    return newStorage.map((storage) => new EventTemplateStorage(storage));
   }
 
   add(template: CreateTemplate) {

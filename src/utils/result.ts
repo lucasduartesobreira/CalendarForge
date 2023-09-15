@@ -1,67 +1,63 @@
-class Okay<O> {
-  private value: O;
-  private constructor(value: O) {
-    this.value = value;
-  }
+type Res<O, E> =
+  | {
+      kind: "ok";
+      value: O;
+    }
+  | {
+      kind: "err";
+      value: E;
+    };
 
-  static Ok<V>(value: V) {
-    return new Okay(value);
+class Result<O, E> {
+  result: Res<O, E>;
+  constructor(result: Res<O, E>) {
+    this.result = result;
   }
 
   isOk(): this is Okay<O> {
-    return true;
+    return this.result.kind === "ok";
   }
 
-  unwrap(): O {
-    return this.value;
+  unwrap(): O | never {
+    if (this.result.kind === "ok") {
+      return this.result.value;
+    }
+
+    throw Symbol("Cannot unwrap an Err");
   }
 
-  unwrap_err(): never {
-    throw "Trying to unwrap_err an Ok";
-  }
-}
+  unwrap_err(): E | never {
+    if (this.result.kind === "err") {
+      return this.result.value;
+    }
 
-class Error<E> {
-  private value: E;
-  private constructor(value: E) {
-    this.value = value;
+    throw Symbol("Cannot unwrap_err a Ok");
   }
 
-  static Err<V>(value: V) {
-    return new Error(value);
-  }
+  map<B>(f: (value: O) => B): Result<B, E> {
+    if (this.result.kind === "ok") {
+      return new Okay(f(this.result.value));
+    }
 
-  isOk<O>(): this is Okay<O> {
-    return false;
-  }
-
-  unwrap(): never {
-    throw "Trying to unwrap an Error";
-  }
-
-  unwrap_err(): E {
-    return this.value;
+    return new Error(this.result.value);
   }
 }
 
-const Ok = <O>(ok: O): Result<O, never> => Okay.Ok(ok);
-const Err = <E>(err: E): Result<never, E> => Error.Err(err);
-
-const map = <O, E, B>(result: Result<O, E>, f: (value: O) => B) => {
-  if (result.isOk()) {
-    return Ok(f(result.unwrap()));
+class Okay<O> extends Result<O, never> {
+  constructor(value: O) {
+    super({ kind: "ok", value });
   }
-  return result;
-};
+}
 
-type Result<O, E> = Okay<O> | Error<E>;
+class Error<E> extends Result<never, E> {
+  constructor(value: E) {
+    super({ kind: "err", value });
+  }
+}
 
-type UnifyResultReturn<Fn extends (...args: any) => any> = Fn extends (
-  ...args: any
-) => Okay<infer O> | Error<infer E>
-  ? (...args: Parameters<Fn>) => Result<O, E>
-  : Fn;
+const Ok = <O>(ok: O): Result<O, never> => new Okay(ok);
+const Err = <E>(err: E): Result<never, E> => new Error(err);
 
-export { Ok, Err, map };
+export { Ok, Err };
 
-export type { UnifyResultReturn, Result };
+export type { Result };

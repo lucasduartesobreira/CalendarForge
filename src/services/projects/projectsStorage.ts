@@ -30,10 +30,7 @@ export class ProjectStorage implements StorageActions<Project["id"], Project> {
       path,
       forceUpdate,
     );
-    if (newStorage.isOk()) {
-      return R.Ok(new ProjectStorage(newStorage.unwrap()));
-    }
-    return newStorage;
+    return newStorage.map((storage) => new ProjectStorage(storage));
   }
 
   add(value: AddValue<Project>): R.Result<Project, symbol> {

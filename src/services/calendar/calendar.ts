@@ -124,12 +124,7 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
       ]),
     );
 
-    if (localStorage.isOk()) {
-      const unwrapedLocalStorage = localStorage.unwrap();
-      return R.Ok(new CalendarStorage(unwrapedLocalStorage));
-    }
-
-    return localStorage;
+    return localStorage.map((storage) => new CalendarStorage(storage));
   }
 
   @emitEvent<"add", CalendarStorage>("add")
@@ -152,7 +147,7 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
       return result;
     }
 
-    return validated;
+    return R.Err(validated.unwrap_err());
   }
 
   static RemoveCalendarError = Symbol(

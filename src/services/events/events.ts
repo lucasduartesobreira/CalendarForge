@@ -104,12 +104,7 @@ class EventStorage
       CalendarEvent
     >("eventsMap", forceUpdate);
 
-    if (localStorage.isOk()) {
-      const unwrapedLocalStorage = localStorage.unwrap();
-      return R.Ok(new EventStorage(unwrapedLocalStorage));
-    }
-
-    return localStorage;
+    return localStorage.map((localStorage) => new EventStorage(localStorage));
   }
 
   subscribe<
