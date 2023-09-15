@@ -9,6 +9,11 @@ import * as R from "@/utils/result";
 import * as O from "@/utils/option";
 import { idGenerator } from "@/utils/idGenerator";
 import EventEmitter from "events";
+import {
+  BetterEventEmitter,
+  EventArg,
+  MyEventEmitter,
+} from "@/utils/eventEmitter";
 
 export type Project = {
   id: string;
@@ -16,12 +21,26 @@ export type Project = {
   calendars: Array<Calendar["id"]>;
 };
 
-export class ProjectStorage implements StorageActions<Project["id"], Project> {
+export class ProjectStorage
+  implements BetterEventEmitter<Project["id"], Project>
+{
   private map: MapLocalStorage<Project["id"], Project>;
-  private eventEmitter: EventEmitter;
+  private eventEmitter: MyEventEmitter;
   private constructor(map: MapLocalStorage<Project["id"], Project>) {
-    this.eventEmitter = new EventEmitter();
+    this.eventEmitter = new MyEventEmitter();
     this.map = map;
+  }
+  emit<
+    This extends StorageActions<string, Project>,
+    Event extends keyof StorageActions<Project["id"], Project>,
+  >(event: Event, args: EventArg<Event, This>): void {
+    this.eventEmitter.emit(event, args);
+  }
+  on<
+    This extends StorageActions<string, Project>,
+    Event extends keyof StorageActions<Project["id"], Project>,
+  >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
+    this.eventEmitter.on(event, handler);
   }
 
   static new(forceUpdate: () => void) {
