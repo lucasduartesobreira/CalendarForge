@@ -7,7 +7,12 @@ import {
 import { idGenerator } from "@/utils/idGenerator";
 import * as O from "@/utils/option";
 import * as R from "@/utils/result";
-import { MapLocalStorage, StorageActions } from "@/utils/storage";
+import {
+  AddValue,
+  MapLocalStorage,
+  StorageActions,
+  UpdateValue,
+} from "@/utils/storage";
 import { validateTypes, ValidatorType } from "@/utils/validator";
 
 type Timezones =
@@ -44,8 +49,8 @@ type Calendar = {
   default: boolean;
 };
 
-type CreateCalendar = Omit<Calendar, "id" | "default">;
-type UpdateCalendar = Partial<CreateCalendar>;
+type CreateCalendar = AddValue<Calendar>;
+type UpdateCalendar = UpdateValue<Calendar>;
 
 class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
   private eventEmitter: MyEventEmitter;
@@ -128,12 +133,12 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
   }
 
   @emitEvent<"add", CalendarStorage>("add")
-  add(calendar: CreateCalendar): R.Result<Calendar, symbol> {
+  add(calendar: AddValue<Calendar>): R.Result<Calendar, symbol> {
     const id = Buffer.from(Date.now().toString()).toString("base64");
     const { id: _id, ...validator } = CalendarStorage.validator;
     const validated = validateTypes(calendar, validator);
     if (validated.isOk()) {
-      const calendarCreated = { id, default: false, ...calendar };
+      const calendarCreated = { id, ...calendar, default: false };
       let result = this.map.setNotDefined(id, calendarCreated);
       let retries = 0;
       while (!result.isOk() && retries < 100) {
@@ -181,15 +186,10 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
     return result.unwrap().map(([, calendar]) => calendar);
   }
 
-  getCalendars(): Calendar[] {
-    return this.map.values();
-  }
-
-  private updateInternal(calendarsId: string, calendar: UpdateCalendar) {
+  update(calendarsId: string, calendar: UpdateCalendar) {
     const calendarGet = this.map.get(calendarsId);
     if (!calendarGet.isSome()) {
-      const result = R.Err(Symbol("Event not found"));
-      return result;
+      return R.Err(Symbol("Event not found"));
     }
 
     const calendarFound = calendarGet.unwrap();
@@ -202,16 +202,19 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
     };
 
     const validated = validateTypes(newCalendar, CalendarStorage.validator);
-    if (validated.isOk()) {
-      return this.map.setNotDefined(calendarsId, newCalendar);
-    }
+    const result = validated.mapOrElse(
+      (err) => R.Err(err),
+      () => {
+        return this.map.setNotDefined(calendarsId, newCalendar);
+      },
+    );
 
-    return validated;
-  }
+    this.emit("update", {
+      args: [calendarsId, calendar],
+      result,
+      opsSpecific: calendarFound,
+    });
 
-  update(calendarsId: string, calendar: UpdateCalendar) {
-    const result = this.updateInternal(calendarsId, calendar);
-    this.emit("update", { args: [calendarsId, calendar], result });
     return result;
   }
 

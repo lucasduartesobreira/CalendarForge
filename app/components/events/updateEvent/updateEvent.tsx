@@ -102,7 +102,7 @@ const UpdateEventForm = ({
             defaultValue={initialForm.calendar_id}
             className="text-black m-2 bg-gray-200"
           >
-            {calendarsStorage.getCalendars().map((value, index) => (
+            {calendarsStorage.all().map((value, index) => (
               <option key={index} value={value.id}>
                 {value.name}
               </option>

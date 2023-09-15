@@ -162,7 +162,7 @@ const CreateEventForm = ({
             className="m-2"
             value={form.calendar_id}
           >
-            {calendarsStorage.getCalendars().map((value, index) => {
+            {calendarsStorage.all().map((value, index) => {
               return (
                 <option key={index} value={value.id}>
                   {value.name}

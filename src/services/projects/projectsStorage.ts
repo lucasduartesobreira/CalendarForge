@@ -8,11 +8,11 @@ import { Calendar } from "../calendar/calendar";
 import * as R from "@/utils/result";
 import * as O from "@/utils/option";
 import { idGenerator } from "@/utils/idGenerator";
-import EventEmitter from "events";
 import {
   BetterEventEmitter,
   EventArg,
   MyEventEmitter,
+  emitEvent,
 } from "@/utils/eventEmitter";
 
 export type Project = {
@@ -52,13 +52,11 @@ export class ProjectStorage
     return newStorage.map((storage) => new ProjectStorage(storage));
   }
 
+  @emitEvent("add")
   add(value: AddValue<Project>): R.Result<Project, symbol> {
     const id = idGenerator();
 
-    const result = this.map.set(id, { id, ...value });
-
-    this.eventEmitter.emit("add", { input: value, output: result });
-    return result;
+    return this.map.setNotDefined(id, { id, ...value });
   }
 
   update(
@@ -78,34 +76,23 @@ export class ProjectStorage
     };
     const result = this.map.set(id, updatedValue);
 
-    this.eventEmitter.emit("update", {
-      input: [id, updateValue, valueFound],
-      output: result,
+    this.emit("update", {
+      args: [id, updateValue],
+      opsSpecific: valueFound,
+      result,
     });
 
     return result;
   }
 
+  @emitEvent("remove")
   remove(id: string): R.Result<Project, symbol> {
-    const result = this.map.remove(id);
-
-    this.eventEmitter.emit("remove", {
-      input: [id],
-      output: result,
-    });
-
-    return result;
+    return this.map.remove(id);
   }
 
+  @emitEvent("removeAll")
   removeAll(predicate: (value: Project) => boolean): Project[] {
-    const result = this.removeAll(predicate);
-
-    this.eventEmitter.emit("removeAll", {
-      input: [predicate],
-      output: result,
-    });
-
-    return result;
+    return this.removeAll(predicate);
   }
 
   findById(id: string): O.Option<Project> {

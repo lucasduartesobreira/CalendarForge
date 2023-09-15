@@ -17,7 +17,11 @@ import {
 import UpdateCalendarForm from "../calendar/updateCalendar/updateCalendar";
 import { Actions } from "@/hooks/mapHook";
 
-const initialCalendar: CreateCalendar = { name: "", timezone: 0 };
+const initialCalendar: CreateCalendar = {
+  name: "",
+  timezone: 0,
+  default: false,
+};
 
 const CreateCalendarForm = ({
   refs,
@@ -156,7 +160,7 @@ const SideBar = (
           <ul className="">
             {storages
               .unwrap()
-              .calendarsStorage.getCalendars()
+              .calendarsStorage.all()
               .map((calendar, index) => {
                 const viewableCalendars = calendars.unwrap();
 

@@ -174,10 +174,10 @@ class EventStorage
       event,
     ];
 
-    this.eventEmitter.emit("update", {
-      input: inputEventHandler,
-      output: result,
-      found: O.Some(eventFound),
+    this.emit("update", {
+      args: inputEventHandler,
+      result,
+      opsSpecific: O.Some(eventFound),
     });
 
     return result;

@@ -28,7 +28,7 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
   useEffect(() => {
     if (storages.isSome() && viewableCalendarsState.isSome()) {
       const { calendarsStorage } = storages.unwrap();
-      const calendars = calendarsStorage.getCalendars();
+      const calendars = calendarsStorage.all();
       const [viewableCalendars, actions] = viewableCalendarsState.unwrap();
       const fixedCalendars = calendars.reduce((acc, calendar) => {
         acc.get(calendar.id) ?? acc.set(calendar.id, true);

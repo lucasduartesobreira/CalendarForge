@@ -2,11 +2,12 @@ import { CalendarEvent } from "@/services/events/events";
 import { idGenerator } from "@/utils/idGenerator";
 import * as R from "@/utils/result";
 import * as O from "@/utils/option";
-import { MapLocalStorage, StorageActions } from "@/utils/storage";
+import { AddValue, MapLocalStorage, StorageActions } from "@/utils/storage";
 import {
   BetterEventEmitter,
   EventArg,
   MyEventEmitter,
+  emitEvent,
 } from "@/utils/eventEmitter";
 
 export const INITIAL_TEMPLATE: EventTemplate = {
@@ -44,15 +45,20 @@ export class EventTemplateStorage
   >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
     this.eventEmitter.on(event, handler);
   }
+
+  @emitEvent("remove")
   remove(id: string): R.Result<EventTemplate, symbol> {
     return this.eventTemplates.remove(id);
   }
+
+  @emitEvent("removeAll")
   removeAll(predicate: (value: EventTemplate) => boolean): EventTemplate[] {
     return this.eventTemplates
       .removeAll(predicate)
       .unwrap()
       .map(([, value]) => value);
   }
+
   filteredValues(
     predicate: (value: EventTemplate) => boolean,
   ): EventTemplate[] {
@@ -68,10 +74,11 @@ export class EventTemplateStorage
     return newStorage.map((storage) => new EventTemplateStorage(storage));
   }
 
-  add(template: CreateTemplate) {
+  @emitEvent("add")
+  add(template: AddValue<EventTemplate>): R.Result<EventTemplate, symbol> {
     const id = idGenerator();
     const newTemplate = { ...template, id } satisfies EventTemplate;
-    this.eventTemplates.set(id, newTemplate);
+    this.eventTemplates.setNotDefined(id, newTemplate);
     return R.Ok(newTemplate);
   }
 
@@ -92,15 +99,18 @@ export class EventTemplateStorage
       notifications: template.notifications ?? templateFound.notifications,
     };
 
-    return this.eventTemplates.set(id, updatedTemplate);
+    const result = this.eventTemplates.set(id, updatedTemplate);
+    this.emit("update", {
+      args: [id, template],
+      opsSpecific: templateFound,
+      result,
+    });
+
+    return result;
   }
 
   findById(id: EventTemplate["id"]): O.Option<EventTemplate> {
     return this.eventTemplates.get(id);
-  }
-
-  delete(id: EventTemplate["id"]): R.Result<EventTemplate, symbol> {
-    return this.eventTemplates.remove(id);
   }
 
   all() {
