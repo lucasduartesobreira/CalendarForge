@@ -140,11 +140,22 @@ export class MapLocalStorage<K, V> {
     return found ? O.Some(found) : O.None();
   }
 
-  filter(predicate: (value: V) => boolean) {
+  filterEntries(predicate: (value: V) => boolean) {
     const filtered = [] as [K, V][];
     for (const [key, value] of this.map.entries()) {
       if (predicate(value)) {
         filtered.push([key, value]);
+      }
+    }
+
+    return filtered;
+  }
+
+  filterValues(predicate: (value: V) => boolean) {
+    const filtered = [] as V[];
+    for (const value of this.map.values()) {
+      if (predicate(value)) {
+        filtered.push();
       }
     }
 

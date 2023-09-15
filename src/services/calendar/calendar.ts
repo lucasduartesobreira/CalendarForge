@@ -98,7 +98,7 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
     return this.map.get(id);
   }
   filteredValues(predicate: (value: Calendar) => boolean): Calendar[] {
-    return this.map.filter(predicate).map(([, calendar]) => calendar);
+    return this.map.filterValues(predicate);
   }
   all(): Calendar[] {
     return this.map.values();

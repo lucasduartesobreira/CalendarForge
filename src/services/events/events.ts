@@ -92,7 +92,7 @@ class EventStorage
   filteredValues(
     predicate: (value: CalendarEvent) => boolean,
   ): CalendarEvent[] {
-    return this.map.filter(predicate).map(([, value]) => value);
+    return this.map.filterValues(predicate);
   }
   all(): CalendarEvent[] {
     return this.map.values();
@@ -164,7 +164,7 @@ class EventStorage
   }
 
   filter(predicate: (event: CalendarEvent) => boolean) {
-    const filtered = this.map.filter(predicate);
+    const filtered = this.map.filterEntries(predicate);
 
     return filtered;
   }
