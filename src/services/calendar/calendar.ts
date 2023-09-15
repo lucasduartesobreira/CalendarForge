@@ -1,7 +1,9 @@
+import { BetterEventEmitter, emitEvent, EventArg } from "@/utils/eventEmitter";
 import { idGenerator } from "@/utils/idGenerator";
 import { None, Option, Some } from "@/utils/option";
 import { Err, Ok, Result } from "@/utils/result";
 import { MapLocalStorage, StorageActions } from "@/utils/storage";
+import { EventEmitter } from "stream";
 import { TypeOfTag } from "typescript";
 
 type Timezones =
@@ -76,7 +78,12 @@ const validateTypes = <A extends Record<string, any>>(
 type CreateCalendar = Omit<Calendar, "id" | "default">;
 type UpdateCalendar = Partial<CreateCalendar>;
 
-class CalendarStorage implements StorageActions<Calendar["id"], Calendar> {
+class CalendarStorage
+  implements
+    StorageActions<Calendar["id"], Calendar>,
+    BetterEventEmitter<Calendar["id"], Calendar>
+{
+  private eventEmitter = new EventEmitter();
   private static validator: ValidatorType<Calendar> = {
     id: { optional: false, type: "string" },
     timezone: {
@@ -106,6 +113,18 @@ class CalendarStorage implements StorageActions<Calendar["id"], Calendar> {
         default: true,
       });
     }
+  }
+  emit<This extends StorageActions<string, Calendar>, Event extends keyof This>(
+    event: Event,
+    args: EventArg<Event, This>,
+  ): void {
+    this.eventEmitter.emit(event.toString(), args);
+  }
+  on<This extends StorageActions<string, Calendar>, Event extends keyof This>(
+    event: Event,
+    handler: (args: EventArg<Event, This>) => void,
+  ): void {
+    this.eventEmitter.on(event.toString(), handler);
   }
 
   findById(id: string): Option<Calendar> {
@@ -146,6 +165,7 @@ class CalendarStorage implements StorageActions<Calendar["id"], Calendar> {
     return localStorage;
   }
 
+  @emitEvent<"add", CalendarStorage>("add")
   add(calendar: CreateCalendar): Result<Calendar, symbol> {
     const id = Buffer.from(Date.now().toString()).toString("base64");
     const { id: _id, ...validator } = CalendarStorage.validator;
@@ -176,6 +196,7 @@ class CalendarStorage implements StorageActions<Calendar["id"], Calendar> {
     "Not allowed to delete the default calendar",
   );
 
+  @emitEvent<"remove", CalendarStorage>("remove")
   remove(id: string): Result<Calendar, symbol> {
     const calendar = this.map.get(id);
     if (calendar.isSome()) {
@@ -183,12 +204,13 @@ class CalendarStorage implements StorageActions<Calendar["id"], Calendar> {
       if (calendarFound.default) {
         return Err(CalendarStorage.RemoveDefaultCalendarError);
       }
-      this.map.remove(id);
-      return Ok(calendarFound);
+      return this.map.remove(id);
     }
+
     return Err(CalendarStorage.RemoveCalendarError);
   }
 
+  @emitEvent<"removeAll", CalendarStorage>("removeAll")
   removeAll(predicate: (value: Calendar) => boolean): Calendar[] {
     const result = this.map.removeAll(
       (value) => !value.default && predicate(value),
@@ -201,10 +223,11 @@ class CalendarStorage implements StorageActions<Calendar["id"], Calendar> {
     return this.map.values();
   }
 
-  update(calendarsId: string, calendar: UpdateCalendar) {
+  private updateInternal(calendarsId: string, calendar: UpdateCalendar) {
     const calendarGet = this.map.get(calendarsId);
     if (!calendarGet.isSome()) {
-      return Err(Symbol("Event not found"));
+      const result = Err(Symbol("Event not found"));
+      return result;
     }
 
     const calendarFound = calendarGet.unwrap();
@@ -218,10 +241,16 @@ class CalendarStorage implements StorageActions<Calendar["id"], Calendar> {
 
     const validated = validateTypes(newCalendar, CalendarStorage.validator);
     if (validated.isOk()) {
-      this.map.set(calendarsId, newCalendar);
+      return this.map.setNotDefined(calendarsId, newCalendar);
     }
 
     return validated;
+  }
+
+  update(calendarsId: string, calendar: UpdateCalendar) {
+    const result = this.updateInternal(calendarsId, calendar);
+    this.emit("update", { args: [calendarsId, calendar], result });
+    return result;
   }
 
   findDefault() {
