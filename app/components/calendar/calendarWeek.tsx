@@ -256,14 +256,14 @@ const CalendarWeek = ({
         events={weekEventsByDay ? weekEventsByDay[6] : []}
         setSelectedEvent={setSelectedEvent}
       />
-      {O.unwrapOrElse(
-        O.map(selectedEvent, (selectedEvent) => (
+      {selectedEvent.mapOrElse(
+        () => null,
+        (selectedEvent) => (
           <UpdateEventForm
             setOpen={() => setSelectedEvent(O.None())}
             initialForm={selectedEvent}
           ></UpdateEventForm>
-        )),
-        () => null,
+        ),
       )}
     </div>
   );
