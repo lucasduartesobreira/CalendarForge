@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import OutsideClick from "../utils/outsideClick";
-import { None, Option, Some } from "@/utils/option";
+import * as O from "@/utils/option";
 import {
   Calendar,
   CreateCalendar,
@@ -23,7 +23,7 @@ const CreateCalendarForm = ({
   refs,
   setOpen,
 }: {
-  refs: Option<RefObject<any>[]>;
+  refs: O.Option<RefObject<any>[]>;
   setOpen: (open: boolean) => void;
 }) => {
   const [form, setForm] = useState(initialCalendar);
@@ -113,7 +113,7 @@ const SideBar = (
     React.HTMLAttributes<HTMLDivElement>,
     HTMLDivElement
   > & {
-    viewableCalendarsState: Option<
+    viewableCalendarsState: O.Option<
       [
         Omit<Map<string, boolean>, "set" | "clear" | "delete">,
         Actions<string, boolean>,
@@ -122,25 +122,25 @@ const SideBar = (
   },
 ) => {
   const { viewableCalendarsState, ...arg } = args;
-  const [calendars, setCalendars] = useState<Option<Map<string, boolean>>>(
-    None(),
+  const [calendars, setCalendars] = useState<O.Option<Map<string, boolean>>>(
+    O.None(),
   );
-  const [actions, setActions] = useState<Option<Actions<string, boolean>>>(
-    None(),
+  const [actions, setActions] = useState<O.Option<Actions<string, boolean>>>(
+    O.None(),
   );
   const { storages } = useContext(StorageContext);
   const [open, setOpen] = useState(false);
-  const [selectedCalendar, setSelectedCalendar] = useState<Option<Calendar>>(
-    None(),
+  const [selectedCalendar, setSelectedCalendar] = useState<O.Option<Calendar>>(
+    O.None(),
   );
 
   useEffect(() => {
     if (viewableCalendarsState.isSome()) {
       const [viewableCalendars, viewableCalendarsActions] =
         viewableCalendarsState.unwrap();
-      setCalendars(Some(viewableCalendars as any));
+      setCalendars(O.Some(viewableCalendars as any));
 
-      setActions(Some(viewableCalendarsActions));
+      setActions(O.Some(viewableCalendarsActions));
     }
   }, [viewableCalendarsState]);
 
@@ -175,7 +175,7 @@ const SideBar = (
                     <button
                       className="text-yellow-100"
                       onClick={() => {
-                        setSelectedCalendar(Some(calendar));
+                        setSelectedCalendar(O.Some(calendar));
                       }}
                     >
                       Edit
@@ -194,12 +194,12 @@ const SideBar = (
         New Calendar
       </button>
       {open && (
-        <CreateCalendarForm setOpen={setOpen} refs={Some([refButton])} />
+        <CreateCalendarForm setOpen={setOpen} refs={O.Some([refButton])} />
       )}
       {selectedCalendar.isSome() && (
         <UpdateCalendarForm
-          setOpen={(_arg: boolean) => setSelectedCalendar(None())}
-          refs={None()}
+          setOpen={(_arg: boolean) => setSelectedCalendar(O.None())}
+          refs={O.None()}
           initialCalendar={selectedCalendar.unwrap()}
         />
       )}

@@ -14,7 +14,7 @@ import {
 } from "@/services/events/events";
 import OutsideClick from "../utils/outsideClick";
 import { getHTMLDateTime } from "@/utils/date";
-import { Option, Some } from "@/utils/option";
+import * as O from "@/utils/option";
 import {
   NewEventNotificationForm,
   UpdateNotificationForm,
@@ -40,7 +40,7 @@ const CreateEventForm = ({
 }: {
   setOpen: (open: boolean) => void;
   initialForm: CreateEvent;
-  blockdRefs: Option<RefObject<any>[]>;
+  blockdRefs: O.Option<RefObject<any>[]>;
 }) => {
   const initialStartDate = new Date(initialForm.startDate);
   const initialEndDate = new Date(initialForm.endDate);
@@ -273,7 +273,7 @@ const CreateEventButton = () => {
         <CreateEventForm
           setOpen={setOpen}
           initialForm={initialFormState}
-          blockdRefs={Some([buttonRef])}
+          blockdRefs={O.Some([buttonRef])}
         ></CreateEventForm>
       )}
     </div>

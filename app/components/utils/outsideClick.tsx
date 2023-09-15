@@ -1,5 +1,5 @@
 import { PropsWithChildren, RefObject, useEffect, useRef } from "react";
-import { Option } from "@/utils/option";
+import * as O from "@/utils/option";
 
 const OutsideClick = <Fn extends () => void>({
   doSomething,
@@ -8,7 +8,7 @@ const OutsideClick = <Fn extends () => void>({
   ...props
 }: {
   doSomething: Fn;
-  refs: Option<RefObject<any>[]>;
+  refs: O.Option<RefObject<any>[]>;
   children: PropsWithChildren;
 } & React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,

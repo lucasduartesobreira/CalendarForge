@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { None, Some, Option } from "@/utils/option";
+import * as O from "@/utils/option";
 
 export type MapOrEntries<K, V> = Map<K, V> | [K, V][];
 
@@ -21,7 +21,7 @@ type Return<K, V> = [
 export function useMap<K, V>(
   key: string,
   initialState: MapOrEntries<K, V> = new Map(),
-): Option<Return<K, V>> {
+): O.Option<Return<K, V>> {
   const [map, setMap] = useState<Map<K, V>>();
 
   useEffect(() => {
@@ -71,10 +71,10 @@ export function useMap<K, V>(
     }, []),
   };
 
-  return useMemo((): Option<Return<K, V>> => {
+  return useMemo((): O.Option<Return<K, V>> => {
     if (map != undefined) {
-      return Some<Return<K, V>>([map, actions]);
+      return O.Some<Return<K, V>>([map, actions]);
     }
-    return None();
+    return O.None();
   }, [map]);
 }

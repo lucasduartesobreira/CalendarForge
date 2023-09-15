@@ -10,7 +10,7 @@ class Something<T> {
     return true;
   }
 
-  unwrap() {
+  unwrap(): T {
     return this.value;
   }
 }
@@ -22,15 +22,21 @@ class Nothing {
     return false;
   }
 
-  unwrap() {
+  unwrap(): never {
     throw new Error("Trying to unwrap a None");
   }
 }
 
-const Some = <T>(some: T): Something<T> => new Something(some);
-const None = (): Nothing => new Nothing();
+const Some = <T>(some: T): Option<T> => new Something(some);
+const None = (): Option<never> => new Nothing();
 
-export { None, Some, Something };
+const map = <T, B>(option: Option<T>, f: (value: T) => B) => {
+  if (option.isSome()) {
+    return Some(f(option.unwrap()));
+  }
+  return option;
+};
+
+export { None, Some, map };
 
 export type { Option };
-

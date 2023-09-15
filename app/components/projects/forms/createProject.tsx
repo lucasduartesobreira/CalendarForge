@@ -3,7 +3,7 @@ import { UpdateProjectCalendarForm } from "@/components/calendar/forms/updateCal
 import OutsideClick from "@/components/utils/outsideClick";
 import { CreateCalendar } from "@/services/calendar/calendar";
 import { Project } from "@/services/projects/projectsStorage";
-import { None, Option, Some } from "@/utils/option";
+import * as O from "@/utils/option";
 import { AddValue } from "@/utils/storage";
 import React, { FormEvent, RefObject, useRef, useState } from "react";
 
@@ -22,7 +22,7 @@ export const CreateProjectForm = ({
     form: AddValue<Project>,
     localCalendars: CreateCalendar[],
   ) => void;
-  refs: Option<RefObject<any>[]>;
+  refs: O.Option<RefObject<any>[]>;
   fixProjectCalendar: (
     form: AddValue<Project>,
     localCalendars: CreateCalendar,
@@ -43,8 +43,8 @@ export const CreateProjectForm = ({
   const [openAddCalendar, setOpenAddCalendar] = useState(false);
 
   const [editCalendar, setEditCalendar] = useState<
-    Option<[CreateCalendar, number]>
-  >(None());
+    O.Option<[CreateCalendar, number]>
+  >(O.None());
 
   const ref = useRef(null);
 
@@ -97,7 +97,7 @@ export const CreateProjectForm = ({
                         e.preventDefault();
                         e.stopPropagation();
                         setEditCalendar(
-                          Some([calendar, index] satisfies [
+                          O.Some([calendar, index] satisfies [
                             CreateCalendar,
                             number,
                           ]),
@@ -131,7 +131,7 @@ export const CreateProjectForm = ({
             e.stopPropagation();
             e.preventDefault();
             setOpenAddCalendar(!openAddCalendar);
-            setEditCalendar(None());
+            setEditCalendar(O.None());
           }}
           className="text-blue-500"
         >
@@ -151,7 +151,7 @@ export const CreateProjectForm = ({
             setLocalCalendars((calendars) => [...calendars, calendar]);
             setOpenAddCalendar(!openAddCalendar);
           }}
-          refs={refs.isSome() ? Some([...refs.unwrap(), ref]) : Some([ref])}
+          refs={refs.isSome() ? O.Some([...refs.unwrap(), ref]) : O.Some([ref])}
           outsideClickHandler={() => {
             setOpenForm(false);
           }}
@@ -159,8 +159,8 @@ export const CreateProjectForm = ({
       )}
       {editCalendar.isSome() && (
         <UpdateProjectCalendarForm
-          refs={refs.isSome() ? Some([...refs.unwrap(), ref]) : Some([ref])}
-          setOpen={() => setEditCalendar(None())}
+          refs={refs.isSome() ? O.Some([...refs.unwrap(), ref]) : O.Some([ref])}
+          setOpen={() => setEditCalendar(O.None())}
           initialCalendar={editCalendar.unwrap()[0]}
           onSubmit={(calendar) => {
             setLocalCalendars((calendars) => {

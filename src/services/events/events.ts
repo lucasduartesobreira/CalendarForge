@@ -1,6 +1,6 @@
 import * as R from "@/utils/result";
-import { Option, Some } from "@/utils/option";
-import { MapLocalStorage } from "@/utils/storage";
+import * as O from "@/utils/option";
+import { MapLocalStorage, StorageActions } from "@/utils/storage";
 
 type EventNotification = {
   id: string;
@@ -64,17 +64,17 @@ type InputAndOutput<T extends (...args: any) => any> = {
 type Subscribed = {
   add: ((eventData: InputAndOutput<EventStorage["add"]>) => void)[];
   remove: ((eventData: InputAndOutput<EventStorage["remove"]>) => void)[];
-  removeAll: ((dunno: {
-    output: [R.Result<CalendarEvent[], symbol>];
-  }) => void)[];
+  removeAll: ((dunno: { output: CalendarEvent[] }) => void)[];
   update: ((
     eventData: InputAndOutput<EventStorage["update"]> & {
-      found: Option<CalendarEvent>;
+      found: O.Option<CalendarEvent>;
     },
   ) => void)[];
 };
 
-class EventStorage {
+class EventStorage
+  implements StorageActions<CalendarEvent["id"], CalendarEvent>
+{
   private map: MapLocalStorage<CalendarEvent["id"], CalendarEvent>;
   private subscribed: Subscribed;
 
@@ -88,6 +88,14 @@ class EventStorage {
       removeAll: [],
       update: [],
     };
+  }
+  filteredValues(
+    predicate: (value: CalendarEvent) => boolean,
+  ): CalendarEvent[] {
+    return this.map.filter(predicate).map(([, value]) => value);
+  }
+  all(): CalendarEvent[] {
+    return this.map.values();
   }
 
   static new(forceUpdate: () => void) {
@@ -115,7 +123,7 @@ class EventStorage {
     ] as Subscribed[E];
   }
 
-  add(event: CreateEvent): R.Result<CalendarEvent, null> {
+  add(event: CreateEvent): R.Result<CalendarEvent, never> {
     const eventWithId = {
       id: Buffer.from(Date.now().toString()).toString("base64"),
       ...event,
@@ -134,20 +142,18 @@ class EventStorage {
     return result;
   }
 
-  removeAll(
-    predicate: (event: CalendarEvent) => boolean,
-  ): R.Result<CalendarEvent[], symbol> {
+  removeAll(predicate: (event: CalendarEvent) => boolean): CalendarEvent[] {
     const result = this.map.removeAll(predicate);
-    const resultMapped = R.Ok(result.unwrap().map(([, value]) => value));
+    const resultMapped = result.unwrap().map(([, value]) => value);
 
     this.subscribed.removeAll.forEach((handler) => {
-      handler({ output: [resultMapped] });
+      handler({ output: resultMapped });
     });
 
     return resultMapped;
   }
 
-  findById(eventId: string): Option<CalendarEvent> {
+  findById(eventId: string): O.Option<CalendarEvent> {
     const event = this.map.get(eventId);
     return event;
   }
@@ -196,7 +202,7 @@ class EventStorage {
       handler({
         input: inputEventHandler,
         output: result,
-        found: Some(eventFound),
+        found: O.Some(eventFound),
       });
     });
 

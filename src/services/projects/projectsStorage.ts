@@ -5,8 +5,8 @@ import {
   UpdateValue,
 } from "@/utils/storage";
 import { Calendar } from "../calendar/calendar";
-import { Err, Ok, Result } from "@/utils/result";
-import { Option } from "@/utils/option";
+import * as R from "@/utils/result";
+import * as O from "@/utils/option";
 import { idGenerator } from "@/utils/idGenerator";
 import EventEmitter from "events";
 
@@ -31,12 +31,12 @@ export class ProjectStorage implements StorageActions<Project["id"], Project> {
       forceUpdate,
     );
     if (newStorage.isOk()) {
-      return Ok(new ProjectStorage(newStorage.unwrap()));
+      return R.Ok(new ProjectStorage(newStorage.unwrap()));
     }
     return newStorage;
   }
 
-  add(value: AddValue<Project>): Result<Project, symbol> {
+  add(value: AddValue<Project>): R.Result<Project, symbol> {
     const id = idGenerator();
 
     const result = this.map.set(id, { id, ...value });
@@ -48,10 +48,10 @@ export class ProjectStorage implements StorageActions<Project["id"], Project> {
   update(
     id: string,
     updateValue: UpdateValue<Project>,
-  ): Result<Project, symbol> {
+  ): R.Result<Project, symbol> {
     const found = this.map.get(id);
     if (!found.isSome()) {
-      return Err(Symbol("Couldn't find any entry for this key"));
+      return R.Err(Symbol("Couldn't find any entry for this key"));
     }
 
     const valueFound = found.unwrap();
@@ -70,7 +70,7 @@ export class ProjectStorage implements StorageActions<Project["id"], Project> {
     return result;
   }
 
-  remove(id: string): Result<Project, symbol> {
+  remove(id: string): R.Result<Project, symbol> {
     const result = this.map.remove(id);
 
     this.eventEmitter.emit("remove", {
@@ -92,7 +92,7 @@ export class ProjectStorage implements StorageActions<Project["id"], Project> {
     return result;
   }
 
-  findById(id: string): Option<Project> {
+  findById(id: string): O.Option<Project> {
     return this.map.get(id);
   }
 

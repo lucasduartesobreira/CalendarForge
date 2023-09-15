@@ -6,7 +6,7 @@ import {
   EventColors,
 } from "@/services/events/events";
 import { getHTMLDateTime } from "@/utils/date";
-import { None } from "@/utils/option";
+import * as O from "@/utils/option";
 import { useContext, useState } from "react";
 import {
   NewEventNotificationForm,
@@ -58,7 +58,7 @@ const UpdateEventForm = ({
     };
 
     return (
-      <OutsideClick doSomething={() => setOpen(false)} refs={None()}>
+      <OutsideClick doSomething={() => setOpen(false)} refs={O.None()}>
         <form
           hidden={false}
           onSubmit={handleSubmit}

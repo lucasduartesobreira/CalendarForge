@@ -1,7 +1,7 @@
 import { CalendarEvent } from "@/services/events/events";
 import { idGenerator } from "@/utils/idGenerator";
 import * as R from "@/utils/result";
-import { Option } from "@/utils/option";
+import * as O from "@/utils/option";
 import { MapLocalStorage } from "@/utils/storage";
 
 export const INITIAL_TEMPLATE: EventTemplate = {
@@ -63,7 +63,7 @@ export class EventTemplateStorage {
     return this.eventTemplates.set(id, updatedTemplate);
   }
 
-  findById(id: EventTemplate["id"]): Option<EventTemplate> {
+  findById(id: EventTemplate["id"]): O.Option<EventTemplate> {
     return this.eventTemplates.get(id);
   }
 

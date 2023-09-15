@@ -6,7 +6,7 @@ import {
 } from "@/services/events/eventTemplates";
 import { useContext, useState } from "react";
 import OutsideClick from "../utils/outsideClick";
-import { None } from "@/utils/option";
+import * as O from "@/utils/option";
 import {
   NewEventNotificationForm,
   UpdateNotificationForm,
@@ -44,7 +44,7 @@ export const UpdateEventTemplateForm = ({
     };
 
     return (
-      <OutsideClick doSomething={() => setOpen(false)} refs={None()}>
+      <OutsideClick doSomething={() => setOpen(false)} refs={O.None()}>
         <form
           hidden={false}
           onSubmit={handleSubmit}

@@ -1,7 +1,7 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { PropsWithChildren, useContext, useRef, useState } from "react";
 import { CreateProjectForm } from "../forms/createProject";
-import { Some } from "@/utils/option";
+import * as O from "@/utils/option";
 import * as R from "@/utils/result";
 import { Calendar, Timezones } from "@/services/calendar/calendar";
 
@@ -50,7 +50,7 @@ const AddNew = () => {
         {openForm && (
           <CreateProjectForm
             setOpenForm={setOpenForm}
-            refs={Some([ref])}
+            refs={O.Some([ref])}
             initialForm={{
               title: "",
               calendars: [],

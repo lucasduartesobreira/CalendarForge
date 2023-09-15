@@ -5,7 +5,7 @@ import {
   MyEventEmitter,
 } from "@/utils/eventEmitter";
 import { idGenerator } from "@/utils/idGenerator";
-import { None, Option, Some } from "@/utils/option";
+import * as O from "@/utils/option";
 import * as R from "@/utils/result";
 import { MapLocalStorage, StorageActions } from "@/utils/storage";
 import { validateTypes, ValidatorType } from "@/utils/validator";
@@ -94,7 +94,7 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
     this.eventEmitter.on(event.toString(), handler);
   }
 
-  findById(id: string): Option<Calendar> {
+  findById(id: string): O.Option<Calendar> {
     return this.map.get(id);
   }
   filteredValues(predicate: (value: Calendar) => boolean): Calendar[] {
@@ -224,10 +224,10 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
     const calendars = this.map.values();
     for (const calendar of calendars) {
       if (calendar.default) {
-        return Some(calendar);
+        return O.Some(calendar);
       }
     }
-    return None();
+    return O.None();
   }
 
   sync() {

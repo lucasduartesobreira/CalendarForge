@@ -1,7 +1,7 @@
 "use client";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
-import { None, Option, Some } from "@/utils/option";
+import * as O from "@/utils/option";
 import { ReactNode, useContext, useEffect, useState } from "react";
 import UpdateEventForm from "../events/updateEvent/updateEvent";
 import { Actions } from "@/hooks/mapHook";
@@ -61,7 +61,7 @@ const DayBackground = ({
 }: {
   day: number;
   events: CalendarEvent[];
-  setSelectedEvent: (event: Option<CalendarEvent>) => void;
+  setSelectedEvent: (event: O.Option<CalendarEvent>) => void;
 }) => {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
@@ -106,7 +106,7 @@ const DayBackground = ({
               <button
                 key={event.id}
                 onClick={() => {
-                  setSelectedEvent(Some(event));
+                  setSelectedEvent(O.Some(event));
                 }}
                 className="flex absolute bottom-0 justify-start"
                 style={{
@@ -172,7 +172,7 @@ const CalendarWeek = ({
 }: {
   style: string;
   startDate: Date;
-  viewableCalendarsState: Option<
+  viewableCalendarsState: O.Option<
     [
       Omit<Map<string, boolean>, "set" | "clear" | "delete">,
       Actions<string, boolean>,
@@ -182,8 +182,8 @@ const CalendarWeek = ({
   const { storages: storages, listeners } = useContext(StorageContext);
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<Option<CalendarEvent>>(
-    None(),
+  const [selectedEvent, setSelectedEvent] = useState<O.Option<CalendarEvent>>(
+    O.None(),
   );
   useEffect(() => {
     if (storages.isSome() && viewableCalendarsState.isSome()) {
@@ -258,7 +258,7 @@ const CalendarWeek = ({
       />
       {selectedEvent.isSome() && (
         <UpdateEventForm
-          setOpen={() => setSelectedEvent(None())}
+          setOpen={() => setSelectedEvent(O.None())}
           initialForm={selectedEvent.unwrap()}
         ></UpdateEventForm>
       )}

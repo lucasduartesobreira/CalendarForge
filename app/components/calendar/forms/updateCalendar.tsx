@@ -1,5 +1,5 @@
 import { RefObject, useState } from "react";
-import { Option } from "@/utils/option";
+import * as O from "@/utils/option";
 import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
 import OutsideClick from "@/components/utils/outsideClick";
 
@@ -9,7 +9,7 @@ export const UpdateProjectCalendarForm = ({
   initialCalendar,
   onSubmit,
 }: {
-  refs: Option<RefObject<any>[]>;
+  refs: O.Option<RefObject<any>[]>;
   setOpen: (open: boolean) => void;
   initialCalendar: CreateCalendar;
   onSubmit: (value: CreateCalendar) => void;

@@ -1,4 +1,4 @@
-import { None, Some, Option } from "./option";
+import * as O from "./option";
 import * as R from "./result";
 
 function syncStorage<
@@ -137,7 +137,7 @@ export class MapLocalStorage<K, V> {
 
   get(key: K) {
     const found = this.map.get(key);
-    return found ? Some(found) : None();
+    return found ? O.Some(found) : O.None();
   }
 
   filter(predicate: (value: V) => boolean) {
@@ -171,7 +171,7 @@ export interface StorageActions<K, V extends Record<string, any> & { id: K }> {
   update(id: K, updateValue: UpdateValue<V>): R.Result<V, symbol>;
   remove(id: K): R.Result<V, symbol>;
   removeAll(predicate: (value: V) => boolean): V[];
-  findById(id: K): Option<V>;
+  findById(id: K): O.Option<V>;
   filteredValues(predicate: (value: V) => boolean): V[];
   all(): V[];
 }

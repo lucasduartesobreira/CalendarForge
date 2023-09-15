@@ -1,7 +1,6 @@
 import OutsideClick from "@/components/utils/outsideClick";
-import { StorageContext } from "@/hooks/dataHook";
 import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
-import { FormEvent, RefObject, useContext, useState } from "react";
+import { FormEvent, RefObject, useState } from "react";
 import { Option } from "@/utils/option";
 
 const initialCalendar: CreateCalendar = { name: "", timezone: 0 };

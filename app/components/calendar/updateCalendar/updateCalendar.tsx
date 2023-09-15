@@ -2,7 +2,7 @@ import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { Calendar, Timezones } from "@/services/calendar/calendar";
 import { RefObject, useContext, useEffect, useState } from "react";
-import { None, Option, Some } from "@/utils/option";
+import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { UpdateEventTemplateForm } from "@/components/templates/updateEventTemplate";
 
@@ -11,7 +11,7 @@ const UpdateCalendarForm = ({
   setOpen,
   initialCalendar,
 }: {
-  refs: Option<RefObject<any>[]>;
+  refs: O.Option<RefObject<any>[]>;
   setOpen: (open: boolean) => void;
   initialCalendar: Calendar;
 }) => {
@@ -19,14 +19,14 @@ const UpdateCalendarForm = ({
   const [form, setForm] = useState(initialForm);
   const { storages, listeners } = useContext(StorageContext);
   const [selectedTemplate, setSelectedTemplate] = useState<
-    Option<EventTemplate>
-  >(None());
+    O.Option<EventTemplate>
+  >(O.None());
   const [templates, setTemplates] = useState<EventTemplate[]>([]);
 
   useEffect(() => {
     if (storages.isSome()) {
       const { eventsTemplateStorage } = storages.unwrap();
-      setTemplates((templates) =>
+      setTemplates(() =>
         eventsTemplateStorage
           .all()
           .filter((template) => template.calendar_id === id),
@@ -35,8 +35,7 @@ const UpdateCalendarForm = ({
   }, [listeners.eventsTemplateStorageListener]);
 
   if (storages.isSome()) {
-    const { calendarsStorage, eventsStorage, eventsTemplateStorage } =
-      storages.unwrap();
+    const { calendarsStorage, eventsStorage } = storages.unwrap();
     return (
       <OutsideClick
         doSomething={() => {
@@ -117,7 +116,7 @@ const UpdateCalendarForm = ({
                         onClick={(ev) => {
                           ev.preventDefault();
                           ev.stopPropagation();
-                          setSelectedTemplate(Some(template));
+                          setSelectedTemplate(O.Some(template));
                         }}
                       >
                         Edit
@@ -146,7 +145,7 @@ const UpdateCalendarForm = ({
         )}
         {selectedTemplate.isSome() && (
           <UpdateEventTemplateForm
-            setOpen={() => setSelectedTemplate(None())}
+            setOpen={() => setSelectedTemplate(O.None())}
             initialForm={selectedTemplate.unwrap()}
           />
         )}

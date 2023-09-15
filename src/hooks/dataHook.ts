@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { None, Some, Option } from "@/utils/option";
+import * as O from "@/utils/option";
 import { CalendarStorage } from "@/services/calendar/calendar";
 import { NotificationManager } from "@/services/notifications/notificationPermission";
 import { EventTemplateStorage } from "@/services/events/eventTemplates";
@@ -21,7 +21,7 @@ type Storages = {
 };
 
 type StorageContext = {
-  storages: Option<Storages>;
+  storages: O.Option<Storages>;
   listeners: StorageListeners;
 };
 
@@ -30,7 +30,7 @@ type StorageListeners = {
 };
 
 const StorageContext = createContext<StorageContext>({
-  storages: None(),
+  storages: O.None(),
   listeners: {
     eventsStorageListener: undefined,
     calendarsStorageListener: undefined,
@@ -52,7 +52,7 @@ export function useDataStorage(): StorageContext {
   const [templatesUpdated, forceTemplatesUpdate] = useForceUpdate();
   const [projectsUpdated, forceProjectsUpdate] = useForceUpdate();
 
-  const [clientData, setClientData] = useState<Option<Storages>>(None());
+  const [clientData, setClientData] = useState<O.Option<Storages>>(O.None());
 
   const eventsStorage = EventStorage.new(forceEventsUpdate);
   const calendarStorage = CalendarStorage.new(forceCalendarUpdate);
@@ -94,9 +94,9 @@ export function useDataStorage(): StorageContext {
       });
 
       eventsStorageSome.subscribe("removeAll", ({ output }) => {
-        const [deletedEvents] = output;
-        if (deletedEvents.isOk()) {
-          deletedEvents.unwrap().forEach((event) => {
+        const deletedEvents = output;
+        if (deletedEvents) {
+          deletedEvents.forEach((event) => {
             event.notifications.forEach((notification) => {
               notificationManager.remove(notification.id);
             });
@@ -111,7 +111,7 @@ export function useDataStorage(): StorageContext {
       }
 
       setClientData(
-        Some({
+        O.Some({
           eventsStorage: eventsStorageSome,
           calendarsStorage: calendarStorage.unwrap(),
           eventsTemplateStorage: templateStorage.unwrap(),
