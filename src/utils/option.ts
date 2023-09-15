@@ -1,6 +1,7 @@
 type OptionT<T> = { kind: "some"; value: T } | { kind: "none"; value: never };
 
-declare let myNever: never;
+let myNever: never;
+
 class Option<T> {
   value: OptionT<T>;
   constructor(value: OptionT<T>) {
@@ -54,19 +55,11 @@ class Something<T> extends Option<T> {
   constructor(value: T) {
     super({ kind: "some", value });
   }
-
-  unwrap(): T {
-    return super.value.value;
-  }
 }
 
 class Nothing extends Option<never> {
   constructor() {
     super({ kind: "none", value: myNever });
-  }
-
-  isSome<T>(): this is Something<T> {
-    return false;
   }
 }
 
