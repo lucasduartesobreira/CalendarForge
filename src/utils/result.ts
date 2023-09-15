@@ -41,6 +41,22 @@ class Result<O, E> {
 
     return new Error(this.result.value);
   }
+
+  unwrapOrElse(f: (err: E) => O): O {
+    if (this.isOk()) {
+      return this.unwrap();
+    } else {
+      return f(this.unwrap_err());
+    }
+  }
+
+  mapOrElse<U>(onErr: (err: E) => U, onOk: (ok: O) => U) {
+    if (this.result.kind === "ok") {
+      return onOk(this.result.value);
+    } else {
+      return onErr(this.result.value);
+    }
+  }
 }
 
 class Okay<O> extends Result<O, never> {
