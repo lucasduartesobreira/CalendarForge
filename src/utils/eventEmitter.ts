@@ -38,12 +38,46 @@ export interface BetterEventEmitter<
   K,
   V extends Record<string, any> & { id: K },
 > extends StorageActions<K, V> {
-  emit<This extends StorageActions<K, V>, Event extends keyof This>(
+  emit<
+    This extends StorageActions<K, V>,
+    Event extends keyof StorageActions<K, V>,
+  >(
     event: Event,
     args: EventArg<Event, This>,
   ): void;
-  on<This extends StorageActions<K, V>, Event extends keyof This>(
+  on<
+    This extends StorageActions<K, V>,
+    Event extends keyof StorageActions<K, V>,
+  >(
     event: Event,
     handler: (args: EventArg<Event, This>) => void,
   ): void;
+}
+
+export class MyEventEmitter {
+  private handlers: Map<string, ((...args: any[]) => void)[]>;
+  constructor() {
+    this.handlers = new Map();
+  }
+
+  emit(event: string, ...args: any[]): void {
+    const handlers = this.handlers.get(event);
+    if (handlers != undefined) {
+      for (const handler of handlers) {
+        handler(args);
+      }
+    }
+  }
+
+  on(event: string, handler: (...args: any[]) => void) {
+    const handlers = this.handlers.get(event);
+    if (handlers != undefined) {
+      handlers.push(handler);
+      this.handlers.set(event, handlers);
+
+      return;
+    }
+
+    this.handlers.set(event, [handler]);
+  }
 }

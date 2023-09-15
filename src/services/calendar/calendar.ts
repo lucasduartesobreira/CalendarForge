@@ -1,4 +1,9 @@
-import { BetterEventEmitter, emitEvent, EventArg } from "@/utils/eventEmitter";
+import {
+  BetterEventEmitter,
+  emitEvent,
+  EventArg,
+  MyEventEmitter,
+} from "@/utils/eventEmitter";
 import { idGenerator } from "@/utils/idGenerator";
 import { None, Option, Some } from "@/utils/option";
 import { Err, Ok, Result } from "@/utils/result";
@@ -78,12 +83,8 @@ const validateTypes = <A extends Record<string, any>>(
 type CreateCalendar = Omit<Calendar, "id" | "default">;
 type UpdateCalendar = Partial<CreateCalendar>;
 
-class CalendarStorage
-  implements
-    StorageActions<Calendar["id"], Calendar>,
-    BetterEventEmitter<Calendar["id"], Calendar>
-{
-  private eventEmitter = new EventEmitter();
+class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
+  private eventEmitter: MyEventEmitter;
   private static validator: ValidatorType<Calendar> = {
     id: { optional: false, type: "string" },
     timezone: {
@@ -103,6 +104,8 @@ class CalendarStorage
 
   private constructor(mapLocalStorage: MapLocalStorage<string, Calendar>) {
     this.map = mapLocalStorage;
+    this.eventEmitter = new MyEventEmitter();
+
     if (this.map.values().length === 0) {
       const id = Buffer.from(Date.now().toString()).toString("base64");
       const timezone = (-new Date().getTimezoneOffset() / 60) as Timezones;
@@ -114,11 +117,11 @@ class CalendarStorage
       });
     }
   }
-  emit<This extends StorageActions<string, Calendar>, Event extends keyof This>(
-    event: Event,
-    args: EventArg<Event, This>,
-  ): void {
-    this.eventEmitter.emit(event.toString(), args);
+  emit<
+    This extends StorageActions<string, Calendar>,
+    Event extends keyof StorageActions<string, Calendar>,
+  >(event: Event, args: EventArg<Event, This>): void {
+    this.eventEmitter.emit(event, args);
   }
   on<This extends StorageActions<string, Calendar>, Event extends keyof This>(
     event: Event,
