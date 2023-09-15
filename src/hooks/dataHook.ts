@@ -69,7 +69,7 @@ export function useDataStorage(): StorageContext {
     if (isDataReady) {
       const notificationManager = new NotificationManager();
       const eventsStorageSome = eventsStorage.unwrap();
-      eventsStorageSome.subscribe("add", ({ output }) => {
+      eventsStorageSome.on("add", ({ result: output }) => {
         if (output.isOk()) {
           const eventCreated = output.unwrap();
           eventCreated.notifications.forEach((notification) => {
@@ -78,22 +78,25 @@ export function useDataStorage(): StorageContext {
         }
       });
 
-      eventsStorageSome.subscribe("update", ({ input, output, found }) => {
-        const [_id, eventPreUpdate] = input;
-        if (output.isOk() && found.isSome() && eventPreUpdate.notifications) {
-          const updatedEvent = output.unwrap();
-          const foundEvent = found.unwrap();
-          foundEvent.notifications.forEach(({ id: idNotification }) => {
-            notificationManager.remove(idNotification);
-          });
+      eventsStorageSome.on(
+        "update",
+        ({ args: input, result: output, opsSpecific: found }) => {
+          const [_id, eventPreUpdate] = input;
+          if (output.isOk() && found.isSome() && eventPreUpdate.notifications) {
+            const updatedEvent = output.unwrap();
+            const foundEvent = found.unwrap();
+            foundEvent.notifications.forEach(({ id }: { id: string }) => {
+              notificationManager.remove(id);
+            });
 
-          updatedEvent.notifications.forEach((notification) => {
-            notificationManager.push(notification, updatedEvent);
-          });
-        }
-      });
+            updatedEvent.notifications.forEach((notification) => {
+              notificationManager.push(notification, updatedEvent);
+            });
+          }
+        },
+      );
 
-      eventsStorageSome.subscribe("removeAll", ({ output }) => {
+      eventsStorageSome.on("removeAll", ({ result: output }) => {
         const deletedEvents = output;
         if (deletedEvents) {
           deletedEvents.forEach((event) => {

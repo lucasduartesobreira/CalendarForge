@@ -1,6 +1,17 @@
 import * as R from "@/utils/result";
 import * as O from "@/utils/option";
-import { MapLocalStorage, StorageActions } from "@/utils/storage";
+import {
+  AddValue,
+  MapLocalStorage,
+  StorageActions,
+  UpdateValue,
+} from "@/utils/storage";
+import {
+  BetterEventEmitter,
+  EventArg,
+  MyEventEmitter,
+  emitEvent,
+} from "@/utils/eventEmitter";
 
 type EventNotification = {
   id: string;
@@ -36,8 +47,8 @@ type CalendarEvent = {
   color: FromTupleToUnion<typeof COLORS>;
 };
 
-type CreateEvent = Omit<CalendarEvent, "id">;
-type UpdateEvent = Partial<CreateEvent>;
+type CreateEvent = AddValue<CalendarEvent>;
+type UpdateEvent = UpdateValue<CalendarEvent>;
 
 const fix = <T extends CalendarEvent[K], K extends keyof CalendarEvent>(
   def: T,
@@ -55,39 +66,29 @@ const fix = <T extends CalendarEvent[K], K extends keyof CalendarEvent>(
   return final;
 };
 
-type TypeOfArray<T> = T extends Array<infer InsideType> ? InsideType : never;
-type InputAndOutput<T extends (...args: any) => any> = {
-  input: Parameters<T>;
-  output: ReturnType<T>;
-};
-
-type Subscribed = {
-  add: ((eventData: InputAndOutput<EventStorage["add"]>) => void)[];
-  remove: ((eventData: InputAndOutput<EventStorage["remove"]>) => void)[];
-  removeAll: ((dunno: { output: CalendarEvent[] }) => void)[];
-  update: ((
-    eventData: InputAndOutput<EventStorage["update"]> & {
-      found: O.Option<CalendarEvent>;
-    },
-  ) => void)[];
-};
-
 class EventStorage
-  implements StorageActions<CalendarEvent["id"], CalendarEvent>
+  implements BetterEventEmitter<CalendarEvent["id"], CalendarEvent>
 {
   private map: MapLocalStorage<CalendarEvent["id"], CalendarEvent>;
-  private subscribed: Subscribed;
+  private eventEmitter: MyEventEmitter;
 
   private constructor(
     map: MapLocalStorage<CalendarEvent["id"], CalendarEvent>,
   ) {
     this.map = map;
-    this.subscribed = {
-      add: [],
-      remove: [],
-      removeAll: [],
-      update: [],
-    };
+    this.eventEmitter = new MyEventEmitter();
+  }
+  emit<
+    This extends StorageActions<string, CalendarEvent>,
+    Event extends keyof StorageActions<string, CalendarEvent>,
+  >(event: Event, args: EventArg<Event, This>): void {
+    this.eventEmitter.emit(event, args);
+  }
+  on<
+    This extends StorageActions<string, CalendarEvent>,
+    Event extends keyof StorageActions<string, CalendarEvent>,
+  >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
+    this.eventEmitter.on(event, handler);
   }
   filteredValues(
     predicate: (value: CalendarEvent) => boolean,
@@ -107,45 +108,24 @@ class EventStorage
     return localStorage.map((localStorage) => new EventStorage(localStorage));
   }
 
-  subscribe<
-    Handler extends TypeOfArray<HandlerList>,
-    HandlerList extends Subscribed[E],
-    E extends keyof Subscribed,
-  >(event: E, handler: Handler) {
-    this.subscribed[event] = [
-      ...this.subscribed[event],
-      handler,
-    ] as Subscribed[E];
-  }
-
-  add(event: CreateEvent): R.Result<CalendarEvent, never> {
+  @emitEvent("add")
+  add(event: AddValue<CalendarEvent>): R.Result<CalendarEvent, symbol> {
     const eventWithId = {
       id: Buffer.from(Date.now().toString()).toString("base64"),
       ...event,
     };
-    const result = this.map.set(eventWithId.id, eventWithId);
-
-    const inputEventHandler: [event: CalendarEvent] = [eventWithId];
-    this.subscribed.add.forEach((handler) => {
-      handler({ input: inputEventHandler, output: result });
-    });
-    return result;
+    return this.map.set(eventWithId.id, eventWithId);
   }
 
+  @emitEvent("remove")
   remove(eventId: string): R.Result<CalendarEvent, symbol> {
-    const result = this.map.remove(eventId);
-    return result;
+    return this.map.remove(eventId);
   }
 
+  @emitEvent("removeAll")
   removeAll(predicate: (event: CalendarEvent) => boolean): CalendarEvent[] {
     const result = this.map.removeAll(predicate);
-    const resultMapped = result.unwrap().map(([, value]) => value);
-
-    this.subscribed.removeAll.forEach((handler) => {
-      handler({ output: resultMapped });
-    });
-
-    return resultMapped;
+    return result.unwrap().map(([, value]) => value);
   }
 
   findById(eventId: string): O.Option<CalendarEvent> {
@@ -193,12 +173,11 @@ class EventStorage
       eventId,
       event,
     ];
-    this.subscribed.update.forEach((handler) => {
-      handler({
-        input: inputEventHandler,
-        output: result,
-        found: O.Some(eventFound),
-      });
+
+    this.eventEmitter.emit("update", {
+      input: inputEventHandler,
+      output: result,
+      found: O.Some(eventFound),
     });
 
     return result;
