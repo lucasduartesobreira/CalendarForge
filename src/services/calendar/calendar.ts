@@ -6,10 +6,9 @@ import {
 } from "@/utils/eventEmitter";
 import { idGenerator } from "@/utils/idGenerator";
 import { None, Option, Some } from "@/utils/option";
-import { Err, Ok, Result } from "@/utils/result";
+import * as R from "@/utils/result";
 import { MapLocalStorage, StorageActions } from "@/utils/storage";
-import { EventEmitter } from "stream";
-import { TypeOfTag } from "typescript";
+import { validateTypes, ValidatorType } from "@/utils/validator";
 
 type Timezones =
   | -12
@@ -43,41 +42,6 @@ type Calendar = {
   name: string;
   timezone: Timezones;
   default: boolean;
-};
-
-type ValidatorType<A> = {
-  [Key in keyof A]: A[Key] extends undefined
-    ? { optional: true; type: TypeOfTag; validator?: (a: A[Key]) => boolean }
-    : {
-        optional: false;
-        type: TypeOfTag;
-        validator?: (a: A[Key]) => boolean;
-      };
-};
-
-const validateTypes = <A extends Record<string, any>>(
-  a: A,
-  b: ValidatorType<A>,
-): Result<A, symbol> => {
-  const isValid = Object.entries(b).filter(([key, value]) => {
-    const newK = key as keyof typeof b;
-    const { optional, type, validator } = value;
-
-    if (!optional) {
-      return a[newK] !== undefined && typeof a[newK] === type && validator
-        ? validator(a[newK])
-        : true;
-    }
-
-    return (
-      a[newK] === undefined ||
-      (typeof a[newK] === type && validator ? validator(a[newK]) : true)
-    );
-  });
-
-  return isValid
-    ? Ok(a)
-    : Err(Symbol("Missing properties or property with wrong type"));
 };
 
 type CreateCalendar = Omit<Calendar, "id" | "default">;
@@ -162,14 +126,14 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
 
     if (localStorage.isOk()) {
       const unwrapedLocalStorage = localStorage.unwrap();
-      return Ok(new CalendarStorage(unwrapedLocalStorage));
+      return R.Ok(new CalendarStorage(unwrapedLocalStorage));
     }
 
     return localStorage;
   }
 
   @emitEvent<"add", CalendarStorage>("add")
-  add(calendar: CreateCalendar): Result<Calendar, symbol> {
+  add(calendar: CreateCalendar): R.Result<Calendar, symbol> {
     const id = Buffer.from(Date.now().toString()).toString("base64");
     const { id: _id, ...validator } = CalendarStorage.validator;
     const validated = validateTypes(calendar, validator);
@@ -200,17 +164,17 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
   );
 
   @emitEvent<"remove", CalendarStorage>("remove")
-  remove(id: string): Result<Calendar, symbol> {
+  remove(id: string): R.Result<Calendar, symbol> {
     const calendar = this.map.get(id);
     if (calendar.isSome()) {
       const calendarFound = calendar.unwrap();
       if (calendarFound.default) {
-        return Err(CalendarStorage.RemoveDefaultCalendarError);
+        return R.Err(CalendarStorage.RemoveDefaultCalendarError);
       }
       return this.map.remove(id);
     }
 
-    return Err(CalendarStorage.RemoveCalendarError);
+    return R.Err(CalendarStorage.RemoveCalendarError);
   }
 
   @emitEvent<"removeAll", CalendarStorage>("removeAll")
@@ -229,7 +193,7 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
   private updateInternal(calendarsId: string, calendar: UpdateCalendar) {
     const calendarGet = this.map.get(calendarsId);
     if (!calendarGet.isSome()) {
-      const result = Err(Symbol("Event not found"));
+      const result = R.Err(Symbol("Event not found"));
       return result;
     }
 

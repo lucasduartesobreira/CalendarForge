@@ -16,7 +16,7 @@ class Okay<O> {
     return this.value;
   }
 
-  unwrap_err() {
+  unwrap_err(): never {
     throw "Trying to unwrap_err an Ok";
   }
 }
@@ -35,7 +35,7 @@ class Error<E> {
     return false;
   }
 
-  unwrap() {
+  unwrap(): never {
     throw "Trying to unwrap an Error";
   }
 
@@ -44,8 +44,15 @@ class Error<E> {
   }
 }
 
-const Ok = <O>(ok: O): Okay<O> => Okay.Ok(ok);
-const Err = <E>(err: E): Error<E> => Error.Err(err);
+const Ok = <O>(ok: O): Result<O, never> => Okay.Ok(ok);
+const Err = <E>(err: E): Result<never, E> => Error.Err(err);
+
+const map = <O, E, B>(result: Result<O, E>, f: (value: O) => B) => {
+  if (result.isOk()) {
+    return Ok(f(result.unwrap()));
+  }
+  return result;
+};
 
 type Result<O, E> = Okay<O> | Error<E>;
 
@@ -55,6 +62,6 @@ type UnifyResultReturn<Fn extends (...args: any) => any> = Fn extends (
   ? (...args: Parameters<Fn>) => Result<O, E>
   : Fn;
 
-export { Ok, Err };
+export { Ok, Err, map };
 
 export type { UnifyResultReturn, Result };

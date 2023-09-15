@@ -1,5 +1,5 @@
 import { None, Some, Option } from "./option";
-import { Err, Ok, Result } from "./result";
+import * as R from "./result";
 
 function syncStorage<
   K,
@@ -75,18 +75,18 @@ export class MapLocalStorage<K, V> {
     path: string,
     forceRender: () => void,
     initialValue: Map<K, V> | IterableIterator<[K, V]> = new Map(),
-  ): Result<MapLocalStorage<K, V>, symbol> {
+  ): R.Result<MapLocalStorage<K, V>, symbol> {
     if (typeof window != "undefined")
-      return Ok(new MapLocalStorage<K, V>(path, forceRender, initialValue));
+      return R.Ok(new MapLocalStorage<K, V>(path, forceRender, initialValue));
 
-    return Err(Symbol("Cannot create a storage on serverside"));
+    return R.Err(Symbol("Cannot create a storage on serverside"));
   }
 
   @forceRender
   @syncStorage
   set(key: K, value: V) {
     this.map.set(key, value);
-    return Ok(this.map.get(key) as V);
+    return R.Ok(this.map.get(key) as V);
   }
 
   @forceRender
@@ -94,10 +94,10 @@ export class MapLocalStorage<K, V> {
   setNotDefined(key: K, value: V) {
     if (!this.map.has(key)) {
       this.map.set(key, value);
-      return Ok(value);
+      return R.Ok(value);
     }
 
-    return Err(Symbol("Key already defined in the Storage"));
+    return R.Err(Symbol("Key already defined in the Storage"));
   }
 
   @forceRender
@@ -115,10 +115,10 @@ export class MapLocalStorage<K, V> {
     const value = this.map.get(key);
     if (value != null) {
       this.map.delete(key);
-      return Ok(value);
+      return R.Ok(value);
     }
 
-    return Err(Symbol("Couldn't find any entry associated with this key"));
+    return R.Err(Symbol("Couldn't find any entry associated with this key"));
   }
 
   @forceRender
@@ -132,7 +132,7 @@ export class MapLocalStorage<K, V> {
       }
     }
 
-    return Ok(removed);
+    return R.Ok(removed);
   }
 
   get(key: K) {
@@ -167,9 +167,9 @@ export class MapLocalStorage<K, V> {
 export type AddValue<V> = Omit<V, "id">;
 export type UpdateValue<V> = Partial<AddValue<V>>;
 export interface StorageActions<K, V extends Record<string, any> & { id: K }> {
-  add(value: AddValue<V>): Result<V, symbol>;
-  update(id: K, updateValue: UpdateValue<V>): Result<V, symbol>;
-  remove(id: K): Result<V, symbol>;
+  add(value: AddValue<V>): R.Result<V, symbol>;
+  update(id: K, updateValue: UpdateValue<V>): R.Result<V, symbol>;
+  remove(id: K): R.Result<V, symbol>;
   removeAll(predicate: (value: V) => boolean): V[];
   findById(id: K): Option<V>;
   filteredValues(predicate: (value: V) => boolean): V[];

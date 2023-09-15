@@ -1,6 +1,6 @@
 import { CalendarEvent } from "@/services/events/events";
 import { idGenerator } from "@/utils/idGenerator";
-import { Err, Ok, Result } from "@/utils/result";
+import * as R from "@/utils/result";
 import { Option } from "@/utils/option";
 import { MapLocalStorage } from "@/utils/storage";
 
@@ -31,7 +31,7 @@ export class EventTemplateStorage {
       forceUpdate,
     );
     if (newStorage.isOk()) {
-      return Ok(new EventTemplateStorage(newStorage.unwrap()));
+      return R.Ok(new EventTemplateStorage(newStorage.unwrap()));
     }
     return newStorage;
   }
@@ -40,13 +40,13 @@ export class EventTemplateStorage {
     const id = idGenerator();
     const newTemplate = { ...template, id } satisfies EventTemplate;
     this.eventTemplates.set(id, newTemplate);
-    return Ok(newTemplate);
+    return R.Ok(newTemplate);
   }
 
   update(id: EventTemplate["id"], template: UpdateTemplate) {
     const templateGet = this.eventTemplates.get(id);
     if (!templateGet.isSome()) {
-      return Err(Symbol("Couldn't find any template with this Id"));
+      return R.Err(Symbol("Couldn't find any template with this Id"));
     }
 
     const templateFound = templateGet.unwrap();
@@ -67,7 +67,7 @@ export class EventTemplateStorage {
     return this.eventTemplates.get(id);
   }
 
-  delete(id: EventTemplate["id"]): Result<EventTemplate, symbol> {
+  delete(id: EventTemplate["id"]): R.Result<EventTemplate, symbol> {
     return this.eventTemplates.remove(id);
   }
 

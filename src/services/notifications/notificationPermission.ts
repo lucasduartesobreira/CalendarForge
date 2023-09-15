@@ -1,4 +1,4 @@
-import { Err, Ok } from "@/utils/result";
+import * as R from "@/utils/result";
 import { CalendarEvent, EventNotification } from "../events/events";
 
 export class NotificationManager {
@@ -22,7 +22,7 @@ export class NotificationManager {
       Notification?.permission === "granted"
     ) {
       if (Date.now() >= event.endDate) {
-        return Err(Symbol("Event already concluded"));
+        return R.Err(Symbol("Event already concluded"));
       }
       const reference =
         notification.from === "start" ? event.startDate : event.endDate;
@@ -35,7 +35,7 @@ export class NotificationManager {
           : 0);
       const notificationTime = reference - timeOffset;
       if (notificationTime <= Date.now()) {
-        return Err(Symbol("Notification already sent"));
+        return R.Err(Symbol("Notification already sent"));
       }
 
       const timeout = setTimeout(() => {
@@ -45,10 +45,10 @@ export class NotificationManager {
       }, notificationTime - Date.now());
 
       this.notifications.set(notification.id, timeout);
-      return Ok(notification);
+      return R.Ok(notification);
     }
 
-    return Err(Symbol("Notification was already registered"));
+    return R.Err(Symbol("Notification was already registered"));
   }
 
   remove(notificationId: EventNotification["id"]) {
@@ -56,10 +56,10 @@ export class NotificationManager {
     if (notificationRegistered) {
       clearTimeout(notificationRegistered);
       this.notifications.delete(notificationId);
-      return Ok(notificationRegistered);
+      return R.Ok(notificationRegistered);
     }
 
-    return Err(Symbol("Couldn't find any notification with this id"));
+    return R.Err(Symbol("Couldn't find any notification with this id"));
   }
 
   removeAll() {

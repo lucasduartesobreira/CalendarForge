@@ -2,7 +2,7 @@ import { StorageContext } from "@/hooks/dataHook";
 import { PropsWithChildren, useContext, useRef, useState } from "react";
 import { CreateProjectForm } from "../forms/createProject";
 import { Some } from "@/utils/option";
-import { Err, Ok, Result } from "@/utils/result";
+import * as R from "@/utils/result";
 import { Calendar, Timezones } from "@/services/calendar/calendar";
 
 const SideBar = ({ children }: PropsWithChildren) => {
@@ -19,7 +19,12 @@ const Content = () => {
           .unwrap()
           .projectsStorage.all()
           .map((project) => {
-            return <div key={project.id}>{project.title}</div>;
+            return (
+              <div key={project.id}>
+                <a>{project.title}</a>
+                <button className="text-yellow-500">Edit</button>
+              </div>
+            );
           })}
     </div>
   );
@@ -67,19 +72,22 @@ const AddNew = () => {
                   }
                   const calendarsSaved = acc.unwrap();
 
-                  const result = calendarsStorage.addCalendar(calendar);
+                  const result = calendarsStorage.add(calendar);
                   if (result.isOk()) {
                     const finalCalendar = result.unwrap();
                     calendarsSaved.push(finalCalendar.id);
-                    return Ok(calendarsSaved);
+                    return R.Ok(calendarsSaved);
                   }
 
-                  return Err([result.unwrap_err(), calendarsSaved] as [
-                    string,
+                  return R.Err([result.unwrap_err(), calendarsSaved] as [
+                    symbol,
                     Calendar["id"][],
                   ]);
                 },
-                Ok([]) as Result<Calendar["id"][], [string, Calendar["id"][]]>,
+                R.Ok([]) as R.Result<
+                  Calendar["id"][],
+                  [symbol, Calendar["id"][]]
+                >,
               );
 
               if (!calendarsSaved.isOk()) {
