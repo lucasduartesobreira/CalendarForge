@@ -37,6 +37,13 @@ const map = <T, B>(option: Option<T>, f: (value: T) => B) => {
   return option;
 };
 
-export { None, Some, map };
+const unwrapOrElse = <T>(option: Option<T>, onNone: () => T) => {
+  if (option.isSome()) {
+    return option.unwrap();
+  }
+  return onNone();
+};
+
+export { None, Some, map, unwrapOrElse };
 
 export type { Option };
