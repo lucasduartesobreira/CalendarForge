@@ -64,7 +64,7 @@ export class MyEventEmitter {
     const handlers = this.handlers.get(event);
     if (handlers != undefined) {
       for (const handler of handlers) {
-        handler(args);
+        handler.apply(null, args);
       }
     }
   }
