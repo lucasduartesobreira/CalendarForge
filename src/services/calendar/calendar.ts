@@ -146,6 +146,7 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
         result = this.map.setNotDefined(newId, {
           ...calendarCreated,
           id: newId,
+          default: false,
         });
       }
 
@@ -198,7 +199,7 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
       id: calendarsId,
       name: calendar.name ?? calendarFound.name,
       timezone: calendar.timezone ?? calendarFound.timezone,
-      default: false,
+      default: calendarFound.default,
     };
 
     const validated = validateTypes(newCalendar, CalendarStorage.validator);
