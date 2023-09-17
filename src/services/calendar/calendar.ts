@@ -164,21 +164,21 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
     "Not allowed to delete the default calendar",
   );
 
-  @emitEvent<"remove", CalendarStorage>("remove")
+  @emitEvent("remove")
   remove(id: string): R.Result<Calendar, symbol> {
     const calendar = this.map.get(id);
-    if (calendar.isSome()) {
-      const calendarFound = calendar.unwrap();
-      if (calendarFound.default) {
-        return R.Err(CalendarStorage.RemoveDefaultCalendarError);
-      }
-      return this.map.remove(id);
-    }
-
-    return R.Err(CalendarStorage.RemoveCalendarError);
+    return calendar.mapOrElse(
+      () => R.Err(CalendarStorage.RemoveCalendarError),
+      (calendar) => {
+        if (calendar.default) {
+          return R.Err(CalendarStorage.RemoveDefaultCalendarError);
+        }
+        return this.map.remove(id);
+      },
+    );
   }
 
-  @emitEvent<"removeAll", CalendarStorage>("removeAll")
+  @emitEvent("removeAll")
   removeAll(predicate: (value: Calendar) => boolean): Calendar[] {
     const result = this.map.removeAll(
       (value) => !value.default && predicate(value),
