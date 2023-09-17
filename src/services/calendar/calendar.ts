@@ -189,9 +189,8 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
 
   update(calendarsId: string, calendar: UpdateCalendar) {
     const calendarGet = this.map.get(calendarsId);
-    return calendarGet.mapOrElse<R.Result<Calendar, symbol>>(
-      () => R.Err(Symbol("Event not found")),
-      (calendarFound) => {
+    return calendarGet
+      .map((calendarFound) => {
         const newCalendar: Calendar = {
           id: calendarsId,
           name: calendar.name ?? calendarFound.name,
@@ -213,9 +212,9 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
           opsSpecific: calendarFound,
         });
 
-        return result;
-      },
-    );
+        return result.unwrap();
+      })
+      .ok(Symbol("Event not found"));
   }
 
   findDefault() {

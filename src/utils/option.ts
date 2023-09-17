@@ -1,3 +1,5 @@
+import { Err, Ok, Result } from "./result";
+
 type OptionT<T> = { kind: "some"; value: T } | { kind: "none"; value: never };
 
 let myNever: never;
@@ -20,7 +22,7 @@ class Option<T> {
     throw "Cannot unwrap a Something";
   }
 
-  map<B>(f: (value: T) => B) {
+  map<B>(f: (value: T) => B): Option<B> {
     if (this.value.kind === "some") {
       return Some(f(this.value.value));
     } else if (this.value.kind === "none") {
@@ -47,6 +49,14 @@ class Option<T> {
       return onNone();
     } else {
       throw "unreachable";
+    }
+  }
+
+  ok<E>(err: E): Result<T, E> {
+    if (this.value.kind === "some") {
+      return Ok(this.value.value);
+    } else {
+      return Err(err);
     }
   }
 }

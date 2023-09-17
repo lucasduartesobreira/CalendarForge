@@ -64,9 +64,8 @@ export class ProjectStorage
     updateValue: UpdateValue<Project>,
   ): R.Result<Project, symbol> {
     const found = this.map.get(id);
-    return found.mapOrElse<R.Result<Project, symbol>>(
-      () => R.Err(Symbol("Couldn't find any entry for this key")),
-      (valueFound) => {
+    return found
+      .map((valueFound) => {
         const updatedValue: Project = {
           id,
           title: updateValue.title ?? valueFound.title,
@@ -80,9 +79,9 @@ export class ProjectStorage
           result,
         });
 
-        return result;
-      },
-    );
+        return result.unwrap();
+      })
+      .ok(Symbol("Couldn't find any entry for this key"));
   }
 
   @emitEvent("remove")

@@ -151,9 +151,8 @@ class EventStorage
 
   update(eventId: string, event: UpdateEvent) {
     const eventFromGet = this.map.get(eventId);
-    return eventFromGet.mapOrElse<R.Result<CalendarEvent, symbol>>(
-      () => R.Err(Symbol("Event not found")),
-      (eventFound) => {
+    return eventFromGet
+      .map((eventFound) => {
         const newEvent: CalendarEvent = {
           id: eventId,
           title: event.title ?? eventFound.title,
@@ -177,9 +176,9 @@ class EventStorage
           opsSpecific: O.Some(eventFound),
         });
 
-        return result;
-      },
-    );
+        return result.unwrap();
+      })
+      .ok(Symbol("Event not found"));
   }
 
   values() {
