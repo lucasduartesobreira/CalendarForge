@@ -64,25 +64,25 @@ export class ProjectStorage
     updateValue: UpdateValue<Project>,
   ): R.Result<Project, symbol> {
     const found = this.map.get(id);
-    if (!found.isSome()) {
-      return R.Err(Symbol("Couldn't find any entry for this key"));
-    }
+    return found.mapOrElse<R.Result<Project, symbol>>(
+      () => R.Err(Symbol("Couldn't find any entry for this key")),
+      (valueFound) => {
+        const updatedValue: Project = {
+          id,
+          title: updateValue.title ?? valueFound.title,
+          calendars: updateValue.calendars ?? valueFound.calendars,
+        };
+        const result = this.map.set(id, updatedValue);
 
-    const valueFound = found.unwrap();
-    const updatedValue: Project = {
-      id,
-      title: updateValue.title ?? valueFound.title,
-      calendars: updateValue.calendars ?? valueFound.calendars,
-    };
-    const result = this.map.set(id, updatedValue);
+        this.emit("update", {
+          args: [id, updateValue],
+          opsSpecific: valueFound,
+          result,
+        });
 
-    this.emit("update", {
-      args: [id, updateValue],
-      opsSpecific: valueFound,
-      result,
-    });
-
-    return result;
+        return result;
+      },
+    );
   }
 
   @emitEvent("remove")

@@ -189,34 +189,33 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
 
   update(calendarsId: string, calendar: UpdateCalendar) {
     const calendarGet = this.map.get(calendarsId);
-    if (!calendarGet.isSome()) {
-      return R.Err(Symbol("Event not found"));
-    }
+    return calendarGet.mapOrElse<R.Result<Calendar, symbol>>(
+      () => R.Err(Symbol("Event not found")),
+      (calendarFound) => {
+        const newCalendar: Calendar = {
+          id: calendarsId,
+          name: calendar.name ?? calendarFound.name,
+          timezone: calendar.timezone ?? calendarFound.timezone,
+          default: calendarFound.default,
+        };
 
-    const calendarFound = calendarGet.unwrap();
+        const validated = validateTypes(newCalendar, CalendarStorage.validator);
+        const result = validated.mapOrElse(
+          (err) => R.Err(err),
+          () => {
+            return this.map.setNotDefined(calendarsId, newCalendar);
+          },
+        );
 
-    const newCalendar: Calendar = {
-      id: calendarsId,
-      name: calendar.name ?? calendarFound.name,
-      timezone: calendar.timezone ?? calendarFound.timezone,
-      default: calendarFound.default,
-    };
+        this.emit("update", {
+          args: [calendarsId, calendar],
+          result,
+          opsSpecific: calendarFound,
+        });
 
-    const validated = validateTypes(newCalendar, CalendarStorage.validator);
-    const result = validated.mapOrElse(
-      (err) => R.Err(err),
-      () => {
-        return this.map.setNotDefined(calendarsId, newCalendar);
+        return result;
       },
     );
-
-    this.emit("update", {
-      args: [calendarsId, calendar],
-      result,
-      opsSpecific: calendarFound,
-    });
-
-    return result;
   }
 
   findDefault() {

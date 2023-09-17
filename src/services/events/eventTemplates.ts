@@ -84,29 +84,30 @@ export class EventTemplateStorage
 
   update(id: EventTemplate["id"], template: UpdateTemplate) {
     const templateGet = this.eventTemplates.get(id);
-    if (!templateGet.isSome()) {
-      return R.Err(Symbol("Couldn't find any template with this Id"));
-    }
+    return templateGet.mapOrElse<R.Result<EventTemplate, symbol>>(
+      () => R.Err(Symbol("Couldn't find any template with this Id")),
+      (template) => {
+        const templateFound = templateGet.unwrap();
+        const updatedTemplate: EventTemplate = {
+          calendar_id: template.calendar_id ?? templateFound.calendar_id,
+          title: template.title ?? templateFound.title,
+          id: id,
 
-    const templateFound = templateGet.unwrap();
-    const updatedTemplate: EventTemplate = {
-      calendar_id: template.calendar_id ?? templateFound.calendar_id,
-      title: template.title ?? templateFound.title,
-      id: id,
+          color: template.color ?? templateFound.color,
+          description: template.description ?? templateFound.description,
+          notifications: template.notifications ?? templateFound.notifications,
+        };
 
-      color: template.color ?? templateFound.color,
-      description: template.description ?? templateFound.description,
-      notifications: template.notifications ?? templateFound.notifications,
-    };
+        const result = this.eventTemplates.set(id, updatedTemplate);
+        this.emit("update", {
+          args: [id, template],
+          opsSpecific: templateFound,
+          result,
+        });
 
-    const result = this.eventTemplates.set(id, updatedTemplate);
-    this.emit("update", {
-      args: [id, template],
-      opsSpecific: templateFound,
-      result,
-    });
-
-    return result;
+        return result;
+      },
+    );
   }
 
   findById(id: EventTemplate["id"]): O.Option<EventTemplate> {

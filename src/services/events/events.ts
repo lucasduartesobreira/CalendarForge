@@ -151,36 +151,35 @@ class EventStorage
 
   update(eventId: string, event: UpdateEvent) {
     const eventFromGet = this.map.get(eventId);
-    if (!eventFromGet.isSome()) {
-      return R.Err(Symbol("Event not found"));
-    }
+    return eventFromGet.mapOrElse<R.Result<CalendarEvent, symbol>>(
+      () => R.Err(Symbol("Event not found")),
+      (eventFound) => {
+        const newEvent: CalendarEvent = {
+          id: eventId,
+          title: event.title ?? eventFound.title,
+          endDate: event.endDate ?? eventFound.endDate,
+          startDate: event.startDate ?? eventFound.startDate,
+          calendar_id: event.calendar_id ?? eventFound.calendar_id,
+          description: event.description ?? eventFound.description,
+          notifications: event.notifications ?? eventFound.notifications,
+          color: event.color ?? eventFound.color,
+        };
 
-    const eventFound = eventFromGet.unwrap();
+        const result = this.map.set(eventId, newEvent);
+        const inputEventHandler: [eventId: string, event: UpdateEvent] = [
+          eventId,
+          event,
+        ];
 
-    const newEvent: CalendarEvent = {
-      id: eventId,
-      title: event.title ?? eventFound.title,
-      endDate: event.endDate ?? eventFound.endDate,
-      startDate: event.startDate ?? eventFound.startDate,
-      calendar_id: event.calendar_id ?? eventFound.calendar_id,
-      description: event.description ?? eventFound.description,
-      notifications: event.notifications ?? eventFound.notifications,
-      color: event.color ?? eventFound.color,
-    };
+        this.emit("update", {
+          args: inputEventHandler,
+          result,
+          opsSpecific: O.Some(eventFound),
+        });
 
-    const result = this.map.set(eventId, newEvent);
-    const inputEventHandler: [eventId: string, event: UpdateEvent] = [
-      eventId,
-      event,
-    ];
-
-    this.emit("update", {
-      args: inputEventHandler,
-      result,
-      opsSpecific: O.Some(eventFound),
-    });
-
-    return result;
+        return result;
+      },
+    );
   }
 
   values() {
