@@ -57,6 +57,14 @@ class Result<O, E> {
       return onErr(this.result.value);
     }
   }
+
+  flatten(this: Result<Result<O, E>, E>): Result<O, E> {
+    if (this.result.kind === "ok") {
+      return this.unwrap();
+    } else {
+      return Err(this.result.value);
+    }
+  }
 }
 
 class Okay<O> extends Result<O, never> {
