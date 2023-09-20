@@ -59,6 +59,14 @@ class Option<T> {
       return Err(err);
     }
   }
+
+  flatten<T extends Option<V>, V>(this: Option<T>): Option<V> {
+    if (this.value.kind === "some") {
+      return this.value.value;
+    } else {
+      return this.value.value;
+    }
+  }
 }
 
 class Something<T> extends Option<T> {
