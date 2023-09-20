@@ -43,10 +43,10 @@ class Result<O, E> {
   }
 
   unwrapOrElse(f: (err: E) => O): O {
-    if (this.isOk()) {
-      return this.unwrap();
+    if (this.result.kind === "ok") {
+      return this.result.value;
     } else {
-      return f(this.unwrap_err());
+      return f(this.result.value);
     }
   }
 
