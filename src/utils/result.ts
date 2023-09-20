@@ -1,3 +1,5 @@
+import { None, Option, Some } from "./option";
+
 type Res<O, E> =
   | {
       kind: "ok";
@@ -48,6 +50,13 @@ class Result<O, E> {
     } else {
       return f(this.result.value);
     }
+  }
+
+  option(): Option<O> {
+    return this.mapOrElse(
+      () => None(),
+      (o) => Some(o),
+    );
   }
 
   mapOrElse<U>(onErr: (err: E) => U, onOk: (ok: O) => U) {
