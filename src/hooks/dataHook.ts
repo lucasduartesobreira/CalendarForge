@@ -11,7 +11,7 @@ import * as O from "@/utils/option";
 import { CalendarStorage } from "@/services/calendar/calendar";
 import { NotificationManager } from "@/services/notifications/notificationPermission";
 import { EventTemplateStorage } from "@/services/events/eventTemplates";
-import { ProjectStorage } from "@/services/projects/projectsStorage";
+import { Project, ProjectStorage } from "@/services/projects/projectsStorage";
 
 type Storages = {
   eventsStorage: EventStorage;
@@ -69,6 +69,9 @@ export function useDataStorage(): StorageContext {
     if (isDataReady) {
       const notificationManager = new NotificationManager();
       const eventsStorageSome = eventsStorage.unwrap();
+      const calendarStorageUnwraped = calendarStorage.unwrap();
+      const projectsStorageUnwraped = projectsStorage.unwrap();
+
       eventsStorageSome.on("add", ({ result: output }) => {
         if (output.isOk()) {
           const eventCreated = output.unwrap();
@@ -96,7 +99,7 @@ export function useDataStorage(): StorageContext {
         },
       );
 
-      eventsStorageSome.on("removeAll", ({ result: output }) => {
+      eventsStorageSome.on("removeWithFilter", ({ result: output }) => {
         const deletedEvents = output;
         if (deletedEvents) {
           deletedEvents.forEach((event) => {
@@ -105,6 +108,65 @@ export function useDataStorage(): StorageContext {
             });
           });
         }
+      });
+
+      calendarStorageUnwraped.on("remove", ({ result }) => {
+        result.map(({ id: deletedCalendar }) => {
+          eventsStorageSome.removeWithFilter(
+            (event) => event.calendar_id === deletedCalendar,
+          );
+        });
+      });
+
+      calendarStorageUnwraped.on("removeAll", ({ result }) => {
+        result.map(([id]) =>
+          eventsStorageSome.removeWithFilter(
+            ({ calendar_id }) => id === calendar_id,
+          ),
+        );
+      });
+
+      calendarStorageUnwraped.on("removeWithFilter", ({ result }) => {
+        result.map(({ id }) =>
+          eventsStorageSome.removeWithFilter(
+            ({ calendar_id }) => id === calendar_id,
+          ),
+        );
+      });
+
+      calendarStorageUnwraped.on("update", () => {
+        // TODO: When using the timezones
+      });
+
+      projectsStorageUnwraped.on("update", ({ result, opsSpecific: found }) => {
+        result.map((project) => {
+          const foundProject: Project = found;
+          const removed = foundProject.calendars.filter(
+            (calendar, index) => !project.calendars.includes(calendar, index),
+          );
+
+          if (removed.length > 0) {
+            calendarStorageUnwraped.removeAll(removed);
+          }
+        });
+        result;
+      });
+
+      projectsStorageUnwraped.on("remove", ({ result }) => {
+        result.map(({ calendars }) =>
+          calendarStorageUnwraped.removeAll(calendars),
+        );
+      });
+      projectsStorageUnwraped.on("removeAll", ({ result }) => {
+        result.map(([id, { calendars }]) =>
+          calendarStorageUnwraped.removeAll(calendars),
+        );
+      });
+
+      projectsStorageUnwraped.on("removeWithFilter", ({ result }) => {
+        result.map(({ calendars }) => {
+          calendarStorageUnwraped.removeAll(calendars);
+        });
       });
 
       for (const event of eventsStorageSome.values()) {
@@ -116,9 +178,9 @@ export function useDataStorage(): StorageContext {
       setClientData(
         O.Some({
           eventsStorage: eventsStorageSome,
-          calendarsStorage: calendarStorage.unwrap(),
+          calendarsStorage: calendarStorageUnwraped,
           eventsTemplateStorage: templateStorage.unwrap(),
-          projectsStorage: projectsStorage.unwrap(),
+          projectsStorage: projectsStorageUnwraped,
         }),
       );
     }
