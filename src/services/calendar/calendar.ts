@@ -218,10 +218,10 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
         };
 
         const validated = validateTypes(newCalendar, CalendarStorage.validator);
-        const result = validated.mapOrElse(
+        const result = validated.mapOrElse<R.Result<Calendar, symbol>>(
           (err) => R.Err(err),
           () => {
-            return this.map.setNotDefined(calendarsId, newCalendar);
+            return this.map.set(calendarsId, newCalendar);
           },
         );
 
@@ -231,8 +231,9 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
           opsSpecific: calendarFound,
         });
 
-        return result.unwrap();
+        return result.option();
       })
+      .flatten<O.Option<Calendar>, Calendar>()
       .ok(Symbol("Event not found"));
   }
 
