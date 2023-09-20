@@ -178,13 +178,32 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
     );
   }
 
-  @emitEvent("removeAll")
-  removeAll(predicate: (value: Calendar) => boolean): Calendar[] {
+  @emitEvent("removeWithFilter")
+  removeWithFilter(predicate: (value: Calendar) => boolean): Calendar[] {
     const result = this.map.removeAll(
       (value) => !value.default && predicate(value),
     );
 
     return result.unwrap().map(([, calendar]) => calendar);
+  }
+
+  @emitEvent("removeAll")
+  removeAll(listOfIds: Array<Calendar["id"]>) {
+    return listOfIds
+      .map((id) => {
+        return this.map.remove(id);
+      })
+      .reduce(
+        (acc, value) =>
+          value.mapOrElse(
+            () => acc,
+            (ok) => {
+              acc.push([ok.id, ok]);
+              return acc;
+            },
+          ),
+        [] as Array<[Calendar["id"], Calendar]>,
+      );
   }
 
   update(calendarsId: string, calendar: UpdateCalendar) {

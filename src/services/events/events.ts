@@ -122,10 +122,31 @@ class EventStorage
     return this.map.remove(eventId);
   }
 
-  @emitEvent("removeAll")
-  removeAll(predicate: (event: CalendarEvent) => boolean): CalendarEvent[] {
+  @emitEvent("removeWithFilter")
+  removeWithFilter(
+    predicate: (event: CalendarEvent) => boolean,
+  ): CalendarEvent[] {
     const result = this.map.removeAll(predicate);
     return result.unwrap().map(([, value]) => value);
+  }
+
+  @emitEvent("removeAll")
+  removeAll(listOfIds: Array<CalendarEvent["id"]>) {
+    return listOfIds
+      .map((id) => {
+        return this.map.remove(id);
+      })
+      .reduce(
+        (acc, value) =>
+          value.mapOrElse(
+            () => acc,
+            (ok) => {
+              acc.push([ok.id, ok]);
+              return acc;
+            },
+          ),
+        [] as Array<[CalendarEvent["id"], CalendarEvent]>,
+      );
   }
 
   findById(eventId: string): O.Option<CalendarEvent> {

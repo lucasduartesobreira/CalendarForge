@@ -51,12 +51,33 @@ export class EventTemplateStorage
     return this.eventTemplates.remove(id);
   }
 
-  @emitEvent("removeAll")
-  removeAll(predicate: (value: EventTemplate) => boolean): EventTemplate[] {
+  @emitEvent("removeWithFilter")
+  removeWithFilter(
+    predicate: (value: EventTemplate) => boolean,
+  ): EventTemplate[] {
     return this.eventTemplates
       .removeAll(predicate)
       .unwrap()
       .map(([, value]) => value);
+  }
+
+  @emitEvent("removeAll")
+  removeAll(listOfIds: Array<EventTemplate["id"]>) {
+    return listOfIds
+      .map((id) => {
+        return this.eventTemplates.remove(id);
+      })
+      .reduce(
+        (acc, value) =>
+          value.mapOrElse(
+            () => acc,
+            (ok) => {
+              acc.push([ok.id, ok]);
+              return acc;
+            },
+          ),
+        [] as Array<[EventTemplate["id"], EventTemplate]>,
+      );
   }
 
   filteredValues(

@@ -181,7 +181,8 @@ export interface StorageActions<K, V extends Record<string, any> & { id: K }> {
   add(value: AddValue<V>): R.Result<V, symbol>;
   update(id: K, updateValue: UpdateValue<V>): R.Result<V, symbol>;
   remove(id: K): R.Result<V, symbol>;
-  removeAll(predicate: (value: V) => boolean): V[];
+  removeWithFilter(predicate: (value: V) => boolean): V[];
+  removeAll(list: K[]): Array<[K, V]>;
   findById(id: K): O.Option<V>;
   filteredValues(predicate: (value: V) => boolean): V[];
   all(): V[];

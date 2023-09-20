@@ -57,6 +57,7 @@ const AddNew = () => {
             }}
             initialProjectCalendar={{
               name: "",
+              default: false,
               timezone: (-new Date().getTimezoneOffset() / 60) as Timezones,
             }}
             fixProjectCalendar={(form, localCalendars) => {
@@ -92,7 +93,7 @@ const AddNew = () => {
 
               if (!calendarsSaved.isOk()) {
                 const [_errorMsg, calendars] = calendarsSaved.unwrap_err();
-                calendarsStorage.removeAll(
+                calendarsStorage.removeWithFilter(
                   (value) =>
                     calendars.find((id) => id === value.id) != undefined,
                 );

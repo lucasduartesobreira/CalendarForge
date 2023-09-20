@@ -89,9 +89,28 @@ export class ProjectStorage
     return this.map.remove(id);
   }
 
+  @emitEvent("removeWithFilter")
+  removeWithFilter(predicate: (value: Project) => boolean): Project[] {
+    return this.removeWithFilter(predicate);
+  }
+
   @emitEvent("removeAll")
-  removeAll(predicate: (value: Project) => boolean): Project[] {
-    return this.removeAll(predicate);
+  removeAll(listOfIds: Array<Project["id"]>) {
+    return listOfIds
+      .map((id) => {
+        return this.map.remove(id);
+      })
+      .reduce(
+        (acc, value) =>
+          value.mapOrElse(
+            () => acc,
+            (ok) => {
+              acc.push([ok.id, ok]);
+              return acc;
+            },
+          ),
+        [] as Array<[Project["id"], Project]>,
+      );
   }
 
   findById(id: string): O.Option<Project> {
