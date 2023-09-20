@@ -1,13 +1,43 @@
 import { CreateCalendarForm } from "@/components/calendar/forms/createCalendar";
 import { UpdateProjectCalendarForm } from "@/components/calendar/forms/updateCalendar";
 import OutsideClick from "@/components/utils/outsideClick";
-import { CreateCalendar } from "@/services/calendar/calendar";
+import { Calendar, CreateCalendar } from "@/services/calendar/calendar";
 import { Project } from "@/services/projects/projectsStorage";
 import * as O from "@/utils/option";
-import { AddValue } from "@/utils/storage";
-import React, { FormEvent, RefObject, useRef, useState } from "react";
+import { AddValue, UpdateValue } from "@/utils/storage";
+import React, {
+  FormEvent,
+  PropsWithChildren,
+  RefObject,
+  useRef,
+  useState,
+} from "react";
 
-export const CreateProjectForm = ({
+type UpdateOrCreateCalendar<V> = V extends AddValue<Project>
+  ? AddValue<Calendar>
+  : AddValue<Calendar> & { id?: Project["id"] };
+
+type Prop<V extends AddValue<Project> | UpdateValue<Project>> = {
+  setOpenForm: (value: boolean) => void;
+  onSubmit: (
+    e: FormEvent<HTMLFormElement>,
+    form: V,
+    localCalendars: UpdateOrCreateCalendar<V>[],
+  ) => void;
+  refs: O.Option<RefObject<any>[]>;
+  fixProjectCalendar: (
+    form: V,
+    localCalendars: CreateCalendar,
+  ) => CreateCalendar;
+  initialForm: V;
+  initialCalendars: CreateCalendar[];
+  initialProjectCalendar: CreateCalendar;
+  deleteButton: O.Option<() => void>;
+};
+
+export function ProjectForm<
+  V extends UpdateValue<Project> | AddValue<Project>,
+>({
   setOpenForm,
   refs,
   onSubmit,
@@ -15,35 +45,21 @@ export const CreateProjectForm = ({
   initialCalendars,
   fixProjectCalendar,
   initialProjectCalendar,
-}: {
-  setOpenForm: (value: boolean) => void;
-  onSubmit: (
-    e: FormEvent<HTMLFormElement>,
-    form: AddValue<Project>,
-    localCalendars: CreateCalendar[],
-  ) => void;
-  refs: O.Option<RefObject<any>[]>;
-  fixProjectCalendar: (
-    form: AddValue<Project>,
-    localCalendars: CreateCalendar,
-  ) => CreateCalendar;
-  initialForm: AddValue<Project>;
-  initialCalendars: CreateCalendar[];
-  initialProjectCalendar: CreateCalendar;
-}) => {
-  const [form, setForm] = useState<AddValue<Project>>(initialForm);
+  deleteButton,
+}: PropsWithChildren<Prop<V>>) {
+  const [form, setForm] = useState<V>(initialForm);
 
   const [localCalendars, setLocalCalendars] =
-    useState<CreateCalendar[]>(initialCalendars);
+    useState<AddValue<Calendar>[]>(initialCalendars);
 
-  const [projectCalendar, setProjectCalendar] = useState<CreateCalendar>(
+  const [projectCalendar, setProjectCalendar] = useState<AddValue<Calendar>>(
     initialProjectCalendar,
   );
 
   const [openAddCalendar, setOpenAddCalendar] = useState(false);
 
   const [editCalendar, setEditCalendar] = useState<
-    O.Option<[CreateCalendar, number]>
+    O.Option<[AddValue<Calendar>, number]>
   >(O.None());
 
   const ref = useRef(null);
@@ -57,7 +73,7 @@ export const CreateProjectForm = ({
       className="fixed top-1/2 flex w-full justify-center"
     >
       <form
-        className="flex-auto max-w-[30%] bg-white p-2 text-gray-400 flex flex-col"
+        className="flex-auto relative max-w-[30%] bg-white p-2 text-gray-400 flex flex-col"
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -83,7 +99,7 @@ export const CreateProjectForm = ({
         </label>
         <label>
           Calendars
-          {projectCalendar.name.length != 0 ? (
+          {projectCalendar.name?.length != 0 ? (
             <div>{projectCalendar.name}</div>
           ) : null}
           <div>
@@ -96,12 +112,7 @@ export const CreateProjectForm = ({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        setEditCalendar(
-                          O.Some([calendar, index] satisfies [
-                            CreateCalendar,
-                            number,
-                          ]),
-                        );
+                        setEditCalendar(O.Some([calendar, index]));
                         setOpenAddCalendar(false);
                       }}
                       className="text-yellow-500"
@@ -142,6 +153,24 @@ export const CreateProjectForm = ({
           type="submit"
           className="rounded-md text-white bg-blue-500"
         />
+        {deleteButton.mapOrElse(
+          () => null,
+          (fn) => {
+            return (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  fn();
+                  setOpenForm(false);
+                }}
+                className="absolute rounded-md right-[4px] top-[4px]"
+              >
+                Delete
+              </button>
+            );
+          },
+        )}
       </form>
       {openAddCalendar && (
         <CreateCalendarForm
@@ -172,4 +201,4 @@ export const CreateProjectForm = ({
       )}
     </OutsideClick>
   );
-};
+}
