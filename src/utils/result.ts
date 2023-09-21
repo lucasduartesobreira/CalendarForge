@@ -38,10 +38,22 @@ class Result<O, E> {
 
   map<B>(f: (value: O) => B): Result<B, E> {
     if (this.result.kind === "ok") {
-      return new Okay(f(this.result.value));
+      return Ok(f(this.result.value));
+    } else if (this.result.kind === "err") {
+      return Err(this.result.value);
+    } else {
+      throw "unreachable";
     }
+  }
 
-    return new Error(this.result.value);
+  mapErr<B>(f: (value: E) => B): Result<O, B> {
+    if (this.result.kind === "err") {
+      return Err(f(this.result.value));
+    } else if (this.result.kind === "ok") {
+      return Ok(this.result.value);
+    } else {
+      throw "unreachable";
+    }
   }
 
   unwrapOrElse(f: (err: E) => O): O {
