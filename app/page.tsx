@@ -7,6 +7,9 @@ import { StorageContext, useDataStorage } from "@/hooks/dataHook";
 import { useMap } from "@/hooks/mapHook";
 import { WeekNavigation } from "./components/calendar/navBar";
 import ProjectsSideBar from "@/components/projects/sidebar/sideBar";
+import Container, { Boards } from "./components/boards/boards";
+import { None, Option } from "@/utils/option";
+import { Project } from "@/services/projects/projectsStorage";
 
 const NavBar = ({ children }: { children: any }) => {
   return (
@@ -73,13 +76,16 @@ const useDate = () => {
 };
 
 const ProjectsContent = () => {
+  const [project, setProject] = useState<Option<Project>>(None());
   return (
     <>
       <ProjectsSideBar.SideBar>
-        <ProjectsSideBar.Content />
+        <ProjectsSideBar.Content selectProject={setProject} />
         <ProjectsSideBar.AddNew />
       </ProjectsSideBar.SideBar>
-      <div>Projects</div>
+      <Container>
+        <Boards.ProjectBoards project={project}></Boards.ProjectBoards>
+      </Container>
     </>
   );
 };

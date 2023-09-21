@@ -1,6 +1,7 @@
 import { StorageContext } from "@/hooks/dataHook";
 import {
   PropsWithChildren,
+  RefObject,
   useContext,
   useReducer,
   useRef,
@@ -17,7 +18,11 @@ const SideBar = ({ children }: PropsWithChildren) => {
   return <div className="flex-none relative w-[15%] h-[100%]">{children}</div>;
 };
 
-const Content = () => {
+const Content = ({
+  selectProject,
+}: {
+  selectProject: (project: O.Option<Project>) => void;
+}) => {
   const { storages } = useContext(StorageContext);
   const [edit, setEdit] = useState<O.Option<Project>>(O.None());
   const refList = useRef(null);
@@ -30,11 +35,24 @@ const Content = () => {
           <>
             <div ref={refList}>
               {projectsStorage.all().map((project) => {
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                const ref = useRef(null);
                 return (
-                  <div key={project.id}>
+                  <div
+                    key={project.id}
+                    onClick={(e) => {
+                      if (
+                        ref.current != null &&
+                        !(ref as RefObject<any>).current.contains(e.target)
+                      ) {
+                        selectProject(O.Some(project));
+                      }
+                    }}
+                  >
                     <a>{project.title}</a>
                     <button
                       className="text-yellow-500"
+                      ref={ref}
                       onClick={(e) => {
                         setEdit(O.Some(project));
                       }}
