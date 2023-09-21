@@ -79,12 +79,18 @@ class Result<O, E> {
     }
   }
 
-  flatten(this: Result<Result<O, E>, E>): Result<O, E> {
+  flatten<NO>(this: Result<Result<NO, E>, E>): Result<NO, E> {
     if (this.result.kind === "ok") {
-      return this.unwrap();
-    } else {
+      return this.result.value;
+    } else if (this.result.kind === "err") {
       return Err(this.result.value);
+    } else {
+      throw "unreachable";
     }
+  }
+
+  andThen<K>(f: (value: O) => Result<K, E>): Result<K, E> {
+    return this.map(f).flatten();
   }
 }
 
