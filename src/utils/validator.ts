@@ -1,15 +1,36 @@
-import { TypeOfTag } from "typescript";
 import * as R from "./result";
 
 export type ValidatorType<A> = {
   [Key in keyof A]: A[Key] extends undefined
-    ? { optional: true; type: TypeOfTag; validator?: (a: A[Key]) => boolean }
+    ? {
+        optional: true;
+        type: ReverseMapping<A[Key]>;
+        validator?: (a: A[Key]) => boolean;
+      }
     : {
         optional: false;
-        type: TypeOfTag;
+        type: ReverseMapping<A[Key]>;
         validator?: (a: A[Key]) => boolean;
       };
 };
+
+type ReverseMapping<T> = T extends string
+  ? "string"
+  : T extends number
+  ? "number"
+  : T extends bigint
+  ? "bigint"
+  : T extends boolean
+  ? "boolean"
+  : T extends symbol
+  ? "symbol"
+  : T extends undefined
+  ? "undefined"
+  : T extends object
+  ? "object"
+  : T extends Function
+  ? "function"
+  : never;
 
 export const validateTypes = <A extends Record<string, any>>(
   a: A,
