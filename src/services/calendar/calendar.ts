@@ -233,7 +233,7 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
 
         return result.option();
       })
-      .flatten<O.Option<Calendar>, Calendar>()
+      .flatten()
       .ok(Symbol("Event not found"));
   }
 
