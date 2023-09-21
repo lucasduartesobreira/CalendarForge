@@ -60,7 +60,7 @@ class Option<T> {
     }
   }
 
-  flatten<T extends Option<unknown>>(this: Option<T>): T {
+  flatten<V>(this: Option<Option<V>>): Option<V> {
     if (this.value.kind === "some") {
       return this.value.value;
     } else {
