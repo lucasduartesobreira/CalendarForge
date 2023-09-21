@@ -156,18 +156,18 @@ const Content = ({
                                     );
                                 },
                               );
-                            return result.mapOrElse<
-                              R.Result<
-                                [Calendar, O.Option<Calendar>][],
-                                [symbol, [Calendar, O.Option<Calendar>][]]
-                              >
-                            >(
-                              (err) => R.Err([err, calendarsSaved]),
-                              ([calendar, option]) => {
+                            return result
+                              .map(([calendar, option]) => {
                                 calendarsSaved.push([calendar, option]);
-                                return R.Ok(calendarsSaved);
-                              },
-                            );
+                                return calendarsSaved;
+                              })
+                              .mapErr(
+                                (err) =>
+                                  [err, calendarsSaved] as [
+                                    symbol,
+                                    typeof calendarsSaved,
+                                  ],
+                              );
                           },
                           R.Ok([]) as R.Result<
                             [Calendar, O.Option<Calendar>][],
