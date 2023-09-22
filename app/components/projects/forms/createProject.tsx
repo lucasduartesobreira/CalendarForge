@@ -70,7 +70,7 @@ export function ProjectForm<
       doSomething={() => {
         setOpenForm(false);
       }}
-      className="fixed top-1/2 flex w-full justify-center"
+      className="fixed z-[1000] top-1/2 flex w-full justify-center"
     >
       <form
         className="flex-auto relative max-w-[30%] bg-white p-2 text-gray-400 flex flex-col"
