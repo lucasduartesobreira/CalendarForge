@@ -3,6 +3,7 @@ import {
   BetterEventEmitter,
   EventArg,
   MyEventEmitter,
+  emitEvent,
 } from "@/utils/eventEmitter";
 import * as O from "@/utils/option";
 import * as R from "@/utils/result";
@@ -61,6 +62,8 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
   >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
     this.eventEmitter.on(event, handler);
   }
+
+  @emitEvent("add")
   add(value: AddValue<Board>): R.Result<Board, symbol> {
     const id = idGenerator();
     return this.boards.set(id, { id, ...value });
@@ -70,7 +73,7 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
     updatedValue: Partial<AddValue<Board>>,
   ): R.Result<Board, symbol> {
     const found = this.boards.get(id);
-    return found
+    const result = found
       .map((board) => {
         const validated = validateTypes(
           {
@@ -86,16 +89,27 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
       })
       .ok(Symbol("Cannot find board with this id"))
       .flatten();
+
+    this.emit("update", {
+      args: [id, updatedValue],
+      result,
+      opsSpecific: found,
+    });
+
+    return result;
   }
+  @emitEvent("remove")
   remove(id: string): R.Result<Board, symbol> {
     return this.boards.remove(id);
   }
+  @emitEvent("removeWithFilter")
   removeWithFilter(predicate: (value: Board) => boolean): Board[] {
     return this.boards
       .removeAll(predicate)
       .unwrap()
       .map(([, board]) => board);
   }
+  @emitEvent("removeAll")
   removeAll(list: string[]): [string, Board][] {
     return list
       .map((id) => this.remove(id))
