@@ -16,7 +16,7 @@ import {
 import { idGenerator } from "@/utils/idGenerator";
 import { Project } from "../projects/projectsStorage";
 
-type Board = {
+export type Board = {
   id: string;
   title: string;
   project_id: string;
