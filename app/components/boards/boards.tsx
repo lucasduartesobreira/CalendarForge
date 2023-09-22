@@ -1,19 +1,28 @@
+import { StorageContext } from "@/hooks/dataHook";
 import { Project } from "@/services/projects/projectsStorage";
 import { Option } from "@/utils/option";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useContext } from "react";
 
 export default function Container({ children }: PropsWithChildren) {
   return <div className="flex">{children}</div>;
 }
 
 function ProjectBoards({ project }: { project: Option<Project> }) {
-  return project.mapOrElse(
+  const { storages } = useContext(StorageContext);
+  return storages.mapOrElse(
     () => null,
-    (project) => {
-      const boards = [1];
-      return boards.map((board, index) => (
-        <div key={index}>{project.title} board</div>
-      ));
+    ({ boardsStorage }) => {
+      return project.mapOrElse(
+        () => null,
+        (project) => {
+          const boards = boardsStorage
+            .all()
+            .filter((board) => board.project_id === project.id);
+          return boards.map((board, index) => (
+            <div key={index}>{board.title} board</div>
+          ));
+        },
+      );
     },
   );
 }
