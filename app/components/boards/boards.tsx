@@ -15,11 +15,11 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
       return project.mapOrElse(
         () => null,
         (project) => {
-          const boards = boardsStorage
-            .all()
-            .filter((board) => board.project_id === project.id);
+          const boards = boardsStorage.allBoardsFromProject(project.id);
           return boards.map((board, index) => (
-            <div key={index}>{board.title} board</div>
+            <div key={index} className="bg-white w-[360px] h-full">
+              {board.title}
+            </div>
           ));
         },
       );

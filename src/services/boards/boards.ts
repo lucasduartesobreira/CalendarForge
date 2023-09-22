@@ -7,8 +7,14 @@ import {
 } from "@/utils/eventEmitter";
 import * as O from "@/utils/option";
 import * as R from "@/utils/result";
-import { StorageActions, AddValue, MapLocalStorage } from "@/utils/storage";
+import {
+  StorageActions,
+  AddValue,
+  MapLocalStorage,
+  Index,
+} from "@/utils/storage";
 import { idGenerator } from "@/utils/idGenerator";
+import { Project } from "../projects/projectsStorage";
 
 type Board = {
   id: string;
@@ -45,6 +51,10 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
     const localStorage = MapLocalStorage.new<Board["id"], Board>(
       "boards",
       forceUpdate,
+      new Map(),
+      {
+        project_id: [new Index(new Map(), "project_id", "id")],
+      },
     );
 
     return localStorage.map((storage) => new BoardStorage(storage));
@@ -134,5 +144,23 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
   }
   all(): Board[] {
     return this.boards.values();
+  }
+  allBoardsFromProject(projectId: Project["id"]) {
+    return this.boards
+      .allWithIndex("project_id", "id", projectId)
+      .map((ids) =>
+        ids.reduce((acc, id) => {
+          this.boards.get(id).map((value) => acc.push(value));
+          return acc;
+        }, [] as Board[]),
+      )
+      .mapOrElse(
+        () => {
+          return this.boards.filterValues(
+            ({ project_id }) => project_id === projectId,
+          );
+        },
+        (ok) => ok,
+      );
   }
 }
