@@ -3,7 +3,7 @@ import * as R from "./result";
 
 function syncStorage<
   K,
-  V,
+  V extends Record<any, any>,
   This extends MapLocalStorage<K, V>,
   Args extends any[],
   Return,
@@ -26,7 +26,7 @@ function syncStorage<
 
 function forceRender<
   K,
-  V,
+  V extends Record<any, any>,
   This extends MapLocalStorage<K, V>,
   Args extends any[],
   Return,
@@ -47,18 +47,26 @@ function forceRender<
   return replacementMethod;
 }
 
-export class MapLocalStorage<K, V> {
+export class MapLocalStorage<K, V extends Record<any, any>> {
   private map: Map<K, V>;
   private path: string;
   forceRender: () => void;
+
+  indexes?: {
+    [From in keyof V]?: Index<From, Exclude<keyof V, From>, V>[];
+  };
 
   private constructor(
     path: string,
     forceRender: () => void,
     initialValue: Map<K, V> | IterableIterator<[K, V]> = new Map(),
+    indexes?: {
+      [From in keyof V]?: Index<From, Exclude<keyof V, From>, V>[];
+    },
   ) {
     this.path = path;
     this.forceRender = forceRender;
+    this.indexes = indexes;
 
     const localStorageItemsString = localStorage.getItem(path);
     if (localStorageItemsString) {
@@ -69,15 +77,38 @@ export class MapLocalStorage<K, V> {
       this.map = new Map(initialValue);
       this.syncLocalStorage();
     }
+
+    for (const value of this.map.values()) {
+      this.addIndex(value);
+    }
   }
 
-  static new<K, V>(
+  private addIndex(value: V) {
+    const indexes = this.indexes;
+    if (indexes) {
+      for (const [, toIndexes] of Object.entries(indexes) as [
+        keyof V,
+        Index<keyof V, Exclude<keyof V, keyof V>, V>[],
+      ][]) {
+        for (const index of toIndexes) {
+          index.add(value);
+        }
+      }
+    }
+  }
+
+  static new<K, V extends Record<any, any>>(
     path: string,
     forceRender: () => void,
     initialValue: Map<K, V> | IterableIterator<[K, V]> = new Map(),
+    indexes?: {
+      [From in keyof V]?: Index<From, Exclude<keyof V, From>, V>[];
+    },
   ): R.Result<MapLocalStorage<K, V>, symbol> {
     if (typeof window != "undefined")
-      return R.Ok(new MapLocalStorage<K, V>(path, forceRender, initialValue));
+      return R.Ok(
+        new MapLocalStorage<K, V>(path, forceRender, initialValue, indexes),
+      );
 
     return R.Err(Symbol("Cannot create a storage on serverside"));
   }
@@ -135,6 +166,17 @@ export class MapLocalStorage<K, V> {
     return R.Ok(removed);
   }
 
+  allWithIndex<A extends keyof V, B extends Exclude<keyof V, A>>(
+    from: A,
+    to: B,
+    value: V[A],
+  ): O.Option<string[]> {
+    const indexedValues = this.indexes
+      ? this.indexes[from]?.find((index) => index.getTo() === to)?.all(value)
+      : undefined;
+
+    return indexedValues ? O.Some(indexedValues) : O.None();
+  }
   get(key: K) {
     const found = this.map.get(key);
     return found ? O.Some(found) : O.None();
@@ -172,6 +214,72 @@ export class MapLocalStorage<K, V> {
 
   syncLocalStorage() {
     localStorage.setItem(this.path, JSON.stringify(this.thisMapToString()));
+  }
+}
+
+type Sla<From extends KeyType, To extends KeyType> = Record<To, string> &
+  Record<From, string>;
+
+type KeyType = string | symbol | number;
+export class Index<
+  From extends keyof V,
+  To extends Exclude<keyof V, From>,
+  V extends Record<any, any>,
+> {
+  private map: Map<string, string[]>;
+  private from: From;
+  private to: To;
+  constructor(map: Map<string, string[]>, from: From, to: To) {
+    this.map = map;
+    this.from = from;
+    this.to = to;
+  }
+
+  getFrom() {
+    return this.from;
+  }
+
+  getTo() {
+    return this.to;
+  }
+
+  add(value: V) {
+    const valueFrom = value[this.from];
+    const valueTo = value[this.to];
+    const found = this.map.get(valueFrom);
+    if (found) {
+      const valueTo = value[this.to];
+      const alreadyRegistered = found.find((index) => valueTo === index);
+      if (!alreadyRegistered) {
+        found.push(valueTo);
+        this.map.set(valueFrom, found);
+      }
+
+      return;
+    }
+    this.map.set(valueFrom, [valueTo]);
+  }
+
+  remove(value: V) {
+    const valueFrom = value[this.from];
+    const found = this.map.get(valueFrom);
+    if (found) {
+      const valueTo = value[this.to];
+      const foundTo = found.findIndex((value) => value === valueTo);
+      if (foundTo >= 0) {
+        found.splice(foundTo, 1);
+      }
+
+      this.map.set(valueFrom, found);
+    }
+  }
+
+  all(valueFrom: V[From]) {
+    const found = this.map.get(valueFrom.toString());
+    if (found) {
+      return found;
+    }
+    return [];
   }
 }
 
