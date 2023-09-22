@@ -3,7 +3,7 @@ import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
 import { FormEvent, RefObject, useState } from "react";
 import { Option } from "@/utils/option";
 
-const initialCalendar: CreateCalendar = { name: "", timezone: 0 };
+const initialCalendar: CreateCalendar = { name: "", timezone: 0, default: false };
 
 export const CreateCalendarForm = ({
   refs,
