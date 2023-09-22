@@ -35,31 +35,13 @@ const Content = ({
           <>
             <div ref={refList}>
               {projectsStorage.all().map((project) => {
-                // eslint-disable-next-line react-hooks/rules-of-hooks
-                const ref = useRef(null);
                 return (
-                  <div
+                  <ProjectItemList
                     key={project.id}
-                    onClick={(e) => {
-                      if (
-                        ref.current != null &&
-                        !(ref as RefObject<any>).current.contains(e.target)
-                      ) {
-                        selectProject(O.Some(project));
-                      }
-                    }}
-                  >
-                    <a>{project.title}</a>
-                    <button
-                      className="text-yellow-500"
-                      ref={ref}
-                      onClick={(e) => {
-                        setEdit(O.Some(project));
-                      }}
-                    >
-                      Edit
-                    </button>
-                  </div>
+                    setEdit={setEdit}
+                    selectProject={selectProject}
+                    project={project}
+                  ></ProjectItemList>
                 );
               })}
             </div>
@@ -203,6 +185,42 @@ const Content = ({
           </>
         ),
       )}
+    </div>
+  );
+};
+
+const ProjectItemList = ({
+  project,
+  selectProject,
+  setEdit,
+}: {
+  project: Project;
+  selectProject: (project: O.Option<Project>) => void;
+  setEdit: (project: O.Option<Project>) => void;
+}) => {
+  const ref = useRef(null);
+  return (
+    <div
+      key={project.id}
+      onClick={(e) => {
+        if (
+          ref.current != null &&
+          !(ref as RefObject<any>).current.contains(e.target)
+        ) {
+          selectProject(O.Some(project));
+        }
+      }}
+    >
+      <a>{project.title}</a>
+      <button
+        className="text-yellow-500"
+        ref={ref}
+        onClick={(e) => {
+          setEdit(O.Some(project));
+        }}
+      >
+        Edit
+      </button>
     </div>
   );
 };
