@@ -1,12 +1,20 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { Project } from "@/services/projects/projectsStorage";
 import { Option } from "@/utils/option";
-import { PropsWithChildren, useContext, useEffect, useReducer } from "react";
+import {
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useReducer,
+  useState,
+} from "react";
 import { Board, BoardStorage } from "@/services/boards/boards";
 
 export default function Container({ children }: PropsWithChildren) {
   return (
-    <div className="flex h-full w-full bg-gray-100 relative">{children}</div>
+    <div className="flex h-full w-full bg-gray-100 relative overflow-auto">
+      {children}
+    </div>
   );
 }
 
