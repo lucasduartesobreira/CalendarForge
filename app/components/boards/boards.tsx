@@ -59,7 +59,7 @@ function AddBoard({
             boardsStorage.add({
               title: "New Board",
               project_id: project.id,
-              position: boardsNumber - 1,
+              position: boardsNumber,
             });
           });
         }}
