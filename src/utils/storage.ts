@@ -97,6 +97,20 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
     }
   }
 
+  private removeIndex(value: V) {
+    const indexes = this.indexes;
+    if (indexes) {
+      for (const [, toIndexes] of Object.entries(indexes) as [
+        keyof V,
+        Index<keyof V, Exclude<keyof V, keyof V>, V>[],
+      ][]) {
+        for (const index of toIndexes) {
+          index.add(value);
+        }
+      }
+    }
+  }
+
   static new<K, V extends Record<any, any>>(
     path: string,
     forceRender: () => void,
@@ -117,6 +131,7 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
   @syncStorage
   set(key: K, value: V) {
     this.map.set(key, value);
+    this.addIndex(value);
     return R.Ok(this.map.get(key) as V);
   }
 
@@ -125,6 +140,7 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
   setNotDefined(key: K, value: V) {
     if (!this.map.has(key)) {
       this.map.set(key, value);
+      this.addIndex(value);
       return R.Ok(value);
     }
 
@@ -136,6 +152,7 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
   clear() {
     const map = new Map(this.map);
     this.map.clear();
+    map.forEach((value) => this.removeIndex(value));
 
     return map;
   }
@@ -146,6 +163,7 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
     const value = this.map.get(key);
     if (value != null) {
       this.map.delete(key);
+      this.removeIndex(value);
       return R.Ok(value);
     }
 
@@ -159,6 +177,7 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
     for (const [key, value] of this.map.entries()) {
       if (predicate(value)) {
         this.map.delete(key);
+        this.removeIndex(value);
         removed.push([key, value]);
       }
     }
@@ -197,7 +216,7 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
     const filtered = [] as V[];
     for (const value of this.map.values()) {
       if (predicate(value)) {
-        filtered.push();
+        filtered.push(value);
       }
     }
 
@@ -252,12 +271,12 @@ export class Index<
       const alreadyRegistered = found.find((index) => valueTo === index);
       if (!alreadyRegistered) {
         found.push(valueTo);
-        this.map.set(valueFrom, found);
+        this.map = new Map(this.map.set(valueFrom, found));
       }
 
       return;
     }
-    this.map.set(valueFrom, [valueTo]);
+    this.map = new Map(this.map.set(valueFrom, [valueTo]));
   }
 
   remove(value: V) {

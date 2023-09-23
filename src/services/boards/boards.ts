@@ -20,6 +20,7 @@ export type Board = {
   id: string;
   title: string;
   project_id: string;
+  position: number;
 };
 
 const BoardValidator: ValidatorType<Board> = {
@@ -29,6 +30,11 @@ const BoardValidator: ValidatorType<Board> = {
     optional: false,
     type: "string",
     validator: (value) => value.length !== 0,
+  },
+  position: {
+    optional: false,
+    type: "number",
+    validator: (value) => value >= 0,
   },
 };
 
@@ -90,6 +96,7 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
             id,
             title: updatedValue.title ?? board.title,
             project_id: updatedValue.project_id ?? board.title,
+            position: updatedValue.position ?? board.position,
           },
           BoardValidator,
         );
