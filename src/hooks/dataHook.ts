@@ -211,6 +211,7 @@ export function useDataStorage(): StorageContext {
     eventsUpdated,
     templatesUpdated,
     projectsUpdated,
+    boardsUpdated,
   ]);
 
   return memoized;
