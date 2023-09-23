@@ -1,8 +1,8 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { Project } from "@/services/projects/projectsStorage";
 import { Option } from "@/utils/option";
-import { PropsWithChildren, useContext } from "react";
-import { Board } from "@/services/boards/boards";
+import { PropsWithChildren, useContext, useEffect, useReducer } from "react";
+import { Board, BoardStorage } from "@/services/boards/boards";
 
 export default function Container({ children }: PropsWithChildren) {
   return (
@@ -22,7 +22,11 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
           return (
             <>
               {boards.map((board, index) => (
-                <Board key={index} board={board}></Board>
+                <Board
+                  key={index}
+                  boardsStorages={boardsStorage}
+                  initialBoard={board}
+                ></Board>
               ))}
               <AddBoard project={project}></AddBoard>
             </>
@@ -53,10 +57,42 @@ function AddBoard({ project }: { project: Project }) {
   );
 }
 
-function Board({ board }: { board: Board }) {
+function Board({
+  initialBoard,
+  boardsStorages,
+}: {
+  initialBoard: Board;
+  boardsStorages: BoardStorage;
+}) {
+  const [board, setBoard] = useReducer(
+    (state: Board, action: { type: "change_title"; title: Board["title"] }) => {
+      if (action.type === "change_title") {
+        return { ...state, title: action.title };
+      }
+
+      return state;
+    },
+    initialBoard,
+  );
+
+  useEffect(() => {
+    boardsStorages.update(initialBoard.id, { ...board }).mapOrElse(
+      () => board,
+      (ok) => ok,
+    );
+  }, [board]);
+
   return (
     <div className="bg-white h-full text-black">
-      <input value={board.title} />
+      <input
+        onChange={(e) => {
+          const newTitle = e.currentTarget.value;
+          if (newTitle.length !== board.title.length) {
+            setBoard({ type: "change_title", title: newTitle });
+          }
+        }}
+        value={board.title}
+      />
     </div>
   );
 }
