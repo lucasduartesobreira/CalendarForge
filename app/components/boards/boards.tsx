@@ -96,7 +96,7 @@ function Board({
   }, [board]);
 
   return (
-    <div className="bg-white h-full text-black">
+    <div className="bg-white h-full relative text-black">
       <input
         onChange={(e) => {
           const newTitle = e.currentTarget.value;
@@ -104,8 +104,18 @@ function Board({
             setBoard({ type: "change_title", title: newTitle });
           }
         }}
+        className="m-2"
         value={board.title}
       />
+
+      <button
+        className="align-top bg-red-500 rounded-md text-white absolute w-[16px] h-[16px] right-0 top-0"
+        onClick={(e) => {
+          boardsStorages.remove(board.id);
+        }}
+      >
+        -
+      </button>
     </div>
   );
 }
