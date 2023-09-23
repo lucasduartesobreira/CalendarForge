@@ -37,22 +37,30 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
   );
 }
 
-function AddBoard({ project }: { project: Project }) {
+function AddBoard({
+  project,
+  boardsNumber,
+}: {
+  project: Project;
+  boardsNumber: number;
+}) {
   const { storages } = useContext(StorageContext);
   return (
-    <div className="h-full w-[32px] absolute right-0">
-      <div className="relative h-full">
-        <button
-          className="absolute top-1/2 h-[32px] w-[32px] rounded-full bg-blue-500 text-white"
-          onClick={() => {
-            storages.map(({ boardsStorage }) => {
-              boardsStorage.add({ title: "New Board", project_id: project.id });
+    <div className="flex h-full w-[32px] sticky right-0 items-center">
+      <button
+        className="h-[32px] w-[32px] rounded-full bg-blue-500 text-white"
+        onClick={() => {
+          storages.map(({ boardsStorage }) => {
+            boardsStorage.add({
+              title: "New Board",
+              project_id: project.id,
+              position: boardsNumber - 1,
             });
-          }}
-        >
-          +
-        </button>
-      </div>
+          });
+        }}
+      >
+        +
+      </button>
     </div>
   );
 }
