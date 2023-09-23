@@ -28,7 +28,10 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
                   initialBoard={board}
                 ></Board>
               ))}
-              <AddBoard project={project}></AddBoard>
+              <AddBoard
+                project={project}
+                boardsNumber={boards.length}
+              ></AddBoard>
             </>
           );
         },
