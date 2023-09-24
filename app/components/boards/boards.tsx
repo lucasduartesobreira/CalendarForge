@@ -1,6 +1,6 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { Project } from "@/services/projects/projectsStorage";
-import { Option } from "@/utils/option";
+import { None, Option, Some } from "@/utils/option";
 import { PropsWithChildren, useContext, useEffect, useReducer } from "react";
 import { Board, BoardStorage } from "@/services/boards/boards";
 
@@ -20,16 +20,29 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
       return project.mapOrElse(
         () => null,
         (project) => {
-          const boards = boardsStorage.allBoardsFromProject(project.id);
+          const boards = boardsStorage
+            .allBoardsFromProject(project.id)
+            .sort((a, b) => {
+              return a.position - b.position;
+            });
+
           return (
             <>
-              {boards.map((board, index) => (
-                <Board
-                  key={index}
-                  boardsStorages={boardsStorage}
-                  initialBoard={board}
-                ></Board>
-              ))}
+              {boards.map((board, index, array) => {
+                return (
+                  <Board
+                    key={board.id}
+                    boardsStorages={boardsStorage}
+                    initialBoard={board}
+                    neighbours={[
+                      index - 1 >= 0 ? Some(array[index - 1]) : None(),
+                      index + 1 < array.length
+                        ? Some(array[index + 1])
+                        : None(),
+                    ]}
+                  ></Board>
+                );
+              })}
               <AddBoard
                 project={project}
                 boardsNumber={boards.length}
@@ -73,12 +86,19 @@ function AddBoard({
 function Board({
   initialBoard,
   boardsStorages,
+  neighbours,
 }: {
   initialBoard: Board;
   boardsStorages: BoardStorage;
+  neighbours: [prev: Option<Board>, next: Option<Board>];
 }) {
   const [board, setBoard] = useReducer(
-    (state: Board, action: { type: "change_title"; title: Board["title"] }) => {
+    (
+      state: Board,
+      action:
+        | { type: "change_title"; title: Board["title"] }
+        | { type: "change_position"; position: Board["position"] },
+    ) => {
       if (action.type === "change_title") {
         return { ...state, title: action.title };
       }
@@ -89,7 +109,7 @@ function Board({
   );
 
   useEffect(() => {
-    boardsStorages.update(initialBoard.id, { ...board }).mapOrElse(
+    boardsStorages.update(initialBoard.id, board).mapOrElse(
       () => board,
       (ok) => ok,
     );
@@ -108,14 +128,51 @@ function Board({
         value={board.title}
       />
 
-      <button
-        className="align-top bg-red-500 rounded-md text-white absolute w-[16px] h-[16px] right-0 top-0"
-        onClick={(e) => {
-          boardsStorages.remove(board.id);
-        }}
-      >
-        -
-      </button>
+      <div className="flex gap-2 absolute right-0 top-0 align-middle p-2 flex-row-reverse">
+        <button
+          className="bg-red-500 rounded-md text-white p-[4px]"
+          onClick={(e) => {
+            boardsStorages.remove(board.id);
+          }}
+        >
+          -
+        </button>
+        <button
+          className="bg-yellow-400 text-white rounded-md p-[4px]"
+          onClick={(e) => {
+            const [, next] = neighbours;
+            next.map(({ id: nextBoardId, position: nextBoardPosition }) => {
+              boardsStorages
+                .update(nextBoardId, { position: board.position })
+                .map(() =>
+                  boardsStorages.update(board.id, {
+                    position: nextBoardPosition,
+                  }),
+                );
+            });
+          }}
+        >
+          &gt;
+        </button>
+        <button
+          className="bg-yellow-400 text-white rounded-md p-[4px]"
+          onClick={(e) => {
+            e.preventDefault();
+            const [prev] = neighbours;
+            prev.map(({ id: prevBoardId, position: prevBoardPosition }) => {
+              boardsStorages
+                .update(prevBoardId, { position: board.position })
+                .map(() =>
+                  boardsStorages.update(board.id, {
+                    position: prevBoardPosition,
+                  }),
+                );
+            });
+          }}
+        >
+          &lt;
+        </button>
+      </div>
     </div>
   );
 }
