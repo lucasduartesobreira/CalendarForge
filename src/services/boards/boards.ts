@@ -95,7 +95,7 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
           {
             id,
             title: updatedValue.title ?? board.title,
-            project_id: updatedValue.project_id ?? board.title,
+            project_id: updatedValue.project_id ?? board.project_id,
             position: updatedValue.position ?? board.position,
           },
           BoardValidator,
