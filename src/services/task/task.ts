@@ -58,7 +58,7 @@ export class TaskStorage implements BetterEventEmitter<Task["id"], Task> {
   }
 
   static new(forceUpdate: () => void) {
-    const path = "projects";
+    const path = "tasks";
     const newStorage = MapLocalStorage.new<Task["id"], Task>(path, forceUpdate);
     return newStorage.map((storage) => new TaskStorage(storage));
   }

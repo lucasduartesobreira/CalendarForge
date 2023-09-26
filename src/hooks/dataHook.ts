@@ -63,13 +63,15 @@ export function useDataStorage(): StorageContext {
   const templateStorage = EventTemplateStorage.new(forceTemplatesUpdate);
   const projectsStorage = ProjectStorage.new(forceProjectsUpdate);
   const boardsStorage = BoardStorage.new(forceBoardsUpdate);
+  const tasksStorage = TaskStorage.new(forceTasksUpdate);
 
   const isDataReady =
     eventsStorage.isOk() &&
     calendarStorage.isOk() &&
     templateStorage.isOk() &&
     projectsStorage.isOk() &&
-    boardsStorage.isOk();
+    boardsStorage.isOk() &&
+    tasksStorage.isOk();
 
   useEffect(() => {
     if (isDataReady) {
@@ -78,6 +80,7 @@ export function useDataStorage(): StorageContext {
       const calendarStorageUnwraped = calendarStorage.unwrap();
       const projectsStorageUnwraped = projectsStorage.unwrap();
       const boardsStorageUnwrapped = boardsStorage.unwrap();
+      const tasksStorageUnwrapped = tasksStorage.unwrap();
 
       eventsStorageSome.on("add", ({ result: output }) => {
         if (output.isOk()) {
@@ -189,6 +192,7 @@ export function useDataStorage(): StorageContext {
           eventsTemplateStorage: templateStorage.unwrap(),
           projectsStorage: projectsStorageUnwraped,
           boardsStorage: boardsStorageUnwrapped,
+          tasksStorage: tasksStorageUnwrapped,
         }),
       );
     }
@@ -203,6 +207,7 @@ export function useDataStorage(): StorageContext {
         eventsStorageListener: eventsUpdated,
         projectsStorageListener: projectsUpdated,
         boardsStorageListener: boardsUpdated,
+        tasksStorageListener: tasksUpdated,
       },
     };
   }, [
@@ -212,6 +217,7 @@ export function useDataStorage(): StorageContext {
     templatesUpdated,
     projectsUpdated,
     boardsUpdated,
+    tasksUpdated,
   ]);
 
   return memoized;
