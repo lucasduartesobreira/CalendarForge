@@ -10,7 +10,7 @@ import { Result } from "@/utils/result";
 import { StorageActions, AddValue, MapLocalStorage } from "@/utils/storage";
 import { ValidatorType, validateTypes } from "@/utils/validator";
 
-type Task = {
+export type Task = {
   id: string;
   project_id: string;
   board_id: string;
