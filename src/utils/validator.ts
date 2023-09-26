@@ -5,12 +5,12 @@ export type ValidatorType<A> = {
     ? {
         optional: true;
         type: ReverseMapping<A[Key]>;
-        validator?: (a: A[Key]) => boolean;
+        validator?(this: A, a: A[Key]): boolean;
       }
     : {
         optional: false;
         type: ReverseMapping<A[Key]>;
-        validator?: (a: A[Key]) => boolean;
+        validator?(this: A, a: A[Key]): boolean;
       };
 };
 
@@ -42,7 +42,7 @@ export const validateTypes = <A extends Record<string, any>>(
 
     if (!optional) {
       return a[newK] !== undefined && typeof a[newK] === type && validator
-        ? validator(a[newK])
+        ? validator.call(a, a[newK])
         : true;
     }
 
