@@ -30,7 +30,6 @@ const TaskValidator: ValidatorType<Task> = {
     optional: true,
     type: "number",
     validator(this, date) {
-      console.log(this, date);
       return date && this.endDate ? date <= this.endDate : true;
     },
   },

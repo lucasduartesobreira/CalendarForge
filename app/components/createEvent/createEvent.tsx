@@ -226,7 +226,6 @@ const CreateEventForm = ({
               const template = templateStorage
                 .findById(selectedValue)
                 .unwrap() as CalendarEvent;
-              console.log(template);
               setForm({
                 ...template,
                 startDate: form.startDate,
