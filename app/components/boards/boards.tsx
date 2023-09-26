@@ -10,7 +10,7 @@ import {
 } from "react";
 import { Board, BoardStorage } from "@/services/boards/boards";
 import { Task } from "@/services/task/task";
-import { TaskForm } from "../tasks/forms/createTask";
+import { MiniatureTask, TaskForm } from "../tasks/forms/createTask";
 import { UpdateValue } from "@/utils/storage";
 
 export default function Container({ children }: PropsWithChildren) {
@@ -149,16 +149,11 @@ function Board({
 
         <div className="bg-gray-200 relative min-h-[6%] m-2 p-[4px] flex flex-col">
           {tasks.map((task, index) => (
-            <div
+            <MiniatureTask
+              setSelectedTask={setSelectedTask}
+              initialTask={task}
               key={index}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setSelectedTask(Some(task));
-              }}
-            >
-              {task.title}
-            </div>
+            ></MiniatureTask>
           ))}
           <button
             className="sticky bottom-0 w-full"

@@ -1,9 +1,10 @@
 import OutsideClick from "@/components/utils/outsideClick";
+import { StorageContext } from "@/hooks/dataHook";
 import { Task } from "@/services/task/task";
 import { getHTMLDateTime } from "@/utils/date";
-import { Option } from "@/utils/option";
+import { Option, Some } from "@/utils/option";
 import { AddValue, UpdateValue } from "@/utils/storage";
-import { RefObject, useReducer } from "react";
+import { RefObject, useContext, useEffect, useReducer, useState } from "react";
 
 type PropsFullPage<A> = {
   closeForm: () => void;
@@ -128,5 +129,48 @@ export function TaskForm<
         <input type="submit" value={"Save"} />
       </form>
     </OutsideClick>
+  );
+}
+
+export function MiniatureTask({
+  setSelectedTask,
+  initialTask: task,
+}: {
+  initialTask: Task;
+  setSelectedTask: (value: Option<Task>) => void;
+}) {
+  const [title, setTitle] = useState(task.title);
+  const [editable, setEditable] = useState(false);
+
+  const { storages } = useContext(StorageContext);
+
+  useEffect(() => {
+    storages.map(({ tasksStorage }) => tasksStorage.update(task.id, { title }));
+  }, [title]);
+  return (
+    <div className="relative">
+      <input
+        value={title}
+        className="bg-gray-200"
+        onDoubleClick={(e) => {
+          setEditable(true);
+        }}
+        onBlur={() => {
+          setEditable(false);
+        }}
+        readOnly={!editable}
+        onChange={(e) => setTitle(e.currentTarget.value)}
+      />
+      <button
+        className="text-yellow-500 p-[4px] rounded-md absolute right-0 -top-[20%]"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelectedTask(Some(task));
+        }}
+      >
+        edit
+      </button>
+    </div>
   );
 }
