@@ -9,7 +9,9 @@ import {
   useState,
 } from "react";
 import { Board, BoardStorage } from "@/services/boards/boards";
-import { Task, TaskStorage } from "@/services/task/task";
+import { Task } from "@/services/task/task";
+import { TaskForm } from "../tasks/forms/createTask";
+import { UpdateValue } from "@/utils/storage";
 
 export default function Container({ children }: PropsWithChildren) {
   return (
@@ -112,6 +114,7 @@ function Board({
   );
 
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [seletectedTask, setSelectedTask] = useState<Option<Task>>(None());
 
   useEffect(() => {
     // TODO: Add index
@@ -131,89 +134,117 @@ function Board({
   }, [board]);
 
   return (
-    <div className="bg-white h-full relative text-black overflow-auto">
-      <input
-        onChange={(e) => {
-          const newTitle = e.currentTarget.value;
-          if (newTitle.length !== board.title.length) {
-            setBoard({ type: "change_title", title: newTitle });
-          }
-        }}
-        className="m-2"
-        value={board.title}
-      />
+    <>
+      <div className="bg-white h-full relative text-black overflow-auto">
+        <input
+          onChange={(e) => {
+            const newTitle = e.currentTarget.value;
+            if (newTitle.length !== board.title.length) {
+              setBoard({ type: "change_title", title: newTitle });
+            }
+          }}
+          className="m-2"
+          value={board.title}
+        />
 
-      <div className="bg-gray-200 relative min-h-[6%] m-2 p-[4px] flex flex-col">
-        {tasks.map((task, index) => (
-          <div key={index}>{task.title}</div>
-        ))}
-        <button
-          className="sticky bottom-0 w-full"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            storages.map(({ tasksStorage }) => {
-              tasksStorage.add({
-                board_id: board.id,
-                title: "New task",
-                endDate: None(),
-                startDate: None(),
-                project_id: board.project_id,
-                description: "",
+        <div className="bg-gray-200 relative min-h-[6%] m-2 p-[4px] flex flex-col">
+          {tasks.map((task, index) => (
+            <div
+              key={index}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setSelectedTask(Some(task));
+              }}
+            >
+              {task.title}
+            </div>
+          ))}
+          <button
+            className="sticky bottom-0 w-full"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              storages.map(({ tasksStorage }) => {
+                tasksStorage.add({
+                  board_id: board.id,
+                  title: "New task",
+                  endDate: undefined,
+                  startDate: undefined,
+                  project_id: board.project_id,
+                  description: "",
+                });
               });
-            });
-          }}
-        >
-          Add Task
-        </button>
-      </div>
+            }}
+          >
+            Add Task
+          </button>
+        </div>
 
-      <div className="flex gap-2 absolute right-0 top-0 align-middle p-2 flex-row-reverse">
-        <button
-          className="bg-red-500 rounded-md text-white p-[4px]"
-          onClick={(e) => {
-            boardsStorage.remove(board.id);
-          }}
-        >
-          -
-        </button>
-        <button
-          className="bg-yellow-400 text-white rounded-md p-[4px]"
-          onClick={(e) => {
-            const [, next] = neighbours;
-            next.map(({ id: nextBoardId, position: nextBoardPosition }) => {
-              boardsStorage
-                .update(nextBoardId, { position: board.position })
-                .map(() =>
-                  boardsStorage.update(board.id, {
-                    position: nextBoardPosition,
-                  }),
-                );
-            });
-          }}
-        >
-          &gt;
-        </button>
-        <button
-          className="bg-yellow-400 text-white rounded-md p-[4px]"
-          onClick={(e) => {
-            e.preventDefault();
-            const [prev] = neighbours;
-            prev.map(({ id: prevBoardId, position: prevBoardPosition }) => {
-              boardsStorage
-                .update(prevBoardId, { position: board.position })
-                .map(() =>
-                  boardsStorage.update(board.id, {
-                    position: prevBoardPosition,
-                  }),
-                );
-            });
-          }}
-        >
-          &lt;
-        </button>
+        <div className="flex gap-2 absolute right-0 top-0 align-middle p-2 flex-row-reverse">
+          <button
+            className="bg-red-500 rounded-md text-white p-[4px]"
+            onClick={(e) => {
+              boardsStorage.remove(board.id);
+            }}
+          >
+            -
+          </button>
+          <button
+            className="bg-yellow-400 text-white rounded-md p-[4px]"
+            onClick={(e) => {
+              const [, next] = neighbours;
+              next.map(({ id: nextBoardId, position: nextBoardPosition }) => {
+                boardsStorage
+                  .update(nextBoardId, { position: board.position })
+                  .map(() =>
+                    boardsStorage.update(board.id, {
+                      position: nextBoardPosition,
+                    }),
+                  );
+              });
+            }}
+          >
+            &gt;
+          </button>
+          <button
+            className="bg-yellow-400 text-white rounded-md p-[4px]"
+            onClick={(e) => {
+              e.preventDefault();
+              const [prev] = neighbours;
+              prev.map(({ id: prevBoardId, position: prevBoardPosition }) => {
+                boardsStorage
+                  .update(prevBoardId, { position: board.position })
+                  .map(() =>
+                    boardsStorage.update(board.id, {
+                      position: prevBoardPosition,
+                    }),
+                  );
+              });
+            }}
+          >
+            &lt;
+          </button>
+        </div>
       </div>
-    </div>
+      {seletectedTask.mapOrElse(
+        () => null,
+        (task) => {
+          return (
+            <TaskForm
+              onSubmit={(value) => {
+                storages.map(({ tasksStorage }) =>
+                  tasksStorage.update(task.id, value),
+                );
+              }}
+              initialForm={task as UpdateValue<Task>}
+              closeForm={() => setSelectedTask(None())}
+              refs={None()}
+            ></TaskForm>
+          );
+        },
+      )}
+    </>
   );
 }
 
