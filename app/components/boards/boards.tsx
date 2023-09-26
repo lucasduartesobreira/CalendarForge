@@ -143,10 +143,29 @@ function Board({
         value={board.title}
       />
 
-      <div className="bg-gray-200 min-h-[6%] m-2 p-[4px]">
+      <div className="bg-gray-200 relative min-h-[6%] m-2 p-[4px] flex flex-col">
         {tasks.map((task, index) => (
           <div key={index}>{task.title}</div>
         ))}
+        <button
+          className="absolute bottom-0 w-full"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            storages.map(({ tasksStorage }) => {
+              tasksStorage.add({
+                board_id: board.id,
+                title: "New task",
+                endDate: None(),
+                startDate: None(),
+                project_id: board.project_id,
+                description: "",
+              });
+            });
+          }}
+        >
+          Add Task
+        </button>
       </div>
 
       <div className="flex gap-2 absolute right-0 top-0 align-middle p-2 flex-row-reverse">
