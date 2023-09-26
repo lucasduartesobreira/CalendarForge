@@ -1,8 +1,15 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { Project } from "@/services/projects/projectsStorage";
 import { None, Option, Some } from "@/utils/option";
-import { PropsWithChildren, useContext, useEffect, useReducer } from "react";
+import {
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useReducer,
+  useState,
+} from "react";
 import { Board, BoardStorage } from "@/services/boards/boards";
+import { Task, TaskStorage } from "@/services/task/task";
 
 export default function Container({ children }: PropsWithChildren) {
   return (
@@ -16,7 +23,7 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
   const { storages } = useContext(StorageContext);
   return storages.mapOrElse(
     () => null,
-    ({ boardsStorage }) => {
+    ({ boardsStorage, tasksStorage }) => {
       return project.mapOrElse(
         () => null,
         (project) => {
@@ -32,7 +39,7 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
                 return (
                   <Board
                     key={board.id}
-                    boardsStorages={boardsStorage}
+                    boardsStorage={boardsStorage}
                     initialBoard={board}
                     neighbours={[
                       index - 1 >= 0 ? Some(array[index - 1]) : None(),
@@ -85,20 +92,16 @@ function AddBoard({
 
 function Board({
   initialBoard,
-  boardsStorages,
+  boardsStorage,
   neighbours,
 }: {
   initialBoard: Board;
-  boardsStorages: BoardStorage;
+  boardsStorage: BoardStorage;
   neighbours: [prev: Option<Board>, next: Option<Board>];
 }) {
+  const { storages, listeners } = useContext(StorageContext);
   const [board, setBoard] = useReducer(
-    (
-      state: Board,
-      action:
-        | { type: "change_title"; title: Board["title"] }
-        | { type: "change_position"; position: Board["position"] },
-    ) => {
+    (state: Board, action: { type: "change_title"; title: Board["title"] }) => {
       if (action.type === "change_title") {
         return { ...state, title: action.title };
       }
@@ -108,15 +111,27 @@ function Board({
     initialBoard,
   );
 
+  const [tasks, setTasks] = useState<Task[]>([]);
+
   useEffect(() => {
-    boardsStorages.update(initialBoard.id, board).mapOrElse(
+    // TODO: Add index
+    storages.map(({ tasksStorage }) => {
+      const tasks = tasksStorage.filteredValues(
+        (task) => task.board_id === initialBoard.id,
+      );
+      setTasks(tasks);
+    });
+  }, [listeners.tasksStorageListener]);
+
+  useEffect(() => {
+    boardsStorage.update(initialBoard.id, board).mapOrElse(
       () => board,
       (ok) => ok,
     );
   }, [board]);
 
   return (
-    <div className="bg-white h-full relative text-black">
+    <div className="bg-white h-full relative text-black overflow-auto">
       <input
         onChange={(e) => {
           const newTitle = e.currentTarget.value;
@@ -128,11 +143,17 @@ function Board({
         value={board.title}
       />
 
+      <div className="bg-gray-200 min-h-[6%] m-2 p-[4px]">
+        {tasks.map((task, index) => (
+          <div key={index}>{task.title}</div>
+        ))}
+      </div>
+
       <div className="flex gap-2 absolute right-0 top-0 align-middle p-2 flex-row-reverse">
         <button
           className="bg-red-500 rounded-md text-white p-[4px]"
           onClick={(e) => {
-            boardsStorages.remove(board.id);
+            boardsStorage.remove(board.id);
           }}
         >
           -
@@ -142,10 +163,10 @@ function Board({
           onClick={(e) => {
             const [, next] = neighbours;
             next.map(({ id: nextBoardId, position: nextBoardPosition }) => {
-              boardsStorages
+              boardsStorage
                 .update(nextBoardId, { position: board.position })
                 .map(() =>
-                  boardsStorages.update(board.id, {
+                  boardsStorage.update(board.id, {
                     position: nextBoardPosition,
                   }),
                 );
@@ -160,10 +181,10 @@ function Board({
             e.preventDefault();
             const [prev] = neighbours;
             prev.map(({ id: prevBoardId, position: prevBoardPosition }) => {
-              boardsStorages
+              boardsStorage
                 .update(prevBoardId, { position: board.position })
                 .map(() =>
-                  boardsStorages.update(board.id, {
+                  boardsStorage.update(board.id, {
                     position: prevBoardPosition,
                   }),
                 );
