@@ -1,17 +1,11 @@
 import * as R from "./result";
 
 export type ValidatorType<A> = {
-  [Key in keyof A]: A[Key] extends undefined
-    ? {
-        optional: true;
-        type: ReverseMapping<A[Key]>;
-        validator?(this: A, a: A[Key]): boolean;
-      }
-    : {
-        optional: false;
-        type: ReverseMapping<A[Key]>;
-        validator?(this: A, a: A[Key]): boolean;
-      };
+  [Key in keyof A]-?: {
+    optional: boolean;
+    type: ReverseMapping<A[Key]>;
+    validator?(this: A, a: A[Key]): boolean;
+  };
 };
 
 type ReverseMapping<T> = T extends string
@@ -41,14 +35,17 @@ export const validateTypes = <A extends Record<string, any>>(
     const { optional, type, validator } = value;
 
     if (!optional) {
-      return a[newK] !== undefined && typeof a[newK] === type && validator
+      return a !== undefined &&
+        a[newK] !== undefined &&
+        typeof a[newK] === type &&
+        validator
         ? validator.call(a, a[newK])
         : true;
     }
 
     return (
       a[newK] === undefined ||
-      (typeof a[newK] === type && validator ? validator(a[newK]) : true)
+      (typeof a[newK] === type && validator ? validator.call(a, a[newK]) : true)
     );
   });
 
