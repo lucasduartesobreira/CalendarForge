@@ -16,8 +16,8 @@ export type Task = {
   board_id: string;
   title: string;
   description: string;
-  startDate: Option<Date>;
-  endDate: Option<Date>;
+  startDate?: number;
+  endDate?: number;
 };
 
 const TaskValidator: ValidatorType<Task> = {
@@ -27,23 +27,18 @@ const TaskValidator: ValidatorType<Task> = {
   board_id: { optional: false, type: "string" },
   project_id: { optional: false, type: "string" },
   startDate: {
-    optional: false,
-    type: "object",
+    optional: true,
+    type: "number",
     validator(this, date) {
-      return date
-        .map((startDate) => this.endDate.map((endDate) => startDate <= endDate))
-        .flatten()
-        .unwrapOrElse(() => true);
+      console.log(this, date);
+      return date && this.endDate ? date <= this.endDate : true;
     },
   },
   endDate: {
-    optional: false,
-    type: "object",
+    optional: true,
+    type: "number",
     validator(this, date) {
-      return date
-        .map((endDate) => this.endDate.map((startDate) => endDate >= startDate))
-        .flatten()
-        .unwrapOrElse(() => true);
+      return date && this.startDate ? date >= this.startDate : true;
     },
   },
 };
