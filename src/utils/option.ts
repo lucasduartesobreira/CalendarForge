@@ -64,7 +64,7 @@ class Option<T> {
     if (this.value.kind === "some") {
       return this.value.value;
     } else {
-      return this.value.value;
+      return None();
     }
   }
 }
