@@ -13,6 +13,7 @@ import { NotificationManager } from "@/services/notifications/notificationPermis
 import { EventTemplateStorage } from "@/services/events/eventTemplates";
 import { Project, ProjectStorage } from "@/services/projects/projectsStorage";
 import { BoardStorage } from "@/services/boards/boards";
+import { TaskStorage } from "@/services/task/task";
 
 type Storages = {
   eventsStorage: EventStorage;
@@ -20,6 +21,7 @@ type Storages = {
   eventsTemplateStorage: EventTemplateStorage;
   projectsStorage: ProjectStorage;
   boardsStorage: BoardStorage;
+  tasksStorage: TaskStorage;
 };
 
 type StorageContext = {
@@ -39,6 +41,7 @@ const StorageContext = createContext<StorageContext>({
     eventsTemplateStorageListener: undefined,
     projectsStorageListener: undefined,
     boardsStorageListener: undefined,
+    tasksStorageListener: undefined,
   },
 });
 type StateUpdate = {} | undefined;
@@ -55,6 +58,7 @@ export function useDataStorage(): StorageContext {
   const [templatesUpdated, forceTemplatesUpdate] = useForceUpdate();
   const [projectsUpdated, forceProjectsUpdate] = useForceUpdate();
   const [boardsUpdated, forceBoardsUpdate] = useForceUpdate();
+  const [tasksUpdated, forceTasksUpdate] = useForceUpdate();
 
   const [clientData, setClientData] = useState<O.Option<Storages>>(O.None());
 
@@ -163,19 +167,57 @@ export function useDataStorage(): StorageContext {
       });
 
       projectsStorageUnwraped.on("remove", ({ result }) => {
-        result.map(({ calendars }) =>
-          calendarStorageUnwraped.removeAll(calendars),
-        );
+        result.map(({ id, calendars }) => {
+          // TODO: Improve this to only delete the ones that are listed to the project
+          calendarStorageUnwraped.removeAll(calendars);
+          boardsStorageUnwrapped.removeWithFilter(
+            ({ project_id }) => project_id === id,
+          );
+        });
       });
       projectsStorageUnwraped.on("removeAll", ({ result }) => {
-        result.map(([, { calendars }]) =>
-          calendarStorageUnwraped.removeAll(calendars),
-        );
+        result.map(([, { id, calendars }]) => {
+          // TODO: Improve this to only delete the ones that are listed to the project
+          calendarStorageUnwraped.removeAll(calendars);
+          boardsStorageUnwrapped.removeWithFilter(
+            ({ project_id }) => project_id === id,
+          );
+        });
       });
 
       projectsStorageUnwraped.on("removeWithFilter", ({ result }) => {
-        result.map(({ calendars }) => {
-          calendarStorageUnwraped.removeAll(calendars);
+        result.map(({ id, calendars }) => {
+          {
+            // TODO: Improve this to only delete the ones that are listed to the project
+            calendarStorageUnwraped.removeAll(calendars);
+            boardsStorageUnwrapped.removeWithFilter(
+              ({ project_id }) => project_id === id,
+            );
+          }
+        });
+      });
+
+      boardsStorageUnwrapped.on("remove", ({ result }) => {
+        result.map((removedBoard) => {
+          tasksStorageUnwrapped.removeWithFilter(
+            ({ board_id }) => board_id === removedBoard.id,
+          );
+        });
+      });
+
+      boardsStorageUnwrapped.on("removeWithFilter", ({ result }) => {
+        result.map((removedBoard) => {
+          tasksStorageUnwrapped.removeWithFilter(
+            ({ board_id }) => board_id === removedBoard.id,
+          );
+        });
+      });
+
+      boardsStorageUnwrapped.on("removeAll", ({ result }) => {
+        result.map(([, removedBoard]) => {
+          tasksStorageUnwrapped.removeWithFilter(
+            ({ board_id }) => board_id === removedBoard.id,
+          );
         });
       });
 
