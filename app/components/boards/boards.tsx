@@ -148,7 +148,7 @@ function Board({
           <div key={index}>{task.title}</div>
         ))}
         <button
-          className="absolute bottom-0 w-full"
+          className="sticky bottom-0 w-full"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
