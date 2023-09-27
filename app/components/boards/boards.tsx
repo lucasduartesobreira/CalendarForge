@@ -235,6 +235,7 @@ function Board({
               initialForm={task as UpdateValue<Task>}
               closeForm={() => setSelectedTask(None())}
               refs={None()}
+              initialTodoList={[]}
             ></TaskForm>
           );
         },

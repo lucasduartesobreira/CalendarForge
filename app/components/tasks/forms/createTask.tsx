@@ -1,3 +1,4 @@
+import { MiniTodo } from "@/components/todo/form/editTodo";
 import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { Task } from "@/services/task/task";
@@ -132,9 +133,12 @@ export function TaskForm<
         </label>
         <label>
           <a>To-Do</a>
-          {todos.map((todo, index) => {
-            return <div key={index}>{todo.title}</div>;
-          })}
+          <div className="bg-gray-200 p-2 w-full flex flex-col">
+            {todos.map((todo) => {
+              return <MiniTodo todo={todo} key={todo.id}></MiniTodo>;
+            })}
+            <button>Add todo</button>
+          </div>
         </label>
         <input type="submit" value={"Save"} />
       </form>
