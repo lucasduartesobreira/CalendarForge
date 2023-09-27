@@ -1,6 +1,7 @@
 import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { Task } from "@/services/task/task";
+import { Todo } from "@/services/todo/todo";
 import { getHTMLDateTime } from "@/utils/date";
 import { Option, Some } from "@/utils/option";
 import { AddValue, UpdateValue } from "@/utils/storage";
@@ -9,6 +10,7 @@ import { RefObject, useContext, useEffect, useReducer, useState } from "react";
 type PropsFullPage<A> = {
   closeForm: () => void;
   initialForm: A;
+  initialTodoList: Todo[];
   onSubmit: (task: A) => void;
   refs: Option<RefObject<null>[]>;
 };
@@ -16,7 +18,16 @@ type PropsFullPage<A> = {
 export function TaskForm<
   A extends UpdateValue<Task> | AddValue<Task>,
   Props extends PropsFullPage<A>,
->({ refs, closeForm, onSubmit, initialForm }: Props) {
+>({ refs, closeForm, onSubmit, initialForm, initialTodoList = [] }: Props) {
+  const [todos, setTodos] = useReducer(
+    (state: Todo[], action: { type: "add"; value: Todo }) => {
+      if (action.type === "add") {
+        return [...state, action.value];
+      }
+      return state;
+    },
+    initialTodoList,
+  );
   const [task, setTask] = useReducer(
     (
       state: A,
@@ -120,11 +131,10 @@ export function TaskForm<
           />
         </label>
         <label>
-          <a>To-Do list</a>
-          {/* 
-          // TODO: Add to-do list
-          */}
-          <div className="bg-gray-200 p-2 w-full">Lista</div>
+          <a>To-Do</a>
+          {todos.map((todo, index) => {
+            return <div key={index}>{todo.title}</div>;
+          })}
         </label>
         <input type="submit" value={"Save"} />
       </form>
@@ -144,9 +154,6 @@ export function MiniatureTask({
 
   const { storages } = useContext(StorageContext);
 
-  useEffect(() => {
-    storages.map(({ tasksStorage }) => tasksStorage.update(task.id, { title }));
-  }, [title]);
   return (
     <div className="relative">
       <input
@@ -156,7 +163,14 @@ export function MiniatureTask({
           setEditable(true);
         }}
         onBlur={() => {
-          setEditable(false);
+          storages.map(({ tasksStorage }) => {
+            if (title.length > 0) {
+              console.log("aqui");
+              tasksStorage.update(task.id, { title });
+            } else {
+              setTitle(task.title);
+            }
+          });
         }}
         readOnly={!editable}
         onChange={(e) => setTitle(e.currentTarget.value)}
