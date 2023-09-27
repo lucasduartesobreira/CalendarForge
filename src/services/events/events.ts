@@ -43,6 +43,7 @@ type CalendarEvent = {
   title: string;
   description: string;
   calendar_id: string;
+  todo_id?: string;
   notifications: EventNotification[];
   color: FromTupleToUnion<typeof COLORS>;
 };
