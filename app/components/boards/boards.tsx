@@ -12,6 +12,8 @@ import { Board, BoardStorage } from "@/services/boards/boards";
 import { Task } from "@/services/task/task";
 import { MiniatureTask, TaskForm } from "../tasks/forms/createTask";
 import { UpdateValue } from "@/utils/storage";
+import { Todo } from "@/services/todo/todo";
+import { Ok, Result } from "@/utils/result";
 
 export default function Container({ children }: PropsWithChildren) {
   return (
@@ -227,12 +229,57 @@ function Board({
         (task) => {
           return (
             <TaskForm
-              onSubmit={(value) => {
-                storages.map(({ tasksStorage }) =>
-                  tasksStorage.update(task.id, value),
+              onSubmit={(task, todos) => {
+                storages.map(({ tasksStorage, todosStorage }) =>
+                  tasksStorage.findById(task.id).map((taskFound) =>
+                    tasksStorage.update(task.id, task).map(() => {
+                      todos
+                        .reduce(
+                          (acc, { id, ...todo }) => {
+                            return acc
+                              .map((toRestore) =>
+                                id
+                                  ? todosStorage
+                                      .findById(id)
+                                      .map((todoFound) => {
+                                        return todosStorage
+                                          .update(id, todo)
+                                          .map(() => [
+                                            ...toRestore,
+                                            { todo: todoFound, delete: false },
+                                          ])
+                                          .mapErr(() => toRestore);
+                                      })
+                                      .ok(toRestore)
+                                      .flatten()
+                                  : todosStorage
+                                      .add(todo)
+                                      .map((created) => [
+                                        ...toRestore,
+                                        { todo: created, delete: true },
+                                      ])
+                                      .mapErr(() => toRestore),
+                              )
+                              .flatten();
+                          },
+                          Ok([]) as Result<
+                            { todo: Todo; delete: boolean }[],
+                            { todo: Todo; delete: boolean }[]
+                          >,
+                        )
+                        .mapErr((toRestore) => {
+                          toRestore.map((value) =>
+                            value.delete
+                              ? todosStorage.remove(value.todo.id)
+                              : todosStorage.update(value.todo.id, value.todo),
+                          );
+                          tasksStorage.update(task.id, taskFound);
+                        });
+                    }),
+                  ),
                 );
               }}
-              initialForm={task as UpdateValue<Task>}
+              initialForm={task}
               closeForm={() => setSelectedTask(None())}
               refs={None()}
               initialTodoList={[]}
