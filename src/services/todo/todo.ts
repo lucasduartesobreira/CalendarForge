@@ -16,6 +16,7 @@ export type Todo = {
   project_id: string;
   board_id: string;
   task_id: string;
+  calendar_id: string;
 };
 
 const TodoValidator: ValidatorType<Todo> = {
@@ -24,6 +25,7 @@ const TodoValidator: ValidatorType<Todo> = {
   project_id: { optional: false, type: "string" },
   board_id: { optional: false, type: "string" },
   task_id: { optional: false, type: "string" },
+  calendar_id: { optional: false, type: "string" },
 };
 
 export class TodoStorage implements BetterEventEmitter<Todo["id"], Todo> {
@@ -76,6 +78,7 @@ export class TodoStorage implements BetterEventEmitter<Todo["id"], Todo> {
             task_id: updateValue.task_id ?? valueFound.task_id,
             project_id: updateValue.project_id ?? valueFound.project_id,
             board_id: updateValue.board_id ?? valueFound.board_id,
+            calendar_id: updateValue.calendar_id ?? valueFound.calendar_id,
           },
           TodoValidator,
         );
