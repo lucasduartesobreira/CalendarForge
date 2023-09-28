@@ -14,6 +14,7 @@ import { EventTemplateStorage } from "@/services/events/eventTemplates";
 import { Project, ProjectStorage } from "@/services/projects/projectsStorage";
 import { BoardStorage } from "@/services/boards/boards";
 import { TaskStorage } from "@/services/task/task";
+import { TodoStorage } from "@/services/todo/todo";
 
 type Storages = {
   eventsStorage: EventStorage;
@@ -22,6 +23,7 @@ type Storages = {
   projectsStorage: ProjectStorage;
   boardsStorage: BoardStorage;
   tasksStorage: TaskStorage;
+  todosStorage: TodoStorage;
 };
 
 type StorageContext = {
@@ -42,6 +44,7 @@ const StorageContext = createContext<StorageContext>({
     projectsStorageListener: undefined,
     boardsStorageListener: undefined,
     tasksStorageListener: undefined,
+    todosStorageListener: undefined,
   },
 });
 type StateUpdate = {} | undefined;
@@ -59,6 +62,7 @@ export function useDataStorage(): StorageContext {
   const [projectsUpdated, forceProjectsUpdate] = useForceUpdate();
   const [boardsUpdated, forceBoardsUpdate] = useForceUpdate();
   const [tasksUpdated, forceTasksUpdate] = useForceUpdate();
+  const [todosUpdated, forceTodosUpdate] = useForceUpdate();
 
   const [clientData, setClientData] = useState<O.Option<Storages>>(O.None());
 
@@ -68,6 +72,7 @@ export function useDataStorage(): StorageContext {
   const projectsStorage = ProjectStorage.new(forceProjectsUpdate);
   const boardsStorage = BoardStorage.new(forceBoardsUpdate);
   const tasksStorage = TaskStorage.new(forceTasksUpdate);
+  const todosStorage = TodoStorage.new(forceTodosUpdate);
 
   const isDataReady =
     eventsStorage.isOk() &&
@@ -75,7 +80,8 @@ export function useDataStorage(): StorageContext {
     templateStorage.isOk() &&
     projectsStorage.isOk() &&
     boardsStorage.isOk() &&
-    tasksStorage.isOk();
+    tasksStorage.isOk() &&
+    todosStorage.isOk();
 
   useEffect(() => {
     if (isDataReady) {
@@ -85,6 +91,7 @@ export function useDataStorage(): StorageContext {
       const projectsStorageUnwraped = projectsStorage.unwrap();
       const boardsStorageUnwrapped = boardsStorage.unwrap();
       const tasksStorageUnwrapped = tasksStorage.unwrap();
+      const todosStorageUnwrapped = todosStorage.unwrap();
 
       eventsStorageSome.on("add", ({ result: output }) => {
         if (output.isOk()) {
@@ -235,6 +242,7 @@ export function useDataStorage(): StorageContext {
           projectsStorage: projectsStorageUnwraped,
           boardsStorage: boardsStorageUnwrapped,
           tasksStorage: tasksStorageUnwrapped,
+          todosStorage: todosStorageUnwrapped,
         }),
       );
     }
@@ -250,6 +258,7 @@ export function useDataStorage(): StorageContext {
         projectsStorageListener: projectsUpdated,
         boardsStorageListener: boardsUpdated,
         tasksStorageListener: tasksUpdated,
+        todosStorageListener: todosUpdated,
       },
     };
   }, [
@@ -260,6 +269,7 @@ export function useDataStorage(): StorageContext {
     projectsUpdated,
     boardsUpdated,
     tasksUpdated,
+    todosUpdated,
   ]);
 
   return memoized;
