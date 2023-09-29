@@ -237,8 +237,8 @@ function Board({
                         .reduce(
                           (acc, { id, ...todo }) => {
                             return acc
-                              .map((toRestore) =>
-                                id
+                              .map((toRestore) => {
+                                return id
                                   ? todosStorage
                                       .findById(id)
                                       .map((todoFound) => {
@@ -258,8 +258,8 @@ function Board({
                                         ...toRestore,
                                         { todo: created, delete: true },
                                       ])
-                                      .mapErr(() => toRestore),
-                              )
+                                      .mapErr(() => toRestore);
+                              })
                               .flatten();
                           },
                           Ok([]) as Result<
@@ -282,7 +282,15 @@ function Board({
               initialForm={task}
               closeForm={() => setSelectedTask(None())}
               refs={None()}
-              initialTodoList={[]}
+              initialTodoList={storages.mapOrElse(
+                () => [],
+                ({ todosStorage }) => {
+                  const result = todosStorage.filteredValues(
+                    ({ task_id }) => task_id === task.id,
+                  );
+                  return result;
+                },
+              )}
             ></TaskForm>
           );
         },

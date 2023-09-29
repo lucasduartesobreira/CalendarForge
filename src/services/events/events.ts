@@ -158,11 +158,11 @@ class EventStorage
   find(predicate: (event: CalendarEvent) => boolean) {
     for (const event of this.map.values()) {
       if (predicate(event)) {
-        return R.Ok(event);
+        return O.Some(event);
       }
     }
 
-    return R.Err(Symbol("Event not found"));
+    return O.None();
   }
 
   filter(predicate: (event: CalendarEvent) => boolean) {

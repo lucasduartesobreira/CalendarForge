@@ -1,37 +1,55 @@
-import { MiniTodo } from "@/components/todo/form/editTodo";
+import { TodoForm } from "@/components/todo/form/editTodo";
 import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
+import { CalendarEvent } from "@/services/events/events";
 import { Task } from "@/services/task/task";
 import { Todo } from "@/services/todo/todo";
 import { getHTMLDateTime } from "@/utils/date";
-import { Option, Some } from "@/utils/option";
-import { AddValue, UpdateValue } from "@/utils/storage";
-import { RefObject, useContext, useEffect, useReducer, useState } from "react";
+import { None, Option, Some } from "@/utils/option";
+import { AddValue } from "@/utils/storage";
+import { RefObject, useContext, useReducer, useState } from "react";
 
 type PropsFullPage<A> = {
   closeForm: () => void;
   initialForm: A;
   initialTodoList: Todo[];
-  onSubmit: (task: A) => void;
+  onSubmit: (task: A, todos: Array<AddValue<Todo> & { id?: string }>) => void;
   refs: Option<RefObject<null>[]>;
 };
 
-export function TaskForm<
-  A extends UpdateValue<Task> | AddValue<Task>,
-  Props extends PropsFullPage<A>,
->({ refs, closeForm, onSubmit, initialForm, initialTodoList = [] }: Props) {
+export function TaskForm<Props extends PropsFullPage<Task>>({
+  refs,
+  closeForm,
+  onSubmit,
+  initialForm,
+  initialTodoList = [],
+}: Props) {
+  const { storages } = useContext(StorageContext);
   const [todos, setTodos] = useReducer(
-    (state: Todo[], action: { type: "add"; value: Todo }) => {
+    (
+      state: (AddValue<Todo> & { id?: string })[],
+      action:
+        | { type: "add"; value: AddValue<Todo> & { id?: string } }
+        | {
+            type: "update";
+            value: AddValue<Todo> & { id?: string };
+            index: number;
+          },
+    ) => {
       if (action.type === "add") {
         return [...state, action.value];
+      } else if (action.type === "update") {
+        state[action.index] = { ...state[action.index], ...action.value };
+        return state;
       }
       return state;
     },
     initialTodoList,
   );
+
   const [task, setTask] = useReducer(
     (
-      state: A,
+      state: Task,
       action:
         | { type: "changeTitle"; value: string }
         | { type: "changeDescription"; value: string }
@@ -61,10 +79,11 @@ export function TaskForm<
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit(task);
+          onSubmit(task, todos);
           closeForm();
         }}
         className="p-2 bg-white rounded-md border-2 border-gray-200 max-w-[50%] text-black flex flex-col "
+        id="form"
       >
         <label>
           Title:
@@ -131,16 +150,51 @@ export function TaskForm<
             className="bg-gray-200 p-2 w-full"
           />
         </label>
-        <label>
-          <a>To-Do</a>
-          <div className="bg-gray-200 p-2 w-full flex flex-col">
-            {todos.map((todo) => {
-              return <MiniTodo todo={todo} key={todo.id}></MiniTodo>;
-            })}
-            <button>Add todo</button>
-          </div>
-        </label>
-        <input type="submit" value={"Save"} />
+        <a>To-Do</a>
+        <div className="bg-gray-200 p-2 w-full flex flex-col">
+          {todos.map(({ id, ...rest }, index) => {
+            return (
+              <TodoForm
+                todo={rest}
+                onSubmit={(todo, event) => {
+                  setTodos({ type: "update", value: todo, index: index });
+                }}
+                key={Date.now() + index}
+                event={storages.flatMap(({ eventsStorage }) =>
+                  eventsStorage.find(
+                    ({ todo_id }) =>
+                      todo_id != null && id != null && todo_id === id,
+                  ),
+                )}
+              ></TodoForm>
+            );
+          })}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              storages.map(({ projectsStorage }) => {
+                projectsStorage
+                  .findById(initialForm.project_id)
+                  .map(({ calendars }) => {
+                    setTodos({
+                      type: "add",
+                      value: {
+                        title: "New Todo",
+                        calendar_id: calendars[0],
+                        board_id: initialForm.board_id,
+                        task_id: initialForm.id,
+                        project_id: initialForm.project_id,
+                      },
+                    });
+                  });
+              });
+            }}
+          >
+            Add todo
+          </button>
+        </div>
+        <input type="submit" value={"Save"} form="form" />
       </form>
     </OutsideClick>
   );
@@ -169,7 +223,6 @@ export function MiniatureTask({
         onBlur={() => {
           storages.map(({ tasksStorage }) => {
             if (title.length > 0) {
-              console.log("aqui");
               tasksStorage.update(task.id, { title });
             } else {
               setTitle(task.title);

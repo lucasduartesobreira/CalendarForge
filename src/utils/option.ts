@@ -32,6 +32,10 @@ class Option<T> {
     }
   }
 
+  flatMap<B>(f: (value: T) => Option<B>): Option<B> {
+    return this.map(f).flatten();
+  }
+
   mapOrElse<B>(onNothing: () => B, onSome: (value: T) => B): B {
     if (this.value.kind === "some") {
       return onSome(this.value.value);
