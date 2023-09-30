@@ -5,16 +5,31 @@ import { CalendarEvent } from "@/services/events/events";
 import { Task } from "@/services/task/task";
 import { Todo } from "@/services/todo/todo";
 import { getHTMLDateTime } from "@/utils/date";
+import { idGenerator } from "@/utils/idGenerator";
 import { None, Option, Some } from "@/utils/option";
 import { AddValue } from "@/utils/storage";
-import { RefObject, useContext, useReducer, useState } from "react";
+import { RefObject, useContext, useEffect, useReducer, useState } from "react";
+
+export type LocalValue<A> = A & {
+  TYPE_OPERATION: "CREATE" | "UPDATE" | "REMOVE";
+};
 
 type PropsFullPage<A> = {
   closeForm: () => void;
   initialForm: A;
   initialTodoList: Todo[];
-  onSubmit: (task: A, todos: Array<AddValue<Todo> & { id?: string }>) => void;
+  onSubmit: (
+    task: A,
+    todos: Array<{
+      event: Option<LocalValue<CalendarEvent>>;
+      todo: LocalValue<Todo>;
+    }>,
+  ) => void;
   refs: Option<RefObject<null>[]>;
+};
+
+const operationType = <A,>(prev: LocalValue<A>, next: LocalValue<A>) => {
+  return prev.TYPE_OPERATION === "CREATE" ? "CREATE" : next.TYPE_OPERATION;
 };
 
 export function TaskForm<Props extends PropsFullPage<Task>>({
@@ -25,27 +40,6 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
   initialTodoList = [],
 }: Props) {
   const { storages } = useContext(StorageContext);
-  const [todos, setTodos] = useReducer(
-    (
-      state: (AddValue<Todo> & { id?: string })[],
-      action:
-        | { type: "add"; value: AddValue<Todo> & { id?: string } }
-        | {
-            type: "update";
-            value: AddValue<Todo> & { id?: string };
-            index: number;
-          },
-    ) => {
-      if (action.type === "add") {
-        return [...state, action.value];
-      } else if (action.type === "update") {
-        state[action.index] = { ...state[action.index], ...action.value };
-        return state;
-      }
-      return state;
-    },
-    initialTodoList,
-  );
 
   const [task, setTask] = useReducer(
     (
@@ -70,6 +64,129 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
     initialForm,
   );
 
+  const [todosAndEvents, setTodosAndEvents] = useReducer(
+    (
+      state: Map<
+        Todo["id"],
+        { event: Option<LocalValue<CalendarEvent>>; todo: LocalValue<Todo> }
+      >,
+      action:
+        | {
+            type: "add";
+            value: AddValue<Todo>;
+          }
+        | {
+            type: "update_event";
+            value: {
+              todoId: Todo["id"];
+              event: Option<CalendarEvent>;
+            };
+          }
+        | {
+            type: "update_todo";
+            value: Todo;
+          }
+        | {
+            type: "remove";
+            value: Todo["id"];
+          },
+    ) => {
+      if (action.type === "add") {
+        const todo = action.value;
+        const id = idGenerator();
+        state.set(id, {
+          event: None(),
+          todo: { ...todo, id, TYPE_OPERATION: "CREATE" },
+        });
+      } else if (action.type === "update_todo") {
+        const todo = action.value;
+        const found = state.get(todo.id);
+        if (found) {
+          const newOperationType = operationType(found.todo, {
+            ...todo,
+            TYPE_OPERATION: "UPDATE",
+          });
+          state.set(todo.id, {
+            event: found.event,
+            todo: { ...todo, TYPE_OPERATION: newOperationType },
+          });
+        }
+      } else if (action.type === "update_event") {
+        const { todoId, event } = action.value;
+        const found = state.get(todoId);
+        if (found) {
+          const newUpdatedEvent = found.event
+            .map((foundEvent) =>
+              event.map((updatedEvent) => ({
+                ...updatedEvent,
+                TYPE_OPERATION: operationType(foundEvent, {
+                  ...updatedEvent,
+                  TYPE_OPERATION: "UPDATE",
+                }),
+              })),
+            )
+            .unwrapOrElse(() =>
+              event.map((event) => ({ ...event, TYPE_OPERATION: "CREATE" })),
+            );
+          state.set(todoId, {
+            event: newUpdatedEvent,
+            todo: found.todo,
+          });
+        }
+      } else if (action.type === "remove") {
+        const found = state.get(action.value);
+        if (found) {
+          if (found.todo.TYPE_OPERATION !== "CREATE") {
+            found.todo = {
+              ...found.todo,
+              TYPE_OPERATION: operationType(found.todo, {
+                ...found.todo,
+                TYPE_OPERATION: "REMOVE",
+              }),
+            };
+            found.event = found.event.map((event) => ({
+              ...event,
+              TYPE_OPERATION: operationType(event, {
+                ...event,
+                TYPE_OPERATION: "REMOVE",
+              }),
+            }));
+            state.set(action.value, found);
+            return new Map(state);
+          }
+
+          state.delete(action.value);
+        }
+      }
+      return new Map(state);
+    },
+    initialTodoList,
+    (todos) => {
+      return new Map(
+        storages
+          .map(({ eventsStorage }) => {
+            return todos.map((todo) => {
+              const event = eventsStorage
+                .find(({ todo_id }) => todo_id != null && todo_id === todo.id)
+                .map<LocalValue<CalendarEvent>>((event) => ({
+                  ...event,
+                  TYPE_OPERATION: "UPDATE",
+                }));
+              return [
+                todo.id,
+                { todo: { ...todo, TYPE_OPERATION: "UPDATE" }, event },
+              ] as const;
+            });
+          })
+          .unwrapOrElse(() => []),
+      );
+    },
+  );
+
+  useEffect(() => {
+    console.log(todosAndEvents);
+  }, [todosAndEvents]);
+
   return (
     <OutsideClick
       refs={refs}
@@ -79,7 +196,7 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit(task, todos);
+          onSubmit(task, Array.from(todosAndEvents.values()));
           closeForm();
         }}
         className="p-2 bg-white rounded-md border-2 border-gray-200 max-w-[50%] text-black flex flex-col "
@@ -152,23 +269,36 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
         </label>
         <a>To-Do</a>
         <div className="bg-gray-200 p-2 w-full flex flex-col">
-          {todos.map(({ id, ...rest }, index) => {
-            return (
-              <TodoForm
-                todo={rest}
-                onSubmit={(todo, event) => {
-                  setTodos({ type: "update", value: todo, index: index });
-                }}
-                key={Date.now() + index}
-                event={storages.flatMap(({ eventsStorage }) =>
-                  eventsStorage.find(
-                    ({ todo_id }) =>
-                      todo_id != null && id != null && todo_id === id,
-                  ),
-                )}
-              ></TodoForm>
-            );
-          })}
+          {Array.from(todosAndEvents.values()).map(
+            ({ todo: { id, ...rest }, event }, index) => {
+              return (
+                <TodoForm
+                  todo={rest}
+                  onSubmit={(updatedTodo, updatedEvent) => {
+                    setTodosAndEvents({
+                      type: "update_todo",
+                      value: {
+                        id,
+                        ...updatedTodo,
+                      },
+                    });
+                    setTodosAndEvents({
+                      type: "update_event",
+                      value: {
+                        todoId: id,
+                        event: updatedEvent.map((value) => ({
+                          ...value,
+                          TYPE_OPERATION: "UPDATE",
+                        })),
+                      },
+                    });
+                  }}
+                  key={id}
+                  event={event}
+                ></TodoForm>
+              );
+            },
+          )}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -177,7 +307,7 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
                 projectsStorage
                   .findById(initialForm.project_id)
                   .map(({ calendars }) => {
-                    setTodos({
+                    setTodosAndEvents({
                       type: "add",
                       value: {
                         title: "New Todo",
@@ -217,7 +347,7 @@ export function MiniatureTask({
       <input
         value={title}
         className="bg-gray-200"
-        onDoubleClick={(e) => {
+        onDoubleClick={() => {
           setEditable(true);
         }}
         onBlur={() => {

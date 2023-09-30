@@ -10,10 +10,12 @@ import {
 } from "react";
 import { Board, BoardStorage } from "@/services/boards/boards";
 import { Task } from "@/services/task/task";
-import { MiniatureTask, TaskForm } from "../tasks/forms/createTask";
-import { UpdateValue } from "@/utils/storage";
-import { Todo } from "@/services/todo/todo";
+import { LocalValue, MiniatureTask, TaskForm } from "../tasks/forms/createTask";
+import { AddValue, UpdateValue } from "@/utils/storage";
+import { Todo, TodoStorage } from "@/services/todo/todo";
 import { Ok, Result } from "@/utils/result";
+import { CalendarEvent, EventStorage } from "@/services/events/events";
+import { BetterEventEmitter } from "@/utils/eventEmitter";
 
 export default function Container({ children }: PropsWithChildren) {
   return (
@@ -93,6 +95,75 @@ function AddBoard({
     </div>
   );
 }
+
+const internalReduceTodo =
+  <
+    A extends BetterEventEmitter<Type["id"], Type>,
+    Type extends Record<string, unknown> & { id: string },
+  >(
+    todosStorage: A,
+  ) =>
+  (
+    acc: Result<
+      {
+        value: Type;
+        operation: "REMOVE" | "UPDATE" | "CREATE";
+      }[],
+      {
+        value: Type;
+        operation: "REMOVE" | "UPDATE" | "CREATE";
+      }[]
+    >,
+    {
+      todo: { id, TYPE_OPERATION: todoTypeOperation, ...todo },
+    }: { todo: LocalValue<Type> },
+  ) => {
+    return acc
+      .map((toRestore) => {
+        const todoReduced =
+          todoTypeOperation === "UPDATE"
+            ? todosStorage
+                .findById(id)
+                .map((todoFound) => {
+                  return todosStorage
+                    .update(id, todo as UpdateValue<Type>)
+                    .map(() => [
+                      ...toRestore,
+                      {
+                        value: todoFound,
+                        operation: "UPDATE" as "REMOVE" | "UPDATE" | "CREATE",
+                      },
+                    ])
+                    .mapErr(() => toRestore);
+                })
+                .ok(toRestore)
+                .flatten()
+            : todoTypeOperation === "CREATE"
+            ? todosStorage
+                .add(todo as AddValue<Type>)
+                .map((created) => [
+                  ...toRestore,
+                  {
+                    value: created,
+                    operation: "REMOVE" as "REMOVE" | "UPDATE" | "CREATE",
+                  },
+                ])
+                .mapErr(() => toRestore)
+            : todosStorage
+                .remove(id)
+                .map((deleted) => [
+                  ...toRestore,
+                  {
+                    value: deleted,
+                    operation: "CREATE" as "REMOVE" | "UPDATE" | "CREATE",
+                  },
+                ])
+                .mapErr(() => toRestore);
+
+        return todoReduced;
+      })
+      .flatten();
+  };
 
 function Board({
   initialBoard,
@@ -181,7 +252,7 @@ function Board({
         <div className="flex gap-2 absolute right-0 top-0 align-middle p-2 flex-row-reverse">
           <button
             className="bg-red-500 rounded-md text-white p-[4px]"
-            onClick={(e) => {
+            onClick={() => {
               boardsStorage.remove(board.id);
             }}
           >
@@ -189,7 +260,7 @@ function Board({
           </button>
           <button
             className="bg-yellow-400 text-white rounded-md p-[4px]"
-            onClick={(e) => {
+            onClick={() => {
               const [, next] = neighbours;
               next.map(({ id: nextBoardId, position: nextBoardPosition }) => {
                 boardsStorage
@@ -229,51 +300,81 @@ function Board({
         (task) => {
           return (
             <TaskForm
-              onSubmit={(task, todos) => {
-                storages.map(({ tasksStorage, todosStorage }) =>
+              onSubmit={(task, todosAndEvents) => {
+                storages.map(({ tasksStorage, todosStorage, eventsStorage }) =>
                   tasksStorage.findById(task.id).map((taskFound) =>
                     tasksStorage.update(task.id, task).map(() => {
-                      todos
+                      todosAndEvents
                         .reduce(
-                          (acc, { id, ...todo }) => {
-                            return acc
-                              .map((toRestore) => {
-                                return id
-                                  ? todosStorage
-                                      .findById(id)
-                                      .map((todoFound) => {
-                                        return todosStorage
-                                          .update(id, todo)
-                                          .map(() => [
-                                            ...toRestore,
-                                            { todo: todoFound, delete: false },
-                                          ])
-                                          .mapErr(() => toRestore);
-                                      })
-                                      .ok(toRestore)
-                                      .flatten()
-                                  : todosStorage
-                                      .add(todo)
-                                      .map((created) => [
-                                        ...toRestore,
-                                        { todo: created, delete: true },
-                                      ])
-                                      .mapErr(() => toRestore);
-                              })
-                              .flatten();
-                          },
+                          internalReduceTodo(todosStorage),
                           Ok([]) as Result<
-                            { todo: Todo; delete: boolean }[],
-                            { todo: Todo; delete: boolean }[]
+                            {
+                              value: Todo;
+                              operation: "REMOVE" | "UPDATE" | "CREATE";
+                            }[],
+                            {
+                              value: Todo;
+                              operation: "REMOVE" | "UPDATE" | "CREATE";
+                            }[]
                           >,
                         )
                         .mapErr((toRestore) => {
-                          toRestore.map((value) =>
-                            value.delete
-                              ? todosStorage.remove(value.todo.id)
-                              : todosStorage.update(value.todo.id, value.todo),
+                          toRestore.map(({ value, operation }) =>
+                            operation === "REMOVE"
+                              ? todosStorage.remove(value.id)
+                              : operation === "UPDATE"
+                              ? todosStorage.update(value.id, value)
+                              : todosStorage.add(value),
                           );
                           tasksStorage.update(task.id, taskFound);
+                        })
+                        .map((todos) =>
+                          todos.map((todo, index) =>
+                            todosAndEvents[index].event.map((event) => ({
+                              ...event,
+                              todo_id: todo.value.id,
+                            })),
+                          ),
+                        )
+                        .map((events) => {
+                          events
+                            .reduce(
+                              (acc, event) =>
+                                event.mapOrElse(
+                                  () => acc,
+                                  (event) => [
+                                    ...acc,
+                                    { todo: event, event: None() },
+                                  ],
+                                ),
+                              [] as {
+                                todo: LocalValue<CalendarEvent>;
+                                event: Option<LocalValue<CalendarEvent>>;
+                              }[],
+                            )
+                            .reduce(
+                              internalReduceTodo(eventsStorage),
+                              Ok([]) as Result<
+                                {
+                                  value: CalendarEvent;
+                                  operation: "REMOVE" | "UPDATE" | "CREATE";
+                                }[],
+                                {
+                                  value: CalendarEvent;
+                                  operation: "REMOVE" | "UPDATE" | "CREATE";
+                                }[]
+                              >,
+                            )
+                            .mapErr((toRestore) => {
+                              toRestore.map(({ value, operation }) =>
+                                operation === "REMOVE"
+                                  ? eventsStorage.remove(value.id)
+                                  : operation === "UPDATE"
+                                  ? eventsStorage.update(value.id, value)
+                                  : eventsStorage.add(value),
+                              );
+                              tasksStorage.update(task.id, taskFound);
+                            });
                         });
                     }),
                   ),

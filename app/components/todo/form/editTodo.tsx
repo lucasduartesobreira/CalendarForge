@@ -2,9 +2,10 @@ import OutsideClick from "@/components/utils/outsideClick";
 import { CalendarEvent } from "@/services/events/events";
 import { Todo } from "@/services/todo/todo";
 import { getHTMLDateTime } from "@/utils/date";
-import { None, Option } from "@/utils/option";
+import { idGenerator } from "@/utils/idGenerator";
+import { None, Option, Some } from "@/utils/option";
 import { AddValue } from "@/utils/storage";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 type Props<A = {}> = {
   todo: AddValue<Todo>;
   onSubmit: (value: AddValue<Todo>, event: Option<CalendarEvent>) => void;
@@ -18,14 +19,15 @@ export function TodoForm({
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [todo, setTodo] = useState(initialTodo);
-  const [event, setEvent] = useState(initialEvent);
+  const eventState = useState(initialEvent);
+  useEffect(() => console.log(eventState[0]), [eventState[0]]);
 
   return (
     <>
       {expanded ? (
         <ExpandedTodo
           todoState={[todo, setTodo]}
-          eventState={[event, setEvent]}
+          eventState={eventState}
           colapse={() => setExpanded(false)}
           onSubmit={onSubmit}
         />
@@ -69,6 +71,9 @@ function ExpandedTodo({
             setTodo((todo) => {
               return { ...todo, title: value };
             });
+            setEvent((event) =>
+              event.map((event) => ({ ...event, title: value })),
+            );
           }}
         />
         <input
@@ -79,11 +84,23 @@ function ExpandedTodo({
             )
             .unwrapOrElse(() => undefined)}
           onChange={(e) => {
-            const date = e.currentTarget.valueAsDate;
+            const date = new Date(e.currentTarget.value);
             if (date != null) {
-              setEvent((event) =>
-                event.map((event) => ({ ...event, startDate: date.getTime() })),
-              );
+              const updatedEvent = event
+                .map((event) => Some({ ...event, startDate: date.getTime() }))
+                .unwrapOrElse(() =>
+                  Some({
+                    title: todo.title,
+                    calendar_id: todo.calendar_id,
+                    color: "#7a5195",
+                    description: "",
+                    notifications: [],
+                    id: idGenerator(),
+                    endDate: Date.now(),
+                    startDate: date.getTime(),
+                  }),
+                );
+              setEvent(updatedEvent);
             }
           }}
         />
@@ -95,11 +112,23 @@ function ExpandedTodo({
             )
             .unwrapOrElse(() => undefined)}
           onChange={(e) => {
-            const date = e.currentTarget.valueAsDate;
+            const date = new Date(e.currentTarget.value);
             if (date != null) {
-              setEvent((event) =>
-                event.map((event) => ({ ...event, endDate: date.getTime() })),
-              );
+              const updatedEvent = event
+                .map((event) => Some({ ...event, endDate: date.getTime() }))
+                .unwrapOrElse(() =>
+                  Some({
+                    title: todo.title,
+                    calendar_id: todo.calendar_id,
+                    color: "#7a5195",
+                    description: "",
+                    notifications: [],
+                    id: "",
+                    startDate: Date.now(),
+                    endDate: date.getTime(),
+                  }),
+                );
+              setEvent(updatedEvent);
             }
           }}
         />
