@@ -183,10 +183,6 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
     },
   );
 
-  useEffect(() => {
-    console.log(todosAndEvents);
-  }, [todosAndEvents]);
-
   return (
     <OutsideClick
       refs={refs}
