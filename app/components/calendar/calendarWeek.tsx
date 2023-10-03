@@ -2,11 +2,21 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
-import { ReactNode, useContext, useEffect, useState } from "react";
+import { ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import UpdateEventForm from "../events/updateEvent/updateEvent";
 import { Actions } from "@/hooks/mapHook";
 
 const range24 = Array.from(new Array(24));
+
+const dayToString = {
+  1: "sun",
+  2: "mon",
+  3: "tue",
+  4: "wed",
+  5: "thu",
+  6: "fri",
+  7: "sat",
+};
 
 const rowStartClass = [
   "row-start-[1]",
@@ -56,12 +66,16 @@ const startAndHeight = (startDate: Date, endDate: Date) => {
 };
 
 const DayBackground = ({
+  dayOfWeek,
   day,
   events,
   setSelectedEvent,
+  isToday,
 }: {
+  dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   day: number;
   events: CalendarEvent[];
+  isToday: boolean;
   setSelectedEvent: (event: O.Option<CalendarEvent>) => void;
 }) => {
   const [isClient, setIsClient] = useState(false);
@@ -85,14 +99,23 @@ const DayBackground = ({
 
     return acc;
   }, new Map<string, number>());
+
+  const color = isToday ? "bg-blue-100" : "";
   return (
     <div
       className={`grid grid-rows-[auto,repeat(24,64px)] relative bg-white text-gray-300`}
     >
-      <div className="flex flex-wrap row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-gray-700 justify-center content-center top-0 rounded-lg shadow-lg border-[1px] border-gray-200">
-        <a className="p-2 rounded-full border-[1px] border-blue-600 bg-white text-blue-500 shadow-md">
-          {day}
-        </a>
+      <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-gray-700 justify-center items-center top-0 rounded-lg shadow-lg border-[1px] border-gray-200 overflow-hidden">
+        <div className="text-center relative px-8 py-4">
+          <div
+            className={`${color} flex justify-center items-center font-mono text-4x1 font-bold px-4 py-2 rounded-[1rem] border-[1px] border-blue-600 bg-white text-blue-500 shadow-md w-10 h-10`}
+          >
+            <span className="text-center">{day}</span>
+          </div>
+          <div className="absolute bottom-2 right-2">
+            <a className="text-xs font-mono">{dayToString[dayOfWeek]}</a>
+          </div>
+        </div>
       </div>
       {range24.map((_value, index) => {
         return (
@@ -108,7 +131,7 @@ const DayBackground = ({
           const left = 10 * (conflicts.get(event.id) ?? 0);
           const width = 100 / (conflictNumber ?? 1) - left;
           return (
-            <div key={`day${day}${index}`} className={`static`}>
+            <div key={`day${dayOfWeek}${index}`} className={`static`}>
               <button
                 key={event.id}
                 onClick={() => {
@@ -156,6 +179,7 @@ const HoursBackground = () => {
     <div
       className={`grid grid-rows-[auto,repeat(24,64px)] bg-white text-gray-300`}
     >
+      <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-gray-700 justify-center items-center top-0 shadow-lg border-[1px] border-gray-200 overflow-hidden"></div>
       {range24.map((_value, index) => {
         return (
           <SquareBG
@@ -235,47 +259,37 @@ const CalendarWeek = ({
     }
   }, []);
 
+  const memoedRange = useMemo(
+    () =>
+      [0, 1, 2, 3, 4, 5, 6].map((value) => {
+        const date = new Date(startDate.getTime() + value * 24 * 3600 * 1000);
+        const dateNow = new Date(Date.now());
+        dateNow.setHours(0, 0, 0, 0);
+        return {
+          dayOfWeek: (date.getDay() + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7,
+          day: date.getDate(),
+          isToday: date.getTime() === dateNow.getTime(),
+        };
+      }),
+    [startDate],
+  );
+
   return (
     <div
       className={`${style} grid grid-cols-[50px_repeat(7,1fr)] grid-row-1 overflow-scroll`}
       id="calendar-week-container"
     >
       <HoursBackground />
-      <DayBackground
-        day={1}
-        events={weekEventsByDay ? weekEventsByDay[0] : []}
-        setSelectedEvent={setSelectedEvent}
-      />
-      <DayBackground
-        day={2}
-        events={weekEventsByDay ? weekEventsByDay[1] : []}
-        setSelectedEvent={setSelectedEvent}
-      />
-      <DayBackground
-        day={3}
-        events={weekEventsByDay ? weekEventsByDay[2] : []}
-        setSelectedEvent={setSelectedEvent}
-      />
-      <DayBackground
-        day={4}
-        events={weekEventsByDay ? weekEventsByDay[3] : []}
-        setSelectedEvent={setSelectedEvent}
-      />
-      <DayBackground
-        day={5}
-        events={weekEventsByDay ? weekEventsByDay[4] : []}
-        setSelectedEvent={setSelectedEvent}
-      />
-      <DayBackground
-        day={6}
-        events={weekEventsByDay ? weekEventsByDay[5] : []}
-        setSelectedEvent={setSelectedEvent}
-      />
-      <DayBackground
-        day={7}
-        events={weekEventsByDay ? weekEventsByDay[6] : []}
-        setSelectedEvent={setSelectedEvent}
-      />
+      {memoedRange.map(({ dayOfWeek, day, isToday }, index) => (
+        <DayBackground
+          key={index}
+          dayOfWeek={dayOfWeek}
+          day={day}
+          events={weekEventsByDay ? weekEventsByDay[index] : []}
+          setSelectedEvent={setSelectedEvent}
+          isToday={isToday}
+        />
+      ))}
       {selectedEvent.mapOrElse(
         () => null,
         (selectedEvent) => (
