@@ -34,6 +34,7 @@ const rowStartClass = [
   "row-start-[23]",
   "row-start-[24]",
   "row-start-[25]",
+  "row-start-[26]",
 ];
 
 const startAndHeight = (startDate: Date, endDate: Date) => {
@@ -86,13 +87,18 @@ const DayBackground = ({
   }, new Map<string, number>());
   return (
     <div
-      className={`grid grid-rows-[repeat(24,64px)] relative bg-white text-gray-300`}
+      className={`grid grid-rows-[auto,repeat(24,64px)] relative bg-white text-gray-300`}
     >
+      <div className="flex flex-wrap row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-gray-700 justify-center content-center top-0 rounded-lg shadow-lg border-[1px] border-gray-200">
+        <a className="p-2 rounded-full border-[1px] border-blue-600 bg-white text-blue-500 shadow-md">
+          {day}
+        </a>
+      </div>
       {range24.map((_value, index) => {
         return (
           <SquareBG
             key={index}
-            style={`${rowStartClass[index]} col-start-[1] row-span-1`}
+            style={`${rowStartClass[index + 1]} col-start-[1] row-span-1`}
           />
         );
       })}
@@ -137,7 +143,9 @@ const SquareBG = ({
   style?: string;
 }) => {
   return (
-    <div className={`${style} border-[0.5px] border-gray-300 h-[64px]`}>
+    <div
+      className={`${style} border-[1px] border-t-0 border-l-0 border-gray-300 h-[64px]`}
+    >
       {childrens}
     </div>
   );
@@ -145,15 +153,17 @@ const SquareBG = ({
 
 const HoursBackground = () => {
   return (
-    <div className={`grid grid-rows-[repeat(24,64px)] bg-white text-gray-300`}>
+    <div
+      className={`grid grid-rows-[auto,repeat(24,64px)] bg-white text-gray-300`}
+    >
       {range24.map((_value, index) => {
         return (
           <SquareBG
-            style={`${rowStartClass[index]} col-start-[1] row-span-[${
-              index + 1
-            }]`}
+            style={`${
+              rowStartClass[index + 1]
+            } col-start-[1] flex flex-wrap justify-end content-end`}
             childrens={
-              <p key={index} className="text-black">{`${
+              <p key={index} className="text-gray-700">{`${
                 index < 10 ? `0${index}` : index
               }:00`}</p>
             }
@@ -216,9 +226,19 @@ const CalendarWeek = ({
     return acc;
   }, initial);
 
+  useEffect(() => {
+    const calendarWeekContainer = document.getElementById(
+      "calendar-week-container",
+    );
+    if (calendarWeekContainer) {
+      calendarWeekContainer.scrollTop = 512;
+    }
+  }, []);
+
   return (
     <div
       className={`${style} grid grid-cols-[50px_repeat(7,1fr)] grid-row-1 overflow-scroll`}
+      id="calendar-week-container"
     >
       <HoursBackground />
       <DayBackground
