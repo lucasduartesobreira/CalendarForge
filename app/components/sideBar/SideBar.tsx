@@ -153,50 +153,63 @@ const SideBar = (
   return (
     <div
       {...arg}
-      className={`${args.className} grid grid-rows-[auto_48px] grid-cols-[auto]`}
+      className={`${args.className} grid grid-rows-[auto_48px] grid-cols-[auto] bg-white`}
     >
       <div className="overflow-auto row-start-1">
         {storages.isSome() && calendars.isSome() && actions.isSome() && (
-          <ul className="">
-            {storages
-              .unwrap()
-              .calendarsStorage.all()
-              .map((calendar, index) => {
-                const viewableCalendars = calendars.unwrap();
+          <div className="bg-white rounded-xl shadow-lg border-[1px] border-gray-200 m-1">
+            <span className="p-2 text-gray-600 bg-white text-lg ">
+              Calendars
+            </span>
+            <ul className="text-sm bg-white p-2 flex flex-col">
+              {storages
+                .unwrap()
+                .calendarsStorage.all()
+                .map((calendar, index) => {
+                  const viewableCalendars = calendars.unwrap();
 
-                const defaultChecked =
-                  viewableCalendars.get(calendar.id) ?? true;
-                return (
-                  <li key={index}>
-                    <input
-                      type="checkbox"
-                      onChange={(event) => {
-                        actions.unwrap().set(calendar.id, event.target.checked);
-                      }}
-                      defaultChecked={defaultChecked}
-                    ></input>
-                    {calendar.name}{" "}
-                    <button
-                      className="text-yellow-100"
-                      onClick={() => {
-                        setSelectedCalendar(O.Some(calendar));
-                      }}
+                  const defaultChecked =
+                    viewableCalendars.get(calendar.id) ?? true;
+                  return (
+                    <li
+                      key={index}
+                      className="flex items-center gap-2 w-full relative"
                     >
-                      Edit
-                    </button>
-                  </li>
-                );
-              })}
-          </ul>
+                      <input
+                        type="checkbox"
+                        onChange={(event) => {
+                          actions
+                            .unwrap()
+                            .set(calendar.id, event.target.checked);
+                        }}
+                        defaultChecked={defaultChecked}
+                        className="px-[2px]"
+                      ></input>
+                      <div className="text-gray-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
+                        {calendar.name}
+                      </div>
+                      <button
+                        className="flex-none ml-auto text-yellow-500 p-1"
+                        onClick={() => {
+                          setSelectedCalendar(O.Some(calendar));
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </li>
+                  );
+                })}
+            </ul>
+            <button
+              className="w-full bg-blue-600 text-white rounded-xl shadow-xl p-1 sticky bottom-0"
+              ref={refButton}
+              onClick={() => setOpen(!open)}
+            >
+              New
+            </button>
+          </div>
         )}
       </div>
-      <button
-        className="row-start-2"
-        ref={refButton}
-        onClick={() => setOpen(!open)}
-      >
-        New Calendar
-      </button>
       {open && (
         <CreateCalendarForm setOpen={setOpen} refs={O.Some([refButton])} />
       )}
