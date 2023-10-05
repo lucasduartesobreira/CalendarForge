@@ -43,13 +43,12 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
 
   return (
     <>
-      <SideBar
-        className="w-[15%]"
-        viewableCalendarsState={viewableCalendarsState}
-      />
-      <div className="w-[85%] max-h-[100%]">
+      <SideBar viewableCalendarsState={viewableCalendarsState} />
+      <div className="ml-auto w-[85%] max-h-[100%]">
         <CalendarWeek
-          style={"h-[100%] max-h-[100%]"}
+          style={
+            "h-[100%] max-h-[100%] p-[4px] rounded-b-md shadow-md bg-white"
+          }
           startDate={startDate}
           viewableCalendarsState={viewableCalendarsState}
         />
