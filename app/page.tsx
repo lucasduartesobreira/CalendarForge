@@ -13,7 +13,7 @@ import { Project } from "@/services/projects/projectsStorage";
 
 const NavBarContainer = ({ children }: { children: any }) => {
   return (
-    <div className="flex-none shadow-xl rounded-b-md grid grid-cols-[auto_15%] grid-rows-[100%] relative h-[42px] bg-primary-500">
+    <div className="flex-none shadow-xl rounded-b-md grid grid-cols-[auto_15%] grid-rows-[100%] relative h-[42px] bg-primary-500 items-center">
       {children}
     </div>
   );
