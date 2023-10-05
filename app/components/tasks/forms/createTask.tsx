@@ -195,7 +195,7 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
           onSubmit(task, Array.from(todosAndEvents.values()));
           closeForm();
         }}
-        className="p-2 bg-white rounded-md border-2 border-gray-200 max-w-[50%] text-black flex flex-col "
+        className="p-2 bg-white rounded-md border-2 border-neutral-200 max-w-[50%] text-black flex flex-col "
         id="form"
       >
         <label>
@@ -210,7 +210,7 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
                 value: e.currentTarget.value,
               });
             }}
-            className="m-2 bg-gray-200 min-w-fit"
+            className="m-2 bg-neutral-200 min-w-fit"
           />
         </label>
         <label>
@@ -260,11 +260,11 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
                 value: e.currentTarget.value,
               });
             }}
-            className="bg-gray-200 p-2 w-full"
+            className="bg-neutral-200 p-2 w-full"
           />
         </label>
         <a>To-Do</a>
-        <div className="bg-gray-200 p-2 w-full flex flex-col">
+        <div className="bg-neutral-200 p-2 w-full flex flex-col">
           {Array.from(todosAndEvents.values()).map(
             ({ todo: { id, ...rest }, event }, index) => {
               return (
@@ -342,7 +342,7 @@ export function MiniatureTask({
     <div className="relative">
       <input
         value={title}
-        className="bg-gray-200"
+        className="bg-neutral-200"
         onDoubleClick={() => {
           setEditable(true);
         }}

@@ -47,13 +47,13 @@ const CreateCalendarForm = ({
             calendarsStorage.add(form);
             setOpen(false);
           }}
-          className="fixed z-[2000] top-1/2 left-1/2 text-gray-500 flex flex-col gap-[4px] p-4 bg-white rounded-md"
+          className="fixed z-[2000] top-1/2 left-1/2 text-neutral-500 flex flex-col gap-[4px] p-4 bg-white rounded-md"
         >
           <input
             title="name"
             type="text"
             placeholder="Name"
-            className="text-black m-2 bg-gray-200"
+            className="text-black m-2 bg-neutral-200"
             onChange={(e) => {
               form.name = e.target.value;
               setForm(form);
@@ -62,7 +62,7 @@ const CreateCalendarForm = ({
           <label>
             Timezone
             <select
-              className="text-black m-2 bg-gray-200"
+              className="text-black m-2 bg-neutral-200"
               onChange={(e) => {
                 const timezone = Number(e.target.value);
                 if (timezone >= -12 && timezone <= 12)
@@ -101,7 +101,7 @@ const CreateCalendarForm = ({
           </label>
           <input
             type="submit"
-            className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
+            className="flex-auto relative r-4 text-white bg-primary-500 rounded-md"
             value={"Save"}
           />
         </form>
@@ -157,8 +157,8 @@ const SideBar = (
     >
       <div className="overflow-auto row-start-1">
         {storages.isSome() && calendars.isSome() && actions.isSome() && (
-          <div className="bg-white rounded-xl shadow-lg border-[1px] border-gray-200 m-1">
-            <span className="p-2 text-gray-600 bg-white text-lg ">
+          <div className="bg-white rounded-xl shadow-lg border-[1px] border-neutral-200 m-1">
+            <span className="p-2 text-neutral-600 bg-white text-lg ">
               Calendars
             </span>
             <ul className="text-sm bg-white p-2 flex flex-col">
@@ -185,7 +185,7 @@ const SideBar = (
                         defaultChecked={defaultChecked}
                         className="px-[2px]"
                       ></input>
-                      <div className="text-gray-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
+                      <div className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
                         {calendar.name}
                       </div>
                       <button
@@ -201,7 +201,7 @@ const SideBar = (
                 })}
             </ul>
             <button
-              className="w-full bg-blue-600 text-white rounded-xl shadow-xl p-1 sticky bottom-0"
+              className="w-full bg-primary-500 text-white rounded-xl shadow-xl p-1 sticky bottom-0"
               ref={refButton}
               onClick={() => setOpen(!open)}
             >

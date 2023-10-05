@@ -120,7 +120,7 @@ const CreateEventForm = ({
         <form
           hidden={false}
           onSubmit={handleSubmit}
-          className="z-[1000] text-gray-500 fixed border-2 rounded-md top-1/2 left-1/2 bg-white flex flex-col"
+          className="z-[1000] text-neutral-500 fixed border-2 rounded-md top-1/2 left-1/2 bg-white flex flex-col"
           id="form1"
         >
           <label>
@@ -128,28 +128,28 @@ const CreateEventForm = ({
             <input
               placeholder="Title"
               value={form.title}
-              className="text-black m-2 bg-gray-200"
+              className="text-black m-2 bg-neutral-200"
               onChange={handleChangeText("title")}
               type="text"
             />
             <input
               placeholder="Description"
               value={form.description}
-              className="text-black m-2 bg-gray-200"
+              className="text-black m-2 bg-neutral-200"
               onChange={handleChangeText("description")}
               type="text"
             />
             <input
               placeholder=""
               value={getHTMLDateTime(new Date(form.startDate))}
-              className="text-black m-2 bg-gray-200"
+              className="text-black m-2 bg-neutral-200"
               onChange={handleChangeDates("startDate")}
               type="datetime-local"
             />
             <input
               placeholder=""
               value={getHTMLDateTime(new Date(form.endDate))}
-              className="text-black m-2 bg-gray-200"
+              className="text-black m-2 bg-neutral-200"
               onChange={handleChangeDates("endDate")}
               type="datetime-local"
             />
@@ -185,7 +185,7 @@ const CreateEventForm = ({
               </option>
             ))}
           </select>
-          <div className="relative flex flex-col m-2 bg-gray-100 min-h-[24px]">
+          <div className="relative flex flex-col m-2 bg-neutral-100 min-h-[24px]">
             {form.notifications.map((notification, index) => (
               <UpdateNotificationForm
                 notification={notification}
@@ -244,7 +244,7 @@ const CreateEventForm = ({
           </select>
           <input
             type="submit"
-            className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
+            className="flex-auto relative r-4 text-white bg-primary-500 rounded-md"
             value={"Save"}
             form="form1"
           />
@@ -263,7 +263,7 @@ const CreateEventButton = () => {
     <div className="">
       <button
         ref={buttonRef}
-        className="absolute bottom-8 right-8 w-24 h-24 z-[1000] rounded-s-full rounded-e-full bg-blue-600"
+        className="absolute bottom-8 right-8 w-24 h-24 z-[1000] rounded-s-full rounded-e-full bg-primary-500"
         onClick={() => setOpen(!open)}
       >
         Create Event

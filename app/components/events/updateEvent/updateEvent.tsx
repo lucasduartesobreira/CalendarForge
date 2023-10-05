@@ -62,34 +62,34 @@ const UpdateEventForm = ({
         <form
           hidden={false}
           onSubmit={handleSubmit}
-          className="z-[1000] text-gray-500 fixed border-2 p-[8px]rounded-md top-1/2 left-1/2 bg-white flex flex-col"
+          className="z-[1000] text-neutral-500 fixed border-2 p-[8px]rounded-md top-1/2 left-1/2 bg-white flex flex-col"
         >
           <label>
             <input
               placeholder="Title"
               defaultValue={initialForm.title}
-              className="text-black m-2 bg-gray-200"
+              className="text-black m-2 bg-neutral-200"
               onChange={handleChangeText("title")}
               type="text"
             />
             <input
               placeholder="Description"
               defaultValue={initialForm.description}
-              className="text-black m-2 bg-gray-200"
+              className="text-black m-2 bg-neutral-200"
               onChange={handleChangeText("description")}
               type="text"
             />
             <input
               placeholder=""
               defaultValue={getHTMLDateTime(new Date(initialForm.startDate))}
-              className="text-black m-2 bg-gray-200"
+              className="text-black m-2 bg-neutral-200"
               onChange={handleChangeDates("startDate")}
               type="datetime-local"
             />
             <input
               placeholder=""
               defaultValue={getHTMLDateTime(new Date(initialForm.endDate))}
-              className="text-black m-2 bg-gray-200"
+              className="text-black m-2 bg-neutral-200"
               onChange={handleChangeDates("endDate")}
               type="datetime-local"
             />
@@ -100,7 +100,7 @@ const UpdateEventForm = ({
               setForm(form);
             }}
             defaultValue={initialForm.calendar_id}
-            className="text-black m-2 bg-gray-200"
+            className="text-black m-2 bg-neutral-200"
           >
             {calendarsStorage.all().map((value, index) => (
               <option key={index} value={value.id}>
@@ -122,7 +122,7 @@ const UpdateEventForm = ({
               </option>
             ))}
           </select>
-          <div className="relative flex flex-col m-2 bg-gray-100 min-h-[24px]">
+          <div className="relative flex flex-col m-2 bg-neutral-100 min-h-[24px]">
             {form.notifications.map((notification, index) => (
               <UpdateNotificationForm
                 notification={notification}
@@ -155,7 +155,7 @@ const UpdateEventForm = ({
           </div>
           <input
             type="submit"
-            className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
+            className="flex-auto relative r-4 text-white bg-primary-500 rounded-md"
             value={"Save"}
           />
           <div className="absolute flex flex-row-reverse gap-[4px] right-0">

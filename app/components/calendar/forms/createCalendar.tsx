@@ -3,7 +3,11 @@ import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
 import { FormEvent, RefObject, useState } from "react";
 import { Option } from "@/utils/option";
 
-const initialCalendar: CreateCalendar = { name: "", timezone: 0, default: false };
+const initialCalendar: CreateCalendar = {
+  name: "",
+  timezone: 0,
+  default: false,
+};
 
 export const CreateCalendarForm = ({
   refs,
@@ -24,13 +28,13 @@ export const CreateCalendarForm = ({
         onSubmit={(e) => {
           onSubmit(e, form);
         }}
-        className="flex-auto text-gray-500 flex flex-col gap-[4px] p-4 bg-white rounded-md"
+        className="flex-auto text-neutral-500 flex flex-col gap-[4px] p-4 bg-white rounded-md"
       >
         <input
           title="name"
           type="text"
           placeholder="Name"
-          className="text-black m-2 bg-gray-200"
+          className="text-black m-2 bg-neutral-200"
           onChange={(e) => {
             form.name = e.target.value;
             setForm({ ...form });
@@ -39,7 +43,7 @@ export const CreateCalendarForm = ({
         <label>
           Timezone
           <select
-            className="text-black m-2 bg-gray-200"
+            className="text-black m-2 bg-neutral-200"
             onChange={(e) => {
               const timezone = Number(e.target.value);
               if (timezone >= -12 && timezone <= 12)
@@ -78,7 +82,7 @@ export const CreateCalendarForm = ({
         </label>
         <input
           type="submit"
-          className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
+          className="flex-auto relative r-4 text-white bg-primary-500 rounded-md"
           value={"Save"}
         />
       </form>

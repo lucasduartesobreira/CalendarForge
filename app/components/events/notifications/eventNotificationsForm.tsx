@@ -30,7 +30,7 @@ const UpdateNotificationForm = ({
           type="number"
           min="1"
           max="60"
-          className="text-right bg-gray-100"
+          className="text-right bg-neutral-100"
           onChange={(e) => {
             const time = Number(e.currentTarget.value);
             onChangeTime(time);
@@ -93,7 +93,7 @@ const NewEventNotificationForm = ({
           type="number"
           min="1"
           max="60"
-          className="text-right bg-gray-100"
+          className="text-right bg-neutral-100"
           onChange={(e) => {
             newNotification.time = Number(e.currentTarget.value);
             setNewNotification({ ...newNotification });
@@ -124,7 +124,7 @@ const NewEventNotificationForm = ({
         </select>
       </label>
       <button
-        className="absolute right-[2%] text-blue-600"
+        className="absolute right-[2%] text-primary-500"
         type="submit"
         value={"+"}
         onClick={(e) => {

@@ -73,7 +73,7 @@ export function ProjectForm<
       className="fixed z-[1000] top-1/2 flex w-full justify-center"
     >
       <form
-        className="flex-auto relative max-w-[30%] bg-white p-2 text-gray-400 flex flex-col"
+        className="flex-auto relative max-w-[30%] bg-white p-2 text-neutral-400 flex flex-col"
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -86,7 +86,7 @@ export function ProjectForm<
           Title
           <input
             value={form.title}
-            className="bg-gray-200 m-2 text-black"
+            className="bg-neutral-200 m-2 text-black"
             onChange={(ev) => {
               const title = ev.currentTarget.value;
               const updatedForm = { ...form, title };
@@ -144,14 +144,14 @@ export function ProjectForm<
             setOpenAddCalendar(!openAddCalendar);
             setEditCalendar(O.None());
           }}
-          className="text-blue-500"
+          className="text-primary-400"
         >
           + Add Calendar
         </button>
         <input
           value={"Save"}
           type="submit"
-          className="rounded-md text-white bg-blue-500"
+          className="rounded-md text-white bg-primary-400"
         />
         {deleteButton.mapOrElse(
           () => null,

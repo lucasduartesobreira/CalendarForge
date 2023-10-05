@@ -19,7 +19,7 @@ import { BetterEventEmitter } from "@/utils/eventEmitter";
 
 export default function Container({ children }: PropsWithChildren) {
   return (
-    <div className="flex gap-[4px] h-full w-full bg-gray-100 relative overflow-auto">
+    <div className="flex gap-[4px] h-full w-full bg-neutral-100 relative overflow-auto">
       {children}
     </div>
   );
@@ -79,7 +79,7 @@ function AddBoard({
   return (
     <div className="flex h-full w-[32px] sticky right-0 items-center">
       <button
-        className="h-[32px] w-[32px] rounded-full bg-blue-500 text-white"
+        className="h-[32px] w-[32px] rounded-full bg-primary-400 text-white"
         onClick={() => {
           storages.map(({ boardsStorage }) => {
             boardsStorage.add({
@@ -220,7 +220,7 @@ function Board({
           value={board.title}
         />
 
-        <div className="bg-gray-200 relative min-h-[6%] m-2 p-[4px] flex flex-col">
+        <div className="bg-neutral-200 relative min-h-[6%] m-2 p-[4px] flex flex-col">
           {tasks.map((task, index) => (
             <MiniatureTask
               setSelectedTask={setSelectedTask}

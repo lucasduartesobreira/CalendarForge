@@ -7,7 +7,21 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        "primary-500": "#2563eb",
+        "primary-400": "#3b82f6",
+        "primary-50": "#dbeafe",
+        "neutral-100": "#f5f5f5",
+        "neutral-200": "#e5e5e5",
+        "neutral-300": "#d4d4d4",
+        "neutral-400": "#a3a3a3",
+        "neutral-500": "#737373",
+        "neutral-600": "#525252",
+        "neutral-700": "#404040",
+        "neutral-800": "#262626",
+      },
+    },
   },
   plugins: [],
   safelist: [
@@ -21,8 +35,7 @@ const config: Config = {
      *},
      */
     {
-      pattern:
-        /row-start-([0-9]|1[0-9]|2[0-4])/,
+      pattern: /row-start-([0-9]|1[0-9]|2[0-4])/,
     },
   ],
 };

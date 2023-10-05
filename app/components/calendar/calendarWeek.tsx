@@ -100,15 +100,16 @@ const DayBackground = ({
     return acc;
   }, new Map<string, number>());
 
-  const color = isToday ? "bg-blue-100" : "";
+  const color = isToday ? "bg-primary-50" : "bg-white";
+  console.log(color, day);
   return (
     <div
-      className={`grid grid-rows-[auto,repeat(24,64px)] relative bg-white text-gray-300`}
+      className={`grid grid-rows-[auto,repeat(24,64px)] relative bg-white text-neutral-300`}
     >
-      <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-gray-700 justify-center items-center top-0 rounded-lg shadow-lg border-[1px] border-gray-200 overflow-hidden">
+      <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-600 justify-center items-center top-0 rounded-lg shadow-lg border-[1px] border-neutral-200 overflow-hidden">
         <div className="text-center relative px-8 py-4">
           <div
-            className={`${color} flex justify-center items-center font-mono text-4x1 font-bold px-4 py-2 rounded-[1rem] border-[1px] border-blue-600 bg-white text-blue-500 shadow-md w-10 h-10`}
+            className={`${color} flex justify-center items-center font-mono text-4x1 font-bold px-4 py-2 rounded-[1rem] border-[1px] border-primary-500 text-primary-500 shadow-md w-10 h-10`}
           >
             <span className="text-center">{day}</span>
           </div>
@@ -167,7 +168,7 @@ const SquareBG = ({
 }) => {
   return (
     <div
-      className={`${style} border-[1px] border-t-0 border-l-0 border-gray-300 h-[64px]`}
+      className={`${style} border-[1px] border-t-0 border-l-0 border-neutral-300 h-[64px]`}
     >
       {childrens}
     </div>
@@ -177,9 +178,9 @@ const SquareBG = ({
 const HoursBackground = () => {
   return (
     <div
-      className={`grid grid-rows-[auto,repeat(24,64px)] bg-white text-gray-300`}
+      className={`grid grid-rows-[auto,repeat(24,64px)] bg-white text-neutral-300`}
     >
-      <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-gray-700 justify-center items-center top-0 shadow-lg border-[1px] border-gray-200 overflow-hidden"></div>
+      <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-700 justify-center items-center top-0 shadow-lg border-[1px] border-neutral-200 overflow-hidden"></div>
       {range24.map((_value, index) => {
         return (
           <SquareBG
@@ -187,7 +188,7 @@ const HoursBackground = () => {
               rowStartClass[index + 1]
             } col-start-[1] flex flex-wrap justify-end content-end`}
             childrens={
-              <p key={index} className="text-gray-700">{`${
+              <p key={index} className="text-neutral-600">{`${
                 index < 10 ? `0${index}` : index
               }:00`}</p>
             }

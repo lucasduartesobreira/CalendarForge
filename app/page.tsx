@@ -13,7 +13,7 @@ import { Project } from "@/services/projects/projectsStorage";
 
 const NavBar = ({ children }: { children: any }) => {
   return (
-    <div className="flex-none grid grid-cols-[auto_15%] grid-rows-[100%] relative h-[48px] bg-red-500">
+    <div className="flex-none grid grid-cols-[auto_15%] grid-rows-[100%] relative h-[48px] bg-green-200">
       {children}
     </div>
   );
@@ -44,10 +44,10 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
   return (
     <>
       <SideBar viewableCalendarsState={viewableCalendarsState} />
-      <div className="ml-auto w-[85%] max-h-[100%]">
+      <div className="ml-auto w-[85%] max-h-[100%] bg-white">
         <CalendarWeek
           style={
-            "h-[100%] max-h-[100%] p-[4px] rounded-b-md shadow-md bg-white"
+            "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
           }
           startDate={startDate}
           viewableCalendarsState={viewableCalendarsState}

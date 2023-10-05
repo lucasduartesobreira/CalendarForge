@@ -235,7 +235,7 @@ const AddNew = () => {
       <>
         <button
           ref={ref}
-          className="absolute bottom-0 m-4 p-2 rounded-md bg-blue-500"
+          className="absolute bottom-0 m-4 p-2 rounded-md bg-primary-400"
           onClick={() => {
             setOpenForm((open) => !open);
           }}

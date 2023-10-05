@@ -31,13 +31,13 @@ export const UpdateProjectCalendarForm = ({
           onSubmit(form);
           setOpen(false);
         }}
-        className="text-gray-500 p-[8px] flex flex-col gap-[4px] p-4 bg-white rounded-md"
+        className="text-neutral-500 p-[8px] flex flex-col gap-[4px] p-4 bg-white rounded-md"
       >
         <input
           title="name"
           type="text"
           placeholder="Name"
-          className="text-black m-2 bg-gray-200"
+          className="text-black m-2 bg-neutral-200"
           onChange={(e) => {
             form.name = e.target.value;
             setForm(form);
@@ -47,7 +47,7 @@ export const UpdateProjectCalendarForm = ({
         <label>
           Timezone
           <select
-            className="text-black m-2 bg-gray-200"
+            className="text-black m-2 bg-neutral-200"
             onChange={(e) => {
               const timezone = Number(e.target.value);
               if (timezone >= -12 && timezone <= 12)
@@ -87,7 +87,7 @@ export const UpdateProjectCalendarForm = ({
 
         <input
           type="submit"
-          className="flex-auto relative r-4 text-white bg-blue-600 rounded-md"
+          className="flex-auto relative r-4 text-white bg-primary-500 rounded-md"
           value={"Save"}
         />
         <button
