@@ -186,11 +186,12 @@ const HoursBackground = () => {
           <SquareBG
             style={`${
               rowStartClass[index + 1]
-            } col-start-[1] flex flex-wrap justify-end content-end`}
+            } col-start-[1] flex flex-wrap justify-end items-start`}
             childrens={
-              <p key={index} className="text-neutral-600">{`${
-                index < 10 ? `0${index}` : index
-              }:00`}</p>
+              <p
+                key={index}
+                className="text-neutral-600 mr-auto ml-auto mt-1 text-sm "
+              >{`${index < 10 ? `0${index}` : index}:00`}</p>
             }
             key={index}
           />

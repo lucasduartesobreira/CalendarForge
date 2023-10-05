@@ -11,6 +11,9 @@ const config: Config = {
       colors: {
         "primary-500": "#2563eb",
         "primary-400": "#3b82f6",
+        "primary-300": "#60a5fa",
+        "primary-200": "#93c5fd",
+        "primary-100": "#bfdbfe",
         "primary-50": "#dbeafe",
         "neutral-100": "#f5f5f5",
         "neutral-200": "#e5e5e5",
@@ -20,6 +23,8 @@ const config: Config = {
         "neutral-600": "#525252",
         "neutral-700": "#404040",
         "neutral-800": "#262626",
+        "text-primary": "#0a0a0a",
+        "text-inverse": "#eff6ff",
       },
     },
   },

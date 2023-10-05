@@ -11,9 +11,9 @@ import Container, { Boards } from "./components/boards/boards";
 import { None, Option } from "@/utils/option";
 import { Project } from "@/services/projects/projectsStorage";
 
-const NavBar = ({ children }: { children: any }) => {
+const NavBarContainer = ({ children }: { children: any }) => {
   return (
-    <div className="flex-none grid grid-cols-[auto_15%] grid-rows-[100%] relative h-[48px] bg-green-200">
+    <div className="flex-none shadow-xl rounded-b-md grid grid-cols-[auto_15%] grid-rows-[100%] relative h-[42px] bg-primary-500">
       {children}
     </div>
   );
@@ -96,16 +96,34 @@ const Home = () => {
 
   return (
     <StorageContext.Provider value={data}>
-      <main className="h-full flex flex-col">
-        <NavBar>
-          <nav className="col-start-1 flex gap-2">
-            <button onClick={() => setMenuType("calendar")}>Calendar</button>
-            <button onClick={() => setMenuType("projects")}>Projects</button>
+      <main className="h-full flex flex-col bg-white">
+        <NavBarContainer>
+          <nav className="mx-6 col-start-1 flex gap-2 text-text-inverse items-center">
+            <button
+              onClick={() => setMenuType("calendar")}
+              className={`font-semibold py-1 px-2 my-2 ${
+                menuType === "calendar"
+                  ? "border-text-inverse bg-primary-300 rounded-md border-[1px] border-primary-100"
+                  : ""
+              }`}
+            >
+              Calendar
+            </button>
+            <button
+              onClick={() => setMenuType("projects")}
+              className={`font-semibold py-1 px-2 my-2 ${
+                menuType === "projects"
+                  ? "border-text-inverse bg-primary-300 rounded-md border-[1px] border-primary-100"
+                  : ""
+              }`}
+            >
+              Projects
+            </button>
           </nav>
           {menuType === "calendar" && (
             <WeekNavigation startDate={startDate} setStartDate={setStartDate} />
           )}
-        </NavBar>
+        </NavBarContainer>
         <FlexContent>
           {menuType === "calendar" && <CalendarContent startDate={startDate} />}
           {menuType === "projects" && <ProjectsContent />}
