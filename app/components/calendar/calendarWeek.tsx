@@ -129,7 +129,7 @@ const DayBackground = ({
       {isClient &&
         eventsMap.map((event, index) => {
           const conflictNumber = conflicts.get(event.id);
-          const left = 10 * (conflicts.get(event.id) ?? 0);
+          const left = 10 * (conflictNumber ?? 0);
           const width = 100 / (conflictNumber ?? 1) - left;
           return (
             <div key={`day${dayOfWeek}${index}`} className={`static`}>
@@ -138,7 +138,7 @@ const DayBackground = ({
                 onClick={() => {
                   setSelectedEvent(O.Some(event));
                 }}
-                className="flex absolute bottom-0 justify-start"
+                className="flex p-1 rounded-md absolute bottom-0 justify-start"
                 style={{
                   ...startAndHeight(
                     new Date(event.startDate),
@@ -148,6 +148,7 @@ const DayBackground = ({
                   left: `${left}%`,
                   zIndex: `${index}`,
                   backgroundColor: event.color ?? "#7a5195",
+                  borderWidth: conflictNumber ? 1 : 0,
                 }}
               >
                 {event.title}
