@@ -101,7 +101,7 @@ const DayBackground = ({
   }, new Map<string, number>());
 
   const color = isToday ? "bg-primary-50" : "bg-white";
-  console.log(color, day);
+
   return (
     <div
       className={`grid grid-rows-[auto,repeat(24,64px)] relative bg-white text-neutral-300`}
