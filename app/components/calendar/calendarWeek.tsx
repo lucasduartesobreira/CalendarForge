@@ -47,20 +47,38 @@ const rowStartClass = [
   "row-start-[26]",
 ];
 
-const startAndHeight = (startDate: Date, endDate: Date) => {
-  const [startHour, startMinute] = [
-    startDate.getHours(),
-    startDate.getMinutes(),
-  ];
+const DAY_HEADER_HEIGHT = 48;
+const HOUR_BLOCK_HEIGHT = 64;
+const HOUR_DIVISION = 4;
+const MINUTES_OF_A_DIVISION = 60 / HOUR_DIVISION;
+const calcOffset = (
+  hour: number,
+  minute: number,
+  rounder: (arg0: number) => number,
+) =>
+  DAY_HEADER_HEIGHT +
+  hour * HOUR_BLOCK_HEIGHT +
+  rounder(minute / MINUTES_OF_A_DIVISION) * (HOUR_BLOCK_HEIGHT / HOUR_DIVISION);
 
-  const startPosition =
-    startHour * 64 + Math.floor(startMinute / 15) * (64 / 4);
+const startAndHeight = (startDate: Date, endDate: Date, day: number) => {
+  const startsSameDay = startDate.getDate() === day;
 
-  const timeDiffInMinutes =
-    (endDate.getTime() - startDate.getTime()) / (60 * 1000);
-  const blockSizeInFifteenMinutes = Math.floor(timeDiffInMinutes / 15);
-  const fixForMinimal = Math.max(blockSizeInFifteenMinutes, 1);
-  const height = fixForMinimal * (64 / 4);
+  const [startHour, startMinute] = startsSameDay
+    ? [startDate.getHours(), startDate.getMinutes()]
+    : [0, 0];
+
+  const [endHour, endMinute] =
+    startDate.getDate() - endDate.getDate() === 0
+      ? [endDate.getHours(), endDate.getMinutes()]
+      : startsSameDay
+      ? [23, 59]
+      : [endDate.getHours(), endDate.getMinutes()];
+
+  const startPosition = calcOffset(startHour, startMinute, Math.floor);
+  const endPosition = calcOffset(endHour, endMinute, Math.ceil);
+  const diff = endPosition - startPosition;
+
+  const height = diff;
 
   return { top: startPosition, height };
 };
@@ -132,24 +150,28 @@ const DayBackground = ({
           const left = 10 * (conflictNumber ?? 0);
           const width = 100 / (conflictNumber ?? 1) - left;
           return (
-            <div key={`day${dayOfWeek}${index}`} className={`static`}>
+            <div
+              key={`day${dayOfWeek}${index}`}
+              className={`absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
+              style={{
+                ...startAndHeight(
+                  new Date(event.startDate),
+                  new Date(event.endDate),
+                  day,
+                ),
+                width: `${width}%`,
+                left: `${left}%`,
+                zIndex: `${index}`,
+                backgroundColor: event.color ?? "#7a5195",
+                borderWidth: conflictNumber ? 1 : 0,
+              }}
+            >
               <button
                 key={event.id}
                 onClick={() => {
                   setSelectedEvent(O.Some(event));
                 }}
-                className="flex p-1 rounded-md absolute bottom-0 justify-start"
-                style={{
-                  ...startAndHeight(
-                    new Date(event.startDate),
-                    new Date(event.endDate),
-                  ),
-                  width: `${width}%`,
-                  left: `${left}%`,
-                  zIndex: `${index}`,
-                  backgroundColor: event.color ?? "#7a5195",
-                  borderWidth: conflictNumber ? 1 : 0,
-                }}
+                className="text-xs"
               >
                 {event.title}
               </button>
@@ -249,7 +271,16 @@ const CalendarWeek = ({
   const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
 
   let weekEventsByDay = events.reduce((acc, event) => {
-    acc.at(new Date(event.startDate).getDay())?.push(event);
+    const startDate = new Date(event.startDate);
+    const endDate = new Date(event.endDate);
+
+    if (startDate.getDay() != endDate.getDay()) {
+      acc.at(startDate.getDay())?.push(event);
+      acc.at(endDate.getDay())?.push(event);
+      return acc;
+    }
+
+    acc.at(startDate.getDay())?.push(event);
     return acc;
   }, initial);
 
