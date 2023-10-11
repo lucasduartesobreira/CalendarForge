@@ -16,6 +16,7 @@ export type Task = {
   board_id: string;
   title: string;
   description: string;
+  position: number;
   startDate?: number;
   endDate?: number;
 };
@@ -26,6 +27,13 @@ const TaskValidator: ValidatorType<Task> = {
   description: { optional: false, type: "string" },
   board_id: { optional: false, type: "string" },
   project_id: { optional: false, type: "string" },
+  position: {
+    optional: false,
+    type: "number",
+    validator(a) {
+      return a >= 0;
+    },
+  },
   startDate: {
     optional: true,
     type: "number",
@@ -91,6 +99,7 @@ export class TaskStorage implements BetterEventEmitter<Task["id"], Task> {
             board_id: updateValue.board_id ?? foundTask.board_id,
             title: updateValue.title ?? foundTask.title,
             description: updateValue.description ?? foundTask.description,
+            position: updateValue.position ?? foundTask.position,
             startDate: updateValue.startDate ?? foundTask.startDate,
             endDate: updateValue.endDate ?? foundTask.endDate,
           },

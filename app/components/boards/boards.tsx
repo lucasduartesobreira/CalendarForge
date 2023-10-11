@@ -192,12 +192,13 @@ function Board({
   useEffect(() => {
     // TODO: Add index
     storages.map(({ tasksStorage }) => {
-      const tasks = tasksStorage.filteredValues(
-        (task) => task.board_id === initialBoard.id,
-      );
+      const tasks = tasksStorage
+        .filteredValues((task) => task.board_id === initialBoard.id)
+        .sort((taskA, taskB) => taskA.position - taskB.position);
+
       setTasks(tasks);
     });
-  }, [listeners.tasksStorageListener]);
+  }, []);
 
   useEffect(() => {
     boardsStorage.update(initialBoard.id, board).mapOrElse(
@@ -234,14 +235,17 @@ function Board({
               e.preventDefault();
               e.stopPropagation();
               storages.map(({ tasksStorage }) => {
-                tasksStorage.add({
-                  board_id: board.id,
-                  title: "New task",
-                  endDate: undefined,
-                  startDate: undefined,
-                  project_id: board.project_id,
-                  description: "",
-                });
+                tasksStorage
+                  .add({
+                    board_id: board.id,
+                    title: "New task",
+                    endDate: undefined,
+                    startDate: undefined,
+                    project_id: board.project_id,
+                    description: "",
+                    position: tasks.length,
+                  })
+                  .map((task) => tasks.push(task) > 0 && setTasks(tasks));
               });
             }}
           >
@@ -303,7 +307,7 @@ function Board({
               onSubmit={(task, todosAndEvents) => {
                 storages.map(({ tasksStorage, todosStorage, eventsStorage }) =>
                   tasksStorage.findById(task.id).map((taskFound) =>
-                    tasksStorage.update(task.id, task).map(() => {
+                    tasksStorage.update(task.id, task).map((updatedTask) => {
                       todosAndEvents
                         .reduce(
                           internalReduceTodo(todosStorage),
@@ -374,6 +378,18 @@ function Board({
                                   : eventsStorage.add(value),
                               );
                               tasksStorage.update(task.id, taskFound);
+                            })
+                            .map(() => {
+                              const taskIndex = tasks.findIndex(
+                                ({ id }) => id === updatedTask.id,
+                              );
+                              const newTasks =
+                                taskIndex > 0
+                                  ? tasks.splice(taskIndex, 1, updatedTask)
+                                  : tasks.push(updatedTask) > 0
+                                  ? tasks
+                                  : tasks;
+                              setTasks([...newTasks]);
                             });
                         });
                     }),
