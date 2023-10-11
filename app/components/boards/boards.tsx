@@ -12,9 +12,9 @@ import { Board, BoardStorage } from "@/services/boards/boards";
 import { Task } from "@/services/task/task";
 import { LocalValue, MiniatureTask, TaskForm } from "../tasks/forms/createTask";
 import { AddValue, UpdateValue } from "@/utils/storage";
-import { Todo, TodoStorage } from "@/services/todo/todo";
+import { Todo } from "@/services/todo/todo";
 import { Ok, Result } from "@/utils/result";
-import { CalendarEvent, EventStorage } from "@/services/events/events";
+import { CalendarEvent } from "@/services/events/events";
 import { BetterEventEmitter } from "@/utils/eventEmitter";
 
 export default function Container({ children }: PropsWithChildren) {
@@ -29,7 +29,7 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
   const { storages } = useContext(StorageContext);
   return storages.mapOrElse(
     () => null,
-    ({ boardsStorage, tasksStorage }) => {
+    ({ boardsStorage }) => {
       return project.mapOrElse(
         () => null,
         (project) => {
@@ -174,7 +174,7 @@ function Board({
   boardsStorage: BoardStorage;
   neighbours: [prev: Option<Board>, next: Option<Board>];
 }) {
-  const { storages, listeners } = useContext(StorageContext);
+  const { storages } = useContext(StorageContext);
   const [board, setBoard] = useReducer(
     (state: Board, action: { type: "change_title"; title: Board["title"] }) => {
       if (action.type === "change_title") {
