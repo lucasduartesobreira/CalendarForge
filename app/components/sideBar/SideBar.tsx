@@ -157,8 +157,8 @@ const SideBar = (
     >
       <div className="overflow-auto row-start-1">
         {storages.isSome() && calendars.isSome() && actions.isSome() && (
-          <div className="bg-white rounded-xl shadow-lg border-[1px] border-neutral-200 m-1">
-            <span className="p-2 text-neutral-600 bg-white text-lg ">
+          <div className="bg-white rounded-xl shadow-lg border-[1px] border-neutral-200 m-1 overflow-hidden">
+            <span className="m-2 text-neutral-600 bg-white text-lg ">
               Calendars
             </span>
             <ul className="text-sm bg-white p-2 flex flex-col">
