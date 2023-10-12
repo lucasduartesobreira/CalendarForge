@@ -8,7 +8,15 @@ import { getHTMLDateTime } from "@/utils/date";
 import { idGenerator } from "@/utils/idGenerator";
 import { None, Option, Some } from "@/utils/option";
 import { AddValue } from "@/utils/storage";
-import { RefObject, useContext, useEffect, useReducer, useState } from "react";
+import {
+  DetailedHTMLProps,
+  HTMLAttributes,
+  RefObject,
+  useContext,
+  useEffect,
+  useReducer,
+  useState,
+} from "react";
 
 export type LocalValue<A> = A & {
   TYPE_OPERATION: "CREATE" | "UPDATE" | "REMOVE";
@@ -329,17 +337,18 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
 export function MiniatureTask({
   setSelectedTask,
   initialTask: task,
+  ...props
 }: {
   initialTask: Task;
   setSelectedTask: (value: Option<Task>) => void;
-}) {
+} & DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>) {
   const [title, setTitle] = useState(task.title);
   const [editable, setEditable] = useState(false);
 
   const { storages } = useContext(StorageContext);
 
   return (
-    <div className="relative">
+    <div {...props} className="relative">
       <input
         value={title}
         className="bg-neutral-200"
@@ -349,7 +358,9 @@ export function MiniatureTask({
         onBlur={() => {
           storages.map(({ tasksStorage }) => {
             if (title.length > 0) {
-              tasksStorage.update(task.id, { title });
+              if (task.title !== title) {
+                tasksStorage.update(task.id, { title });
+              }
             } else {
               setTitle(task.title);
             }

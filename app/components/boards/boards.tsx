@@ -207,6 +207,10 @@ function Board({
     );
   }, [board]);
 
+  const [taskDragging, setTaskDragging] = useState<
+    Option<[oldPosition: number, taskData: Task]>
+  >(None());
+
   return (
     <>
       <div className="bg-white h-full relative text-black overflow-auto">
@@ -221,12 +225,66 @@ function Board({
           value={board.title}
         />
 
-        <div className="bg-neutral-200 relative min-h-[6%] m-2 p-[4px] flex flex-col">
+        <div
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove("dragging");
+            taskDragging.map(([oldPosition, newTask]) => {
+              storages.map(({ tasksStorage }) => {
+                const startRange = Math.min(newTask.position, oldPosition);
+                const endRange = Math.max(newTask.position, oldPosition);
+
+                const othersPositionOffset = Math.sign(
+                  oldPosition - newTask.position,
+                );
+                const updatedTasks = tasks
+                  .map(({ id, position, ...rest }) => {
+                    const result =
+                      id === newTask.id
+                        ? newTask
+                        : position >= startRange && position <= endRange
+                        ? {
+                            id,
+                            ...rest,
+                            position: position + othersPositionOffset,
+                          }
+                        : { id, position, ...rest };
+
+                    if (result.position !== position) {
+                      tasksStorage.update(result.id, {
+                        position: result.position,
+                      });
+                    }
+                    return result;
+                  })
+                  .sort(({ position: pA }, { position: pB }) => pA - pB);
+                setTasks([...updatedTasks]);
+              });
+            });
+            setTaskDragging(None());
+          }}
+          className="bg-neutral-200 relative min-h-[6%] m-2 p-[4px] flex flex-col"
+        >
           {tasks.map((task, index) => (
             <MiniatureTask
               setSelectedTask={setSelectedTask}
               initialTask={task}
-              key={index}
+              key={task.id}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setTaskDragging(
+                  taskDragging.map(([old, task]) => [
+                    old,
+                    { ...task, position: index },
+                  ]),
+                );
+              }}
+              onDragStart={(e) => {
+                e.currentTarget.classList.add("dragging");
+                e.dataTransfer.clearData();
+                setTaskDragging(Some([task.position, task]));
+              }}
+              draggable
             ></MiniatureTask>
           ))}
           <button
