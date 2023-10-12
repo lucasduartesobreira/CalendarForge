@@ -28,12 +28,15 @@ const Content = ({
   const refList = useRef(null);
 
   return (
-    <div>
+    <div className="bg-white rounded-t-xl shadow-lg border-[1px] border-neutral-200 m-1 overflow-hidden">
       {storages.mapOrElse(
         () => null,
         ({ projectsStorage, calendarsStorage }) => (
           <>
-            <div ref={refList}>
+            <span className="p-2 text-neutral-600 bg-white text-lg ">
+              Projects
+            </span>
+            <div ref={refList} className="text-sm bg-white p-2 flex flex-col">
               {projectsStorage.all().map((project) => {
                 return (
                   <ProjectItemList
@@ -185,6 +188,7 @@ const Content = ({
           </>
         ),
       )}
+      <AddNew></AddNew>
     </div>
   );
 };
@@ -210,10 +214,13 @@ const ProjectItemList = ({
           selectProject(O.Some(project));
         }
       }}
+      className="flex items-center gap-2 w-full relative"
     >
-      <a>{project.title}</a>
+      <a className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
+        {project.title}
+      </a>
       <button
-        className="text-yellow-500"
+        className="flex-none ml-auto text-yellow-500 p-1"
         ref={ref}
         onClick={(e) => {
           setEdit(O.Some(project));
@@ -235,7 +242,7 @@ const AddNew = () => {
       <>
         <button
           ref={ref}
-          className="absolute bottom-0 m-4 p-2 rounded-md bg-primary-400"
+          className="sticky bottom-0 rounded-xl shadow-xl text-white w-full p-1 bg-primary-500"
           onClick={() => {
             setOpenForm((open) => !open);
           }}
