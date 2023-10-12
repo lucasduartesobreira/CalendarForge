@@ -3,7 +3,6 @@ import {
   PropsWithChildren,
   RefObject,
   useContext,
-  useReducer,
   useRef,
   useState,
 } from "react";
@@ -222,7 +221,7 @@ const ProjectItemList = ({
       <button
         className="flex-none ml-auto text-yellow-500 p-1"
         ref={ref}
-        onClick={(e) => {
+        onClick={() => {
           setEdit(O.Some(project));
         }}
       >

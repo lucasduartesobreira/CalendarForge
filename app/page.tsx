@@ -8,7 +8,7 @@ import { useMap } from "@/hooks/mapHook";
 import { WeekNavigation } from "./components/calendar/navBar";
 import ProjectsSideBar from "@/components/projects/sidebar/sideBar";
 import Container, { Boards } from "./components/boards/boards";
-import { None, Option } from "@/utils/option";
+import { None, Option, Some } from "@/utils/option";
 import { Project } from "@/services/projects/projectsStorage";
 
 const NavBarContainer = ({ children }: { children: any }) => {
@@ -76,6 +76,13 @@ const useDate = () => {
 
 const ProjectsContent = () => {
   const [project, setProject] = useState<Option<Project>>(None());
+  const { storages } = useContext(StorageContext);
+  useEffect(() => {
+    storages.map(({ projectsStorage }) => {
+      const project = projectsStorage.all().at(0);
+      setProject(project ? Some(project) : None());
+    });
+  }, []);
   return (
     <>
       <ProjectsSideBar.SideBar>
