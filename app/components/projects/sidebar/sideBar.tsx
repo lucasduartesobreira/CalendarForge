@@ -19,8 +19,10 @@ const SideBar = ({ children }: PropsWithChildren) => {
 
 const Content = ({
   selectProject,
+  selectedProject,
 }: {
   selectProject: (project: O.Option<Project>) => void;
+  selectedProject: O.Option<Project>;
 }) => {
   const { storages } = useContext(StorageContext);
   const [edit, setEdit] = useState<O.Option<Project>>(O.None());
@@ -42,6 +44,7 @@ const Content = ({
                     key={project.id}
                     setEdit={setEdit}
                     selectProject={selectProject}
+                    selectedProject={selectedProject}
                     project={project}
                   ></ProjectItemList>
                 );
@@ -195,13 +198,22 @@ const Content = ({
 const ProjectItemList = ({
   project,
   selectProject,
+  selectedProject,
   setEdit,
 }: {
   project: Project;
   selectProject: (project: O.Option<Project>) => void;
+  selectedProject: O.Option<Project>;
   setEdit: (project: O.Option<Project>) => void;
 }) => {
   const ref = useRef(null);
+  const isSelected = selectedProject.mapOrElse(
+    () => false,
+    ({ id }) => project.id === id,
+  );
+  const selectedBorder = isSelected
+    ? "border-[1px] rounded-md border-primary-400"
+    : "";
   return (
     <div
       key={project.id}
@@ -213,7 +225,7 @@ const ProjectItemList = ({
           selectProject(O.Some(project));
         }
       }}
-      className="flex items-center gap-2 w-full relative"
+      className={`flex items-center gap-2 w-full relative ${selectedBorder}`}
     >
       <a className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
         {project.title}

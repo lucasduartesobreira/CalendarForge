@@ -86,7 +86,10 @@ const ProjectsContent = () => {
   return (
     <>
       <ProjectsSideBar.SideBar>
-        <ProjectsSideBar.Content selectProject={setProject} />
+        <ProjectsSideBar.Content
+          selectProject={setProject}
+          selectedProject={project}
+        />
       </ProjectsSideBar.SideBar>
       <Container>
         <Boards.ProjectBoards project={project}></Boards.ProjectBoards>
