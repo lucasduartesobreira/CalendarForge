@@ -28,7 +28,7 @@ const Content = ({
   const refList = useRef(null);
 
   return (
-    <div className="bg-white rounded-t-xl shadow-lg border-[1px] border-neutral-200 m-1 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-lg border-[1px] border-neutral-200 m-1 overflow-hidden">
       {storages.mapOrElse(
         () => null,
         ({ projectsStorage, calendarsStorage }) => (
