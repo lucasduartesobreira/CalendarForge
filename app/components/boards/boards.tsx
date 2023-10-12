@@ -2,14 +2,21 @@ import { StorageContext } from "@/hooks/dataHook";
 import { Project } from "@/services/projects/projectsStorage";
 import { None, Option, Some } from "@/utils/option";
 import {
+  DetailedHTMLProps,
+  Dispatch,
+  DragEvent,
+  HTMLAttributes,
   PropsWithChildren,
+  SetStateAction,
+  createContext,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
   useState,
 } from "react";
 import { Board, BoardStorage } from "@/services/boards/boards";
-import { Task } from "@/services/task/task";
+import { Task, TaskStorage } from "@/services/task/task";
 import { LocalValue, MiniatureTask, TaskForm } from "../tasks/forms/createTask";
 import { AddValue, UpdateValue } from "@/utils/storage";
 import { Todo } from "@/services/todo/todo";
@@ -25,8 +32,13 @@ export default function Container({ children }: PropsWithChildren) {
   );
 }
 
+const TaskDragContext = createContext<
+  [state: Option<Task>, dispatcher: Dispatch<SetStateAction<Option<Task>>>]
+>([None(), () => {}]);
+
 function ProjectBoards({ project }: { project: Option<Project> }) {
   const { storages } = useContext(StorageContext);
+  const taskDragState = useState<Option<Task>>(None());
   return storages.mapOrElse(
     () => null,
     ({ boardsStorage }) => {
@@ -40,7 +52,7 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
             });
 
           return (
-            <>
+            <TaskDragContext.Provider value={taskDragState}>
               {boards.map((board, index, array) => {
                 return (
                   <Board
@@ -60,7 +72,7 @@ function ProjectBoards({ project }: { project: Option<Project> }) {
                 project={project}
                 boardsNumber={boards.length}
               ></AddBoard>
-            </>
+            </TaskDragContext.Provider>
           );
         },
       );
@@ -165,6 +177,82 @@ const internalReduceTodo =
       .flatten();
   };
 
+const onDropHandler =
+  (
+    newPosition: number,
+    tasks: Task[],
+    boardId: Board["id"],
+    taskDragged: Option<Task>,
+    taskStorage: TaskStorage,
+  ) =>
+  (e: DragEvent<HTMLDivElement>): Task[] => {
+    e.preventDefault();
+
+    return taskDragged.mapOrElse(
+      () => tasks,
+      (taskData) => {
+        const oldPosition = tasks.findIndex(({ id }) => id === taskData.id);
+
+        if (oldPosition >= 0) {
+          const startRange = Math.min(oldPosition, newPosition);
+          const endRange = Math.max(oldPosition, newPosition);
+          const offset = Math.sign(oldPosition - newPosition);
+
+          const updatedTasks = tasks
+            .map(({ id, position, ...rest }) => {
+              const result =
+                id === taskData.id
+                  ? { ...taskData, position: newPosition }
+                  : position >= startRange && position <= endRange
+                  ? {
+                      id,
+                      ...rest,
+                      position: position + offset,
+                    }
+                  : { id, position, ...rest };
+
+              if (result.position !== position) {
+                taskStorage.update(result.id, { position: result.position });
+              }
+
+              return result;
+            })
+            .sort(({ position: pA }, { position: pB }) => pA - pB);
+
+          e.currentTarget.style.height = "8px";
+          return updatedTasks;
+        } else {
+          const newTasks = tasks.map(({ position, ...task }) => {
+            const result =
+              position >= newPosition
+                ? { ...task, position: position + 1 }
+                : { ...task, position };
+
+            if (position !== result.position) {
+              taskStorage.update(result.id, { position: result.position });
+            }
+
+            return result;
+          });
+
+          newTasks.splice(newPosition, 0, {
+            ...taskData,
+            position: newPosition,
+            board_id: boardId,
+          });
+
+          taskStorage.update(taskData.id, {
+            position: newPosition,
+            board_id: boardId,
+          });
+
+          e.currentTarget.style.height = "8px";
+          return newTasks;
+        }
+      },
+    );
+  };
+
 function Board({
   initialBoard,
   boardsStorage,
@@ -188,6 +276,7 @@ function Board({
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [seletectedTask, setSelectedTask] = useState<Option<Task>>(None());
+  const [taskDragging, setTaskDragging] = useContext(TaskDragContext);
 
   useEffect(() => {
     // TODO: Add index
@@ -198,7 +287,7 @@ function Board({
 
       setTasks(tasks);
     });
-  }, []);
+  }, [taskDragging]);
 
   useEffect(() => {
     boardsStorage.update(initialBoard.id, board).mapOrElse(
@@ -206,10 +295,6 @@ function Board({
       (ok) => ok,
     );
   }, [board]);
-
-  const [taskDragging, setTaskDragging] = useState<
-    Option<[oldPosition: number, taskData: Task]>
-  >(None());
 
   return (
     <>
@@ -225,67 +310,40 @@ function Board({
           value={board.title}
         />
 
-        <div
-          onDrop={(e) => {
-            e.preventDefault();
-            e.currentTarget.classList.remove("dragging");
-            taskDragging.map(([oldPosition, newTask]) => {
-              storages.map(({ tasksStorage }) => {
-                const startRange = Math.min(newTask.position, oldPosition);
-                const endRange = Math.max(newTask.position, oldPosition);
-
-                const othersPositionOffset = Math.sign(
-                  oldPosition - newTask.position,
-                );
-                const updatedTasks = tasks
-                  .map(({ id, position, ...rest }) => {
-                    const result =
-                      id === newTask.id
-                        ? newTask
-                        : position >= startRange && position <= endRange
-                        ? {
-                            id,
-                            ...rest,
-                            position: position + othersPositionOffset,
-                          }
-                        : { id, position, ...rest };
-
-                    if (result.position !== position) {
-                      tasksStorage.update(result.id, {
-                        position: result.position,
-                      });
-                    }
-                    return result;
-                  })
-                  .sort(({ position: pA }, { position: pB }) => pA - pB);
-                setTasks([...updatedTasks]);
-              });
-            });
-            setTaskDragging(None());
-          }}
-          className="bg-neutral-200 relative min-h-[6%] m-2 p-[4px] flex flex-col"
-        >
-          {tasks.map((task, index) => (
-            <MiniatureTask
-              setSelectedTask={setSelectedTask}
-              initialTask={task}
-              key={task.id}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setTaskDragging(
-                  taskDragging.map(([old, task]) => [
-                    old,
-                    { ...task, position: index },
-                  ]),
-                );
-              }}
-              onDragStart={(e) => {
-                e.currentTarget.classList.add("dragging");
-                e.dataTransfer.clearData();
-                setTaskDragging(Some([task.position, task]));
-              }}
-              draggable
-            ></MiniatureTask>
+        <div className="bg-neutral-200 relative min-h-[6%] m-2 p-[4px] flex flex-col">
+          <DummyDrop
+            startHeight="4px"
+            newPosition={0}
+            boardId={board.id}
+            tasks={tasks}
+            key={0}
+            className="absolute top-0"
+            setTasks={setTasks}
+          ></DummyDrop>
+          {tasks.map((task, taskIndex) => (
+            <>
+              <MiniatureTask
+                setSelectedTask={setSelectedTask}
+                initialTask={task}
+                key={task.id}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                }}
+                onDragStart={(e) => {
+                  e.currentTarget.classList.add("dragging");
+                  e.dataTransfer.clearData();
+                  setTaskDragging(Some(task));
+                }}
+                draggable
+              ></MiniatureTask>
+              <DummyDrop
+                tasks={tasks}
+                boardId={board.id}
+                newPosition={taskIndex + 1}
+                startHeight="8px"
+                setTasks={setTasks}
+              ></DummyDrop>
+            </>
           ))}
           <button
             className="sticky bottom-0 w-full"
@@ -473,6 +531,69 @@ function Board({
     </>
   );
 }
+
+const DummyDrop = ({
+  newPosition,
+  tasks,
+  boardId,
+  startHeight,
+  setTasks,
+}: {
+  newPosition: number;
+  tasks: Task[];
+  boardId: Board["id"];
+  startHeight: string;
+  setTasks: (tasks: Task[]) => void;
+} & DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>) => {
+  const [taskDragging, setTaskDragging] = useContext(TaskDragContext);
+  const { storages } = useContext(StorageContext);
+  const onDrop = useMemo(
+    () =>
+      storages.mapOrElse(
+        () => () => tasks,
+        ({ tasksStorage }) =>
+          onDropHandler(
+            newPosition,
+            tasks,
+            boardId,
+            taskDragging,
+            tasksStorage,
+          ),
+      ),
+    [storages, tasks, newPosition, boardId, startHeight],
+  );
+  return (
+    <div
+      onDrop={(e) => {
+        const result = onDrop(e);
+        setTasks(result);
+        setTaskDragging(None());
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        taskDragging.map((task) => {
+          if (
+            task.board_id === boardId &&
+            (task.position === newPosition || task.position === newPosition - 1)
+          )
+            return;
+
+          e.currentTarget.style.height = "32px";
+        });
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        taskDragging.map(() => {
+          e.currentTarget.style.height = startHeight;
+        });
+      }}
+      style={{ height: startHeight }}
+    ></div>
+  );
+};
 
 export const Boards = {
   Board,
