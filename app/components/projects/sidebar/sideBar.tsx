@@ -316,13 +316,6 @@ const AddNew = () => {
   );
 };
 
-function Test<This extends string>(bind: This) {
-  const fn = function (this: This) {
-    return <div>{this}</div>;
-  };
-  return fn.bind(bind);
-}
-
 const ProjectsSideBar = {
   SideBar,
   Content,
