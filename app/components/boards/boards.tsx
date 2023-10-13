@@ -26,7 +26,7 @@ import { BetterEventEmitter } from "@/utils/eventEmitter";
 
 export default function Container({ children }: PropsWithChildren) {
   return (
-    <div className="flex gap-[4px] h-full w-full bg-neutral-100 relative overflow-auto">
+    <div className="flex gap-[4px] bg-white h-full w-full relative overflow-x-auto overflow-y-hidden">
       {children}
     </div>
   );
@@ -298,121 +298,125 @@ function Board({
 
   return (
     <>
-      <div className="bg-white h-full relative text-black overflow-auto">
-        <input
-          onChange={(e) => {
-            const newTitle = e.currentTarget.value;
-            if (newTitle.length !== board.title.length) {
-              setBoard({ type: "change_title", title: newTitle });
-            }
-          }}
-          className="m-2"
-          value={board.title}
-        />
+      <div className="bg-white overflow-y-hidden py-2 px-1">
+        <div className="flex flex-col bg-white max-h-full max-w-full relative text-black py-1 px-2 rounded-xl shadow-md">
+          <input
+            onChange={(e) => {
+              const newTitle = e.currentTarget.value;
+              if (newTitle.length !== board.title.length) {
+                setBoard({ type: "change_title", title: newTitle });
+              }
+            }}
+            className="m-2"
+            value={board.title}
+          />
 
-        <div className="bg-neutral-200 relative min-h-[6%] m-2 p-[4px] flex flex-col">
-          <DummyDrop
-            startHeight="4px"
-            newPosition={0}
-            boardId={board.id}
-            tasks={tasks}
-            key={0}
-            className="absolute top-0"
-            setTasks={setTasks}
-          ></DummyDrop>
-          {tasks.map((task, taskIndex) => (
-            <>
-              <MiniatureTask
-                setSelectedTask={setSelectedTask}
-                initialTask={task}
-                key={task.id}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                }}
-                onDragStart={(e) => {
-                  e.currentTarget.classList.add("dragging");
-                  e.dataTransfer.clearData();
-                  setTaskDragging(Some(task));
-                }}
-                draggable
-              ></MiniatureTask>
+          <div className="overflow-hidden flex m-1 rounded-md">
+            <div className="bg-neutral-200 p-[4px] flex-auto overflow-y-auto">
               <DummyDrop
-                tasks={tasks}
+                startHeight="4px"
+                newPosition={0}
                 boardId={board.id}
-                newPosition={taskIndex + 1}
-                startHeight="8px"
+                tasks={tasks}
+                key={0}
+                className="min-h-0"
                 setTasks={setTasks}
               ></DummyDrop>
-            </>
-          ))}
-          <button
-            className="sticky bottom-0 w-full"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              storages.map(({ tasksStorage }) => {
-                tasksStorage
-                  .add({
-                    board_id: board.id,
-                    title: "New task",
-                    endDate: undefined,
-                    startDate: undefined,
-                    project_id: board.project_id,
-                    description: "",
-                    position: tasks.length,
-                  })
-                  .map((task) => tasks.push(task) > 0 && setTasks(tasks));
-              });
-            }}
-          >
-            Add Task
-          </button>
-        </div>
-
-        <div className="flex gap-2 absolute right-0 top-0 align-middle p-2 flex-row-reverse">
-          <button
-            className="bg-red-500 rounded-md text-white p-[4px]"
-            onClick={() => {
-              boardsStorage.remove(board.id);
-            }}
-          >
-            -
-          </button>
-          <button
-            className="bg-yellow-400 text-white rounded-md p-[4px]"
-            onClick={() => {
-              const [, next] = neighbours;
-              next.map(({ id: nextBoardId, position: nextBoardPosition }) => {
-                boardsStorage
-                  .update(nextBoardId, { position: board.position })
-                  .map(() =>
-                    boardsStorage.update(board.id, {
-                      position: nextBoardPosition,
-                    }),
-                  );
-              });
-            }}
-          >
-            &gt;
-          </button>
-          <button
-            className="bg-yellow-400 text-white rounded-md p-[4px]"
-            onClick={(e) => {
-              e.preventDefault();
-              const [prev] = neighbours;
-              prev.map(({ id: prevBoardId, position: prevBoardPosition }) => {
-                boardsStorage
-                  .update(prevBoardId, { position: board.position })
-                  .map(() =>
-                    boardsStorage.update(board.id, {
-                      position: prevBoardPosition,
-                    }),
-                  );
-              });
-            }}
-          >
-            &lt;
-          </button>
+              {tasks.map((task, taskIndex) => (
+                <>
+                  <MiniatureTask
+                    setSelectedTask={setSelectedTask}
+                    initialTask={task}
+                    key={task.id}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDragStart={(e) => {
+                      e.currentTarget.classList.add("dragging");
+                      e.dataTransfer.clearData();
+                      setTaskDragging(Some(task));
+                    }}
+                    draggable
+                  ></MiniatureTask>
+                  <DummyDrop
+                    tasks={tasks}
+                    boardId={board.id}
+                    newPosition={taskIndex + 1}
+                    startHeight="8px"
+                    className="min-h-0"
+                    setTasks={setTasks}
+                  ></DummyDrop>
+                </>
+              ))}
+              <button
+                className="w-full min-h-0"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  storages.map(({ tasksStorage }) => {
+                    tasksStorage
+                      .add({
+                        board_id: board.id,
+                        title: "New task",
+                        endDate: undefined,
+                        startDate: undefined,
+                        project_id: board.project_id,
+                        description: "",
+                        position: tasks.length,
+                      })
+                      .map((task) => tasks.push(task) > 0 && setTasks(tasks));
+                  });
+                }}
+              >
+                Add Task
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-2 absolute right-0 top-0 align-middle p-2 flex-row-reverse">
+            <button
+              className="bg-red-500 rounded-md text-white p-[4px]"
+              onClick={() => {
+                boardsStorage.remove(board.id);
+              }}
+            >
+              -
+            </button>
+            <button
+              className="bg-yellow-400 text-white rounded-md p-[4px]"
+              onClick={() => {
+                const [, next] = neighbours;
+                next.map(({ id: nextBoardId, position: nextBoardPosition }) => {
+                  boardsStorage
+                    .update(nextBoardId, { position: board.position })
+                    .map(() =>
+                      boardsStorage.update(board.id, {
+                        position: nextBoardPosition,
+                      }),
+                    );
+                });
+              }}
+            >
+              &gt;
+            </button>
+            <button
+              className="bg-yellow-400 text-white rounded-md p-[4px]"
+              onClick={(e) => {
+                e.preventDefault();
+                const [prev] = neighbours;
+                prev.map(({ id: prevBoardId, position: prevBoardPosition }) => {
+                  boardsStorage
+                    .update(prevBoardId, { position: board.position })
+                    .map(() =>
+                      boardsStorage.update(board.id, {
+                        position: prevBoardPosition,
+                      }),
+                    );
+                });
+              }}
+            >
+              &lt;
+            </button>
+          </div>
         </div>
       </div>
       {seletectedTask.mapOrElse(
@@ -538,6 +542,7 @@ const DummyDrop = ({
   boardId,
   startHeight,
   setTasks,
+  ...props
 }: {
   newPosition: number;
   tasks: Task[];
@@ -564,6 +569,7 @@ const DummyDrop = ({
   );
   return (
     <div
+      {...props}
       onDrop={(e) => {
         const result = onDrop(e);
         setTasks(result);

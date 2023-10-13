@@ -348,10 +348,10 @@ export function MiniatureTask({
   const { storages } = useContext(StorageContext);
 
   return (
-    <div {...props} className="relative">
+    <div {...props} className="relative flex w-full min-h-0">
       <input
         value={title}
-        className="bg-neutral-200"
+        className="bg-neutral-200 w-full"
         onDoubleClick={() => {
           setEditable(true);
         }}
@@ -370,7 +370,7 @@ export function MiniatureTask({
         onChange={(e) => setTitle(e.currentTarget.value)}
       />
       <button
-        className="text-yellow-500 p-[4px] rounded-md absolute right-0 -top-[20%]"
+        className="text-yellow-500 p-[4px] rounded-md ml-auto"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
