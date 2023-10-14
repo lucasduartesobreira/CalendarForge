@@ -41,6 +41,7 @@ const UpdateCalendarForm = ({
           setOpen(false);
         }}
         refs={refs}
+        className="fixed z-[2000] top-1/2 left-1/2"
       >
         {!selectedTemplate.isSome() && (
           <form
@@ -50,23 +51,47 @@ const UpdateCalendarForm = ({
               calendarsStorage.update(id, form);
               setOpen(false);
             }}
-            className="fixed z-[2001] top-1/2 left-1/2 text-neutral-500 p-[8px] flex flex-col gap-[4px] p-4 bg-white rounded-md"
+            className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden"
           >
+            <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center">
+              <button
+                className="ml-auto mr-2 text-red-500"
+                onClick={() => {
+                  setOpen(false);
+                  calendarsStorage.remove(id);
+                  eventsStorage.removeWithFilter(
+                    (event) => event.calendar_id === id,
+                  );
+                }}
+              >
+                Delete
+              </button>
+              <button
+                className=" mr-3 text-neutral-500 text-xs"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setOpen(false);
+                }}
+              >
+                X
+              </button>
+            </div>
             <input
               title="name"
               type="text"
               placeholder="Name"
-              className="text-black m-2 bg-neutral-200"
+              className="text-black px-2 py-1 mt-2 bg-neutral-200 text-base rounded-md"
               onChange={(e) => {
                 form.name = e.target.value;
                 setForm(form);
               }}
               defaultValue={initialCalendar.name}
             />
-            <label>
+            <label className="text-sm mx-1 mb-4">
               Timezone
               <select
-                className="text-black m-2 bg-neutral-200"
+                className="text-text-primary mx-2 bg-neutral-200 rounded-md"
                 onChange={(e) => {
                   const timezone = Number(e.target.value);
                   if (timezone >= -12 && timezone <= 12)
@@ -104,14 +129,14 @@ const UpdateCalendarForm = ({
               </select>
             </label>
             {templates.length > 0 && (
-              <label>
+              <label className="mx-1 mb-4">
                 Templates
-                <div className="text-black m-2 bg-neutral-200">
+                <div className="text-black bg-neutral-200 rounded-md py-1 px-1">
                   {templates.map((template) => (
-                    <div key={template.id} className="relative">
+                    <div key={template.id} className="relative px-2 flex">
                       {template.title}
                       <button
-                        className="text-yellow-500 absolute right-0"
+                        className="text-yellow-500 ml-auto"
                         onClick={(ev) => {
                           ev.preventDefault();
                           ev.stopPropagation();
@@ -127,21 +152,9 @@ const UpdateCalendarForm = ({
             )}
             <input
               type="submit"
-              className="flex-auto relative r-4 text-white bg-primary-500 rounded-md"
+              className="absolute bottom-0 w-full left-0 text-white bg-primary-500 rounded-md"
               value={"Save"}
             />
-            <button
-              className="absolute right-[8px] text-red-500"
-              onClick={() => {
-                setOpen(false);
-                calendarsStorage.remove(id);
-                eventsStorage.removeWithFilter(
-                  (event) => event.calendar_id === id,
-                );
-              }}
-            >
-              Delete
-            </button>
           </form>
         )}
         {selectedTemplate.isSome() && (
