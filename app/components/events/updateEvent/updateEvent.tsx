@@ -58,49 +58,70 @@ const UpdateEventForm = ({
     };
 
     return (
-      <OutsideClick doSomething={() => setOpen(false)} refs={O.None()}>
+      <OutsideClick
+        doSomething={() => setOpen(false)}
+        refs={O.None()}
+        className="z-[1000] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+      >
         <form
           hidden={false}
           onSubmit={handleSubmit}
-          className="z-[1000] text-neutral-500 fixed border-2 p-[8px]rounded-md top-1/2 left-1/2 bg-white flex flex-col"
+          className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
         >
-          <label>
-            <input
-              placeholder="Title"
-              defaultValue={initialForm.title}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeText("title")}
-              type="text"
-            />
-            <input
-              placeholder="Description"
-              defaultValue={initialForm.description}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeText("description")}
-              type="text"
-            />
-            <input
-              placeholder=""
-              defaultValue={getHTMLDateTime(new Date(initialForm.startDate))}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeDates("startDate")}
-              type="datetime-local"
-            />
-            <input
-              placeholder=""
-              defaultValue={getHTMLDateTime(new Date(initialForm.endDate))}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeDates("endDate")}
-              type="datetime-local"
-            />
-          </label>
+          <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center justify-center">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setOpen(false);
+              }}
+              className="ml-auto mr-3 text-neutral-500 text-xs"
+            >
+              X
+            </button>
+          </div>
+          <input
+            placeholder="Title"
+            defaultValue={initialForm.title}
+            className="px-2 py-1 rounded-md mt-2 text-base bg-neutral-200"
+            onChange={handleChangeText("title")}
+            type="text"
+          />
+          <input
+            placeholder="Description"
+            defaultValue={initialForm.description}
+            className="px-2 py-1 rounded-md  bg-neutral-200"
+            onChange={handleChangeText("description")}
+            type="text"
+          />
+          <div className="gap-1 flex">
+            <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200">
+              Initial Date
+              <input
+                placeholder=""
+                defaultValue={getHTMLDateTime(new Date(initialForm.startDate))}
+                className="bg-neutral-200"
+                onChange={handleChangeDates("startDate")}
+                type="datetime-local"
+              />
+            </label>
+            <label className="px-2 py-1 text-sm flex flex-col justify-center rounded-md bg-neutral-200">
+              End Date
+              <input
+                placeholder=""
+                defaultValue={getHTMLDateTime(new Date(initialForm.endDate))}
+                className="bg-neutral-200"
+                onChange={handleChangeDates("endDate")}
+                type="datetime-local"
+              />
+            </label>
+          </div>
           <select
             onChange={(event) => {
               form.calendar_id = event.target.value;
               setForm(form);
             }}
             defaultValue={initialForm.calendar_id}
-            className="text-black m-2 bg-neutral-200"
+            className="px-2 py-1 rounded-md bg-neutral-200"
           >
             {calendarsStorage.all().map((value, index) => (
               <option key={index} value={value.id}>
@@ -114,6 +135,7 @@ const UpdateEventForm = ({
               form.color = event.target.value as CalendarEvent["color"];
               setForm({ ...form });
             }}
+            className="px-2 py-1 bg-neutral-200 rounded-md"
             style={{ color: form.color }}
           >
             {EventColors.map((color, index) => (
@@ -122,7 +144,7 @@ const UpdateEventForm = ({
               </option>
             ))}
           </select>
-          <div className="relative flex flex-col m-2 bg-neutral-100 min-h-[24px]">
+          <div className="flex flex-col px-2 py-1 bg-neutral-200 min-h-[24px] items-start justify-start rounded-md mb-12">
             {form.notifications.map((notification, index) => (
               <UpdateNotificationForm
                 notification={notification}
@@ -153,31 +175,33 @@ const UpdateEventForm = ({
               resetNotification={initialNotification}
             ></NewEventNotificationForm>
           </div>
-          <input
-            type="submit"
-            className="flex-auto relative r-4 text-white bg-primary-500 rounded-md"
-            value={"Save"}
-          />
-          <div className="absolute flex flex-row-reverse gap-[4px] right-0">
-            <button
-              className="text-red-500"
-              onClick={() => {
-                setOpen(false);
-                eventsStorage.remove(id);
-              }}
-            >
-              Delete
-            </button>
-            <button
-              className="text-yellow-500"
-              onClick={() => {
-                setOpen(false);
-                const { startDate: _sd, endDate: _ed, ...template } = form;
-                eventsTemplateStorage.add(template);
-              }}
-            >
-              + Template
-            </button>
+          <div className="absolute w-full bottom-0 flex flex-col gap-[4px] left-0">
+            <div className="w-full flex items-center justify-center gap-2 px-4">
+              <button
+                className="bg-red-500 font-semibold w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
+                onClick={() => {
+                  setOpen(false);
+                  eventsStorage.remove(id);
+                }}
+              >
+                Delete
+              </button>
+              <button
+                className="bg-amber-500 font-semibold w-full rounded-xl text-text-inverse px-2 py-1 text-sm"
+                onClick={() => {
+                  setOpen(false);
+                  const { startDate: _sd, endDate: _ed, ...template } = form;
+                  eventsTemplateStorage.add(template);
+                }}
+              >
+                Make Template
+              </button>
+            </div>
+            <input
+              type="submit"
+              className="w-full left-0 font-semibold text-white bg-primary-500 rounded-md"
+              value={"Save"}
+            />
           </div>
         </form>
       </OutsideClick>
