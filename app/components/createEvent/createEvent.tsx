@@ -267,7 +267,7 @@ const CreateEventForm = ({
           </div>
           <input
             type="submit"
-            className="absolute bottom-0 w-full left-0 text-white bg-primary-500 rounded-md"
+            className="absolute bottom-0 font-semibold w-full left-0 text-white bg-primary-500 rounded-md"
             value={"Save"}
             form="form1"
           />
