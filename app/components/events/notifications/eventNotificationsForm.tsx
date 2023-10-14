@@ -22,15 +22,15 @@ const UpdateNotificationForm = ({
   onDelete: () => void;
 }) => {
   return (
-    <div>
-      <label>
+    <div className="px-2 w-full flex flex-nowrap gap-1 justify-start text-black text-sm">
+      <label className="flex flex-nowrap whitespace-nowrap items-center">
         Notify
         <input
           value={notification.time}
           type="number"
           min="1"
           max="60"
-          className="text-right bg-neutral-100"
+          className="text-right bg-neutral-200"
           onChange={(e) => {
             const time = Number(e.currentTarget.value);
             onChangeTime(time);
@@ -43,11 +43,12 @@ const UpdateNotificationForm = ({
           const timescale = e.currentTarget.value as any;
           onChangeTimescale(timescale);
         }}
+        className="text-center bg-neutral-200"
       >
         <option value={"minutes"}>minutes</option>
         <option value={"hours"}>hours</option>
       </select>
-      <label>
+      <label className="flex flex-nowrap whitespace-nowrap items-center">
         from the
         <select
           value={notification.from}
@@ -55,13 +56,14 @@ const UpdateNotificationForm = ({
             const from = e.currentTarget.value as any;
             onChangeFrom(from);
           }}
+          className="text-center bg-neutral-200"
         >
           <option value={"start"}>start</option>
           <option value={"end"}>end</option>
         </select>
       </label>
       <button
-        className="absolute right-[2%] text-red-600"
+        className="ml-auto font-mono text-red-500"
         type="submit"
         value={"-"}
         onClick={() => {
@@ -85,15 +87,15 @@ const NewEventNotificationForm = ({
     ...resetNotification,
   });
   return (
-    <div className="relative flex-none flex gap-[4px] justify-start text-black">
-      <label>
+    <div className="px-2 w-full flex flex-nowrap gap-1 justify-start text-text-primary text-sm">
+      <label className="flex flex-nowrap whitespace-nowrap items-center">
         Notify
         <input
           value={newNotification.time}
           type="number"
           min="1"
           max="60"
-          className="text-right bg-neutral-100"
+          className="text-right bg-neutral-200"
           onChange={(e) => {
             newNotification.time = Number(e.currentTarget.value);
             setNewNotification({ ...newNotification });
@@ -106,11 +108,12 @@ const NewEventNotificationForm = ({
           newNotification.timescale = e.currentTarget.value as any;
           setNewNotification({ ...newNotification });
         }}
+        className="text-center bg-neutral-200"
       >
         <option value={"minutes"}>minutes</option>
         <option value={"hours"}>hours</option>
       </select>
-      <label>
+      <label className="flex flex-nowrap whitespace-nowrap items-center">
         from the
         <select
           value={newNotification.from}
@@ -118,13 +121,14 @@ const NewEventNotificationForm = ({
             newNotification.from = e.currentTarget.value as any;
             setNewNotification({ ...newNotification });
           }}
+          className="text-center bg-neutral-200"
         >
           <option value={"start"}>start</option>
           <option value={"end"}>end</option>
         </select>
       </label>
       <button
-        className="absolute right-[2%] text-primary-500"
+        className="ml-auto font-mono text-primary-500"
         type="submit"
         value={"+"}
         onClick={(e) => {

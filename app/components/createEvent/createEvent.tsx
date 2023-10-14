@@ -116,50 +116,99 @@ const CreateEventForm = ({
           setOpen(false);
         }}
         refs={blockdRefs}
+        className="z-[1000] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
       >
         <form
           hidden={false}
           onSubmit={handleSubmit}
-          className="z-[1000] text-neutral-500 fixed border-2 rounded-md top-1/2 left-1/2 bg-white flex flex-col"
+          className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
           id="form1"
         >
-          <label>
-            Text
-            <input
-              placeholder="Title"
-              value={form.title}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeText("title")}
-              type="text"
-            />
-            <input
-              placeholder="Description"
-              value={form.description}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeText("description")}
-              type="text"
-            />
-            <input
-              placeholder=""
-              value={getHTMLDateTime(new Date(form.startDate))}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeDates("startDate")}
-              type="datetime-local"
-            />
-            <input
-              placeholder=""
-              value={getHTMLDateTime(new Date(form.endDate))}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeDates("endDate")}
-              type="datetime-local"
-            />
-          </label>
+          <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center justify-center">
+            <label className="ml-5 origin-center text-neutral-500">
+              {selectedTemplate != null && selectedTemplate.length > 0
+                ? "Template"
+                : ""}
+              <select
+                value={selectedTemplate}
+                className="bg-neutral-300"
+                onChange={(ev) => {
+                  ev.preventDefault();
+                  const selectedValue = ev.currentTarget.value;
+                  setSelectedTemplate(selectedValue);
+                  const template = templateStorage
+                    .findById(selectedValue)
+                    .unwrap() as CalendarEvent;
+                  setForm({
+                    ...template,
+                    startDate: form.startDate,
+                    endDate: form.endDate,
+                  });
+                }}
+              >
+                <option value={undefined}></option>
+                {templateStorage.all().map((template, index) => {
+                  return (
+                    <option key={index} value={template.id}>
+                      {template.title}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setOpen(false);
+              }}
+              className="ml-auto mr-3 text-neutral-500 text-xs"
+            >
+              X
+            </button>
+          </div>
+
+          <input
+            placeholder="Title"
+            value={form.title}
+            className="px-2 py-1 rounded-md mt-2 text-base bg-neutral-200"
+            onChange={handleChangeText("title")}
+            type="text"
+          />
+          <input
+            placeholder="Description"
+            value={form.description}
+            className="px-2 py-1 rounded-md  bg-neutral-200"
+            onChange={handleChangeText("description")}
+            type="text"
+          />
+          <div className="gap-1 flex">
+            <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200">
+              Initial Date
+              <input
+                placeholder=""
+                value={getHTMLDateTime(new Date(form.startDate))}
+                className="bg-neutral-200"
+                onChange={handleChangeDates("startDate")}
+                type="datetime-local"
+              />
+            </label>
+            <label className="px-2 py-1 text-sm flex flex-col justify-center rounded-md bg-neutral-200">
+              End Date
+              <input
+                placeholder=""
+                value={getHTMLDateTime(new Date(form.endDate))}
+                className="bg-neutral-200"
+                onChange={handleChangeDates("endDate")}
+                type="datetime-local"
+              />
+            </label>
+          </div>
           <select
             onChange={(event) => {
               form.calendar_id = event.target.value;
               setForm({ ...form });
             }}
-            className="m-2"
+            className="px-2 py-1 rounded-md bg-neutral-200"
             value={form.calendar_id}
           >
             {calendarsStorage.all().map((value, index) => {
@@ -176,7 +225,7 @@ const CreateEventForm = ({
               form.color = event.target.value as CalendarEvent["color"];
               setForm({ ...form });
             }}
-            className="m-2"
+            className="px-2 py-1 bg-neutral-200 rounded-md"
             style={{ color: form.color }}
           >
             {EventColors.map((color, index) => (
@@ -185,7 +234,7 @@ const CreateEventForm = ({
               </option>
             ))}
           </select>
-          <div className="relative flex flex-col m-2 bg-neutral-100 min-h-[24px]">
+          <div className="flex flex-col px-2 py-1 bg-neutral-200 min-h-[24px] items-start justify-start rounded-md mb-4">
             {form.notifications.map((notification, index) => (
               <UpdateNotificationForm
                 notification={notification}
@@ -216,35 +265,9 @@ const CreateEventForm = ({
               resetNotification={initialNotification}
             ></NewEventNotificationForm>
           </div>
-          <select
-            value={selectedTemplate}
-            className="absolute right-[8px] w-[25%]"
-            onChange={(ev) => {
-              ev.preventDefault();
-              const selectedValue = ev.currentTarget.value;
-              setSelectedTemplate(selectedValue);
-              const template = templateStorage
-                .findById(selectedValue)
-                .unwrap() as CalendarEvent;
-              setForm({
-                ...template,
-                startDate: form.startDate,
-                endDate: form.endDate,
-              });
-            }}
-          >
-            <option value={undefined}></option>
-            {templateStorage.all().map((template, index) => {
-              return (
-                <option key={index} value={template.id}>
-                  {template.title}
-                </option>
-              );
-            })}
-          </select>
           <input
             type="submit"
-            className="flex-auto relative r-4 text-white bg-primary-500 rounded-md"
+            className="absolute bottom-0 w-full left-0 text-white bg-primary-500 rounded-md"
             value={"Save"}
             form="form1"
           />
