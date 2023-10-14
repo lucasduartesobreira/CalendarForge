@@ -212,8 +212,13 @@ const ProjectItemList = ({
     ({ id }) => project.id === id,
   );
   const selectedBorder = isSelected
-    ? "border-[1px] rounded-md border-primary-400"
+    ? "border-[1px] rounded-md border-primary-400 bg-primary-400"
     : "";
+
+  const projectTextColor = isSelected
+    ? "text-text-inverse"
+    : "text-neutral-600";
+  const editTextColor = isSelected ? "text-amber-300" : "text-yellow-500";
   return (
     <div
       key={project.id}
@@ -227,11 +232,13 @@ const ProjectItemList = ({
       }}
       className={`flex items-center gap-2 w-full relative ${selectedBorder}`}
     >
-      <a className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
+      <a
+        className={`p-1 max-w-[70%] whitespace-nowrap overflow-hidden ${projectTextColor}`}
+      >
         {project.title}
       </a>
       <button
-        className="flex-none ml-auto text-yellow-500 p-1"
+        className={`flex-none ml-auto p-1 ${editTextColor}`}
         ref={ref}
         onClick={() => {
           setEdit(O.Some(project));
@@ -253,7 +260,7 @@ const AddNew = () => {
       <>
         <button
           ref={ref}
-          className="sticky bottom-0 rounded-xl shadow-xl text-white w-full p-1 bg-primary-500"
+          className="sticky bottom-0 rounded-xl shadow-xl text-sm text-white w-full p-1 bg-primary-500"
           onClick={() => {
             setOpenForm((open) => !open);
           }}
