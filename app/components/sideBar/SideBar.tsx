@@ -53,7 +53,7 @@ const CreateCalendarForm = ({
           >
             <div className="w-full absolute top-0 h-[16px] left-0 bg-neutral-300 flex">
               <button
-                className="ml-auto mr-[8px] text-neutral-500 text-xs"
+                className="ml-auto mr-3 text-neutral-500 text-xs"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
