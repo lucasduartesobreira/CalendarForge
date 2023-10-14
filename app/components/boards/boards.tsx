@@ -333,8 +333,12 @@ function Board({
                     }}
                     onDragStart={(e) => {
                       e.currentTarget.classList.add("dragging");
+                      e.currentTarget.style.borderStyle = "dashed";
                       e.dataTransfer.clearData();
                       setTaskDragging(Some(task));
+                    }}
+                    onDragEnd={(e) => {
+                      e.currentTarget.style.borderStyle = "solid";
                     }}
                     draggable
                   ></MiniatureTask>
