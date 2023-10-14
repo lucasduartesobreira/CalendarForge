@@ -348,14 +348,14 @@ export function MiniatureTask({
   const { storages } = useContext(StorageContext);
 
   return (
-    <div className="px-1">
+    <div className="px-2">
       <div
         {...props}
-        className="relative items-center flex w-full min-h-0 px-3 py-1 text-sm rounded-xl border-[1px] border-black"
+        className="relative items-center flex w-full min-h-0 px-3 py-1 text-sm rounded-xl border-[1px] border-black bg-white"
       >
         <input
           value={title}
-          className="bg-neutral-200 w-full"
+          className="w-full"
           onDoubleClick={() => {
             setEditable(true);
           }}
