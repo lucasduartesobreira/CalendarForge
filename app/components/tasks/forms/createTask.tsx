@@ -348,37 +348,42 @@ export function MiniatureTask({
   const { storages } = useContext(StorageContext);
 
   return (
-    <div {...props} className="relative flex w-full min-h-0">
-      <input
-        value={title}
-        className="bg-neutral-200 w-full"
-        onDoubleClick={() => {
-          setEditable(true);
-        }}
-        onBlur={() => {
-          storages.map(({ tasksStorage }) => {
-            if (title.length > 0) {
-              if (task.title !== title) {
-                tasksStorage.update(task.id, { title });
-              }
-            } else {
-              setTitle(task.title);
-            }
-          });
-        }}
-        readOnly={!editable}
-        onChange={(e) => setTitle(e.currentTarget.value)}
-      />
-      <button
-        className="text-yellow-500 p-[4px] rounded-md ml-auto"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setSelectedTask(Some(task));
-        }}
+    <div className="px-1">
+      <div
+        {...props}
+        className="relative items-center flex w-full min-h-0 px-3 py-1 text-sm rounded-xl border-[1px] border-black"
       >
-        edit
-      </button>
+        <input
+          value={title}
+          className="bg-neutral-200 w-full"
+          onDoubleClick={() => {
+            setEditable(true);
+          }}
+          onBlur={() => {
+            storages.map(({ tasksStorage }) => {
+              if (title.length > 0) {
+                if (task.title !== title) {
+                  tasksStorage.update(task.id, { title });
+                }
+              } else {
+                setTitle(task.title);
+              }
+            });
+          }}
+          readOnly={!editable}
+          onChange={(e) => setTitle(e.currentTarget.value)}
+        />
+        <button
+          className="text-amber-600 rounded-md ml-auto"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setSelectedTask(Some(task));
+          }}
+        >
+          edit
+        </button>
+      </div>
     </div>
   );
 }

@@ -311,10 +311,10 @@ function Board({
             value={board.title}
           />
 
-          <div className="overflow-hidden flex m-1 rounded-md">
-            <div className="bg-neutral-200 p-[4px] flex-auto overflow-y-auto">
+          <div className="overflow-hidden flex m-1 rounded-xl">
+            <div className="bg-neutral-200 flex-auto overflow-y-auto">
               <DummyDrop
-                startHeight="4px"
+                startHeight="8px"
                 newPosition={0}
                 boardId={board.id}
                 tasks={tasks}
@@ -349,7 +349,7 @@ function Board({
                 </>
               ))}
               <button
-                className="w-full min-h-0"
+                className="w-full min-h-0 text-sm rounded-xl py-1 bg-primary-500 text-text-inverse"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
