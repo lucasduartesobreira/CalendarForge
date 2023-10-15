@@ -93,7 +93,7 @@ export function ProjectForm<
             X
           </button>
         </div>
-        <label className="flex flex-nowrap gap-1 items-center">
+        <label className="flex flex-nowrap gap-1 items-center mt-2">
           <a className="text-neutral-500 text-sm">Title</a>
           <input
             value={form.title}
@@ -109,12 +109,39 @@ export function ProjectForm<
             }}
           />
         </label>
-        <div className="flex flex-col flex-nowrap gap-1 justify-center w-full mb-4">
+        <div
+          className={`flex flex-col flex-nowrap gap-1 justify-center w-full ${
+            deleteButton.isSome() ? "mb-[3.25rem]" : "mb-6"
+          }`}
+        >
           <a className="text-neutral-500 text-sm">Calendars</a>
-          {projectCalendar.name?.length != 0 ? (
-            <div>{projectCalendar.name}</div>
-          ) : null}
           <div className="bg-neutral-200 px-2 py-2 rounded-md gap-1 flex flex-col flex-nowrap">
+            {projectCalendar.name?.length != 0 ? (
+              <div className="flex w-full gap-2 py-1 px-2 text-sm bg-white rounded-md border-text-primary border-[1px] items-center">
+                <a className="w-[75%]">{projectCalendar.name}</a>
+
+                <div className="flex gap-1 text-xs font-semibold justify-center items-center">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    className="bg-yellow-400 text-text-inverse px-2 py-[2px] text-center rounded-md"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    className="bg-red-400 text-text-inverse px-2 py-[2px]  text-center rounded-md"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {localCalendars.map((calendar, index) => {
               return (
                 <div
@@ -122,7 +149,7 @@ export function ProjectForm<
                   className="flex w-full gap-2 py-1 px-2 text-sm bg-white rounded-md border-text-primary border-[1px] items-center"
                 >
                   <a className="w-[75%]">{calendar.name}</a>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 text-xs font-semibold justify-center items-center">
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -130,7 +157,7 @@ export function ProjectForm<
                         setEditCalendar(O.Some([calendar, index]));
                         setOpenAddCalendar(false);
                       }}
-                      className="bg-yellow-500 text-text-inverse px-1 rounded-md"
+                      className="bg-yellow-500 text-text-inverse px-2 py-[2px] text-center rounded-md"
                     >
                       Edit
                     </button>
@@ -142,7 +169,7 @@ export function ProjectForm<
                           calendars.filter((_value, i) => i !== index),
                         );
                       }}
-                      className="bg-red-600 text-text-inverse px-1 rounded-md"
+                      className="bg-red-600 text-text-inverse px-2 py-[2px]  text-center rounded-md"
                     >
                       Delete
                     </button>
@@ -163,29 +190,31 @@ export function ProjectForm<
             </button>
           </div>
         </div>
-        <input
-          value={"Save"}
-          type="submit"
-          className="absolute bottom-0 left-0 w-full rounded-md text-white bg-primary-400 font-semibold"
-        />
-        {deleteButton.mapOrElse(
-          () => null,
-          (fn) => {
-            return (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  fn();
-                  setOpenForm(false);
-                }}
-                className="absolute rounded-md right-[4px] top-[4px]"
-              >
-                Delete
-              </button>
-            );
-          },
-        )}
+        <div className="absolute bottom-0 left-0 w-full flex flex-col gap-1 flex-nowrap items-center">
+          {deleteButton.mapOrElse(
+            () => null,
+            (fn) => {
+              return (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    fn();
+                    setOpenForm(false);
+                  }}
+                  className="rounded-md bg-red-600 min-w-[25%] max-w-[50%] text-text-inverse font-semibold "
+                >
+                  Delete
+                </button>
+              );
+            },
+          )}
+          <input
+            value={"Save"}
+            type="submit"
+            className="w-full rounded-md text-text-inverse bg-primary-400 font-semibold py-1"
+          />
+        </div>
       </form>
       {openAddCalendar && (
         <CreateCalendarForm
