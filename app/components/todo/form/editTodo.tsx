@@ -32,7 +32,9 @@ export function TodoForm({
           onSubmit={onSubmit}
         />
       ) : (
-        <div onClick={() => setExpanded(true)}>{todo.title}</div>
+        <div onClick={() => setExpanded(true)} className="px-2 py-1">
+          {todo.title}
+        </div>
       )}
     </>
   );
@@ -63,7 +65,7 @@ function ExpandedTodo({
         colapse();
       }}
     >
-      <div className="flex flex-col">
+      <div className="flex flex-col px-2 py-1 border-[1px] border-text-primary rounded-md ">
         <input
           value={todo.title}
           onChange={(e) => {
@@ -75,63 +77,72 @@ function ExpandedTodo({
               event.map((event) => ({ ...event, title: value })),
             );
           }}
+          className="bg-neutral-200 text-center"
         />
-        <input
-          type="datetime-local"
-          value={event
-            .map<string | undefined>(({ startDate }) =>
-              getHTMLDateTime(new Date(startDate)),
-            )
-            .unwrapOrElse(() => undefined)}
-          onChange={(e) => {
-            const date = new Date(e.currentTarget.value);
-            if (date != null) {
-              const updatedEvent = event
-                .map((event) => Some({ ...event, startDate: date.getTime() }))
-                .unwrapOrElse(() =>
-                  Some({
-                    title: todo.title,
-                    calendar_id: todo.calendar_id,
-                    color: "#7a5195",
-                    description: "",
-                    notifications: [],
-                    id: idGenerator(),
-                    endDate: Date.now(),
-                    startDate: date.getTime(),
-                  }),
-                );
-              setEvent(updatedEvent);
-            }
-          }}
-        />
-        <input
-          type="datetime-local"
-          value={event
-            .map<string | undefined>(({ endDate }) =>
-              getHTMLDateTime(new Date(endDate)),
-            )
-            .unwrapOrElse(() => undefined)}
-          onChange={(e) => {
-            const date = new Date(e.currentTarget.value);
-            if (date != null) {
-              const updatedEvent = event
-                .map((event) => Some({ ...event, endDate: date.getTime() }))
-                .unwrapOrElse(() =>
-                  Some({
-                    title: todo.title,
-                    calendar_id: todo.calendar_id,
-                    color: "#7a5195",
-                    description: "",
-                    notifications: [],
-                    id: "",
-                    startDate: Date.now(),
-                    endDate: date.getTime(),
-                  }),
-                );
-              setEvent(updatedEvent);
-            }
-          }}
-        />
+        <label className="flex flex-nowrap gap-1 justify-start">
+          <a>Start</a>
+          <input
+            type="datetime-local"
+            className="ml-auto bg-neutral-200"
+            value={event
+              .map<string | undefined>(({ startDate }) =>
+                getHTMLDateTime(new Date(startDate)),
+              )
+              .unwrapOrElse(() => undefined)}
+            onChange={(e) => {
+              const date = new Date(e.currentTarget.value);
+              if (date != null) {
+                const updatedEvent = event
+                  .map((event) => Some({ ...event, startDate: date.getTime() }))
+                  .unwrapOrElse(() =>
+                    Some({
+                      title: todo.title,
+                      calendar_id: todo.calendar_id,
+                      color: "#7a5195",
+                      description: "",
+                      notifications: [],
+                      id: idGenerator(),
+                      endDate: Date.now(),
+                      startDate: date.getTime(),
+                    }),
+                  );
+                setEvent(updatedEvent);
+              }
+            }}
+          />
+        </label>
+        <label className="flex flex-nowrap gap-1 justify-start">
+          <a>End</a>
+          <input
+            type="datetime-local"
+            className="ml-auto bg-neutral-200"
+            value={event
+              .map<string | undefined>(({ endDate }) =>
+                getHTMLDateTime(new Date(endDate)),
+              )
+              .unwrapOrElse(() => undefined)}
+            onChange={(e) => {
+              const date = new Date(e.currentTarget.value);
+              if (date != null) {
+                const updatedEvent = event
+                  .map((event) => Some({ ...event, endDate: date.getTime() }))
+                  .unwrapOrElse(() =>
+                    Some({
+                      title: todo.title,
+                      calendar_id: todo.calendar_id,
+                      color: "#7a5195",
+                      description: "",
+                      notifications: [],
+                      id: "",
+                      startDate: Date.now(),
+                      endDate: date.getTime(),
+                    }),
+                  );
+                setEvent(updatedEvent);
+              }
+            }}
+          />
+        </label>
       </div>
     </OutsideClick>
   );

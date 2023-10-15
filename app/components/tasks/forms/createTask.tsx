@@ -195,7 +195,7 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
     <OutsideClick
       refs={refs}
       doSomething={() => closeForm()}
-      className="fixed top-1/2 w-full z-[3000] justify-center flex"
+      className="z-[1000] fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
     >
       <form
         onSubmit={(e) => {
@@ -203,11 +203,22 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
           onSubmit(task, Array.from(todosAndEvents.values()));
           closeForm();
         }}
-        className="p-2 bg-white rounded-md border-2 border-neutral-200 max-w-[50%] text-black flex flex-col "
+        className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
         id="form"
       >
-        <label>
-          Title:
+        <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center justify-center">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              closeForm();
+            }}
+            className="ml-auto mr-3 text-neutral-500 text-xs"
+          >
+            X
+          </button>
+        </div>
+        <label className="flex flex-nowrap gap-1 items-center mt-2">
+          <p className="text-neutral-500">Title</p>
           <input
             type="text"
             value={task.title}
@@ -218,46 +229,53 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
                 value: e.currentTarget.value,
               });
             }}
-            className="m-2 bg-neutral-200 min-w-fit"
+            className="px-2 py-1 bg-neutral-200 rounded-md"
           />
         </label>
-        <label>
-          <a>Dates: </a>
-          <input
-            type="date"
-            value={
-              task.startDate != null
-                ? getHTMLDateTime(new Date(task.startDate)).slice(0, 10)
-                : undefined
-            }
-            onChange={(e) => {
-              if (e.currentTarget.valueAsDate) {
-                setTask({
-                  type: "changeStartDate",
-                  value: e.currentTarget.valueAsDate,
-                });
+        <div className="flex flex-nowrap gap-1 w-full justify-center">
+          <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200 w-full">
+            <a className="text-neutral-500">Inital Date</a>
+            <input
+              type="date"
+              value={
+                task.startDate != null
+                  ? getHTMLDateTime(new Date(task.startDate)).slice(0, 10)
+                  : undefined
               }
-            }}
-          />
-          <input
-            type="date"
-            value={
-              task.endDate != null
-                ? getHTMLDateTime(new Date(task.endDate)).slice(0, 10)
-                : undefined
-            }
-            onChange={(e) => {
-              if (e.currentTarget.valueAsDate) {
-                setTask({
-                  type: "changeEndDate",
-                  value: e.currentTarget.valueAsDate,
-                });
+              className="bg-neutral-200 w-full"
+              onChange={(e) => {
+                if (e.currentTarget.valueAsDate) {
+                  setTask({
+                    type: "changeStartDate",
+                    value: e.currentTarget.valueAsDate,
+                  });
+                }
+              }}
+            />
+          </label>
+          <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200 w-full">
+            <a className="text-neutral-500">End Date</a>
+            <input
+              type="date"
+              value={
+                task.endDate != null
+                  ? getHTMLDateTime(new Date(task.endDate)).slice(0, 10)
+                  : undefined
               }
-            }}
-          />
-        </label>
-        <label>
-          <p>Description</p>
+              className="bg-neutral-200"
+              onChange={(e) => {
+                if (e.currentTarget.valueAsDate) {
+                  setTask({
+                    type: "changeEndDate",
+                    value: e.currentTarget.valueAsDate,
+                  });
+                }
+              }}
+            />
+          </label>
+        </div>
+        <label className="flex flex-col flex-nowrap justify-center">
+          <p className="text-neutral-500">Description</p>
           <input
             type="text"
             value={task.description}
@@ -268,67 +286,75 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
                 value: e.currentTarget.value,
               });
             }}
-            className="bg-neutral-200 p-2 w-full"
+            className="bg-neutral-200 px-2 py-1 w-full rounded-md"
           />
         </label>
-        <a>To-Do</a>
-        <div className="bg-neutral-200 p-2 w-full flex flex-col">
-          {Array.from(todosAndEvents.values()).map(
-            ({ todo: { id, ...rest }, event }, index) => {
-              return (
-                <TodoForm
-                  todo={rest}
-                  onSubmit={(updatedTodo, updatedEvent) => {
-                    setTodosAndEvents({
-                      type: "update_todo",
-                      value: {
-                        id,
-                        ...updatedTodo,
-                      },
+        <div className="flex flex-col flex-nowrap justify-center">
+          <p className="text-neutral-500">To-Do</p>
+          <div className="bg-neutral-200 px-2 py-2 mb-4 w-full gap-1 flex flex-col rounded-md">
+            {Array.from(todosAndEvents.values()).map(
+              ({ todo: { id, ...rest }, event }, index) => {
+                return (
+                  <TodoForm
+                    todo={rest}
+                    onSubmit={(updatedTodo, updatedEvent) => {
+                      setTodosAndEvents({
+                        type: "update_todo",
+                        value: {
+                          id,
+                          ...updatedTodo,
+                        },
+                      });
+                      setTodosAndEvents({
+                        type: "update_event",
+                        value: {
+                          todoId: id,
+                          event: updatedEvent.map((value) => ({
+                            ...value,
+                            TYPE_OPERATION: "UPDATE",
+                          })),
+                        },
+                      });
+                    }}
+                    key={id}
+                    event={event}
+                  ></TodoForm>
+                );
+              },
+            )}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                storages.map(({ projectsStorage }) => {
+                  projectsStorage
+                    .findById(initialForm.project_id)
+                    .map(({ calendars }) => {
+                      setTodosAndEvents({
+                        type: "add",
+                        value: {
+                          title: "New Todo",
+                          calendar_id: calendars[0],
+                          board_id: initialForm.board_id,
+                          task_id: initialForm.id,
+                          project_id: initialForm.project_id,
+                        },
+                      });
                     });
-                    setTodosAndEvents({
-                      type: "update_event",
-                      value: {
-                        todoId: id,
-                        event: updatedEvent.map((value) => ({
-                          ...value,
-                          TYPE_OPERATION: "UPDATE",
-                        })),
-                      },
-                    });
-                  }}
-                  key={id}
-                  event={event}
-                ></TodoForm>
-              );
-            },
-          )}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              storages.map(({ projectsStorage }) => {
-                projectsStorage
-                  .findById(initialForm.project_id)
-                  .map(({ calendars }) => {
-                    setTodosAndEvents({
-                      type: "add",
-                      value: {
-                        title: "New Todo",
-                        calendar_id: calendars[0],
-                        board_id: initialForm.board_id,
-                        task_id: initialForm.id,
-                        project_id: initialForm.project_id,
-                      },
-                    });
-                  });
-              });
-            }}
-          >
-            Add todo
-          </button>
+                });
+              }}
+              className="text-primary-500 border-[1px] border-primary-500 rounded-md px-2 py-1"
+            >
+              Add todo
+            </button>
+          </div>
         </div>
-        <input type="submit" value={"Save"} form="form" />
+        <input
+          type="submit"
+          value={"Save"}
+          form="form"
+          className="absolute bottom-0 w-full left-0 font-semibold text-white bg-primary-500 rounded-md"
+        />
       </form>
     </OutsideClick>
   );
