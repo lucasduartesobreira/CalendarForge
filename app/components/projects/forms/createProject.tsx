@@ -70,10 +70,10 @@ export function ProjectForm<
       doSomething={() => {
         setOpenForm(false);
       }}
-      className="fixed z-[1000] top-1/2 flex w-full justify-center"
+      className="fixed z-[1000] top-1/2 left-1/2 flex -translate-y-1/2 -translate-x-1/2"
     >
       <form
-        className="flex-auto relative max-w-[30%] bg-white p-2 text-neutral-400 flex flex-col"
+        className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -82,11 +82,23 @@ export function ProjectForm<
         }}
         ref={ref}
       >
-        <label>
-          Title
+        <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center justify-center">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              setOpenForm(false);
+            }}
+            className="ml-auto mr-3 text-neutral-500 text-xs"
+          >
+            X
+          </button>
+        </div>
+        <label className="flex flex-nowrap gap-1 items-center">
+          <a className="text-neutral-500 text-sm">Title</a>
           <input
             value={form.title}
-            className="bg-neutral-200 m-2 text-black"
+            placeholder="Title"
+            className="bg-neutral-200 px-2 py-1 text-text-primary rounded-md"
             onChange={(ev) => {
               const title = ev.currentTarget.value;
               const updatedForm = { ...form, title };
@@ -97,15 +109,18 @@ export function ProjectForm<
             }}
           />
         </label>
-        <label>
-          Calendars
+        <div className="flex flex-col flex-nowrap gap-1 justify-center w-full mb-4">
+          <a className="text-neutral-500 text-sm">Calendars</a>
           {projectCalendar.name?.length != 0 ? (
             <div>{projectCalendar.name}</div>
           ) : null}
-          <div>
+          <div className="bg-neutral-200 px-2 py-2 rounded-md gap-1 flex flex-col flex-nowrap">
             {localCalendars.map((calendar, index) => {
               return (
-                <div key={index} className="flex w-full gap-2">
+                <div
+                  key={index}
+                  className="flex w-full gap-2 py-1 px-2 text-sm bg-white rounded-md border-text-primary border-[1px] items-center"
+                >
                   <a className="w-[75%]">{calendar.name}</a>
                   <div className="flex gap-2">
                     <button
@@ -115,7 +130,7 @@ export function ProjectForm<
                         setEditCalendar(O.Some([calendar, index]));
                         setOpenAddCalendar(false);
                       }}
-                      className="text-yellow-500"
+                      className="bg-yellow-500 text-text-inverse px-1 rounded-md"
                     >
                       Edit
                     </button>
@@ -127,7 +142,7 @@ export function ProjectForm<
                           calendars.filter((_value, i) => i !== index),
                         );
                       }}
-                      className="text-red-600"
+                      className="bg-red-600 text-text-inverse px-1 rounded-md"
                     >
                       Delete
                     </button>
@@ -135,23 +150,23 @@ export function ProjectForm<
                 </div>
               );
             })}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOpenAddCalendar(!openAddCalendar);
+                setEditCalendar(O.None());
+              }}
+              className="text-primary-500 w-full text-sm border-primary-500 border-[1px] rounded-md"
+            >
+              + Add Calendar
+            </button>
           </div>
-        </label>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setOpenAddCalendar(!openAddCalendar);
-            setEditCalendar(O.None());
-          }}
-          className="text-primary-400"
-        >
-          + Add Calendar
-        </button>
+        </div>
         <input
           value={"Save"}
           type="submit"
-          className="rounded-md text-white bg-primary-400"
+          className="absolute bottom-0 left-0 w-full rounded-md text-white bg-primary-400 font-semibold"
         />
         {deleteButton.mapOrElse(
           () => null,
