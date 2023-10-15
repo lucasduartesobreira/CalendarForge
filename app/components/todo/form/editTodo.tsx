@@ -32,7 +32,10 @@ export function TodoForm({
           onSubmit={onSubmit}
         />
       ) : (
-        <div onClick={() => setExpanded(true)} className="px-2 py-1">
+        <div
+          onClick={() => setExpanded(true)}
+          className="px-2 py-1 border-[1px] rounded-md border-text-primary"
+        >
           {todo.title}
         </div>
       )}
