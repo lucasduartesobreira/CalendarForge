@@ -53,75 +53,86 @@ export class ProjectStorage
   }
 
   @emitEvent("add")
-  add(value: AddValue<Project>): R.Result<Project, symbol> {
+  add(value: AddValue<Project>): Promise<R.Result<Project, symbol>> {
     const id = idGenerator();
 
-    return this.map.setNotDefined(id, { id, ...value });
+    const resultAsync = async () =>
+      this.map.setNotDefined(id, { id, ...value });
+    return resultAsync();
   }
 
   update(
     id: string,
     updateValue: UpdateValue<Project>,
-  ): R.Result<Project, symbol> {
+  ): Promise<R.Result<Project, symbol>> {
     const found = this.map.get(id);
-    return found
-      .map((valueFound) => {
-        const updatedValue: Project = {
-          id,
-          title: updateValue.title ?? valueFound.title,
-          calendars: updateValue.calendars ?? valueFound.calendars,
-        };
-        const result = this.map.set(id, updatedValue);
+    const resultAsync = async () =>
+      found
+        .map((valueFound) => {
+          const updatedValue: Project = {
+            id,
+            title: updateValue.title ?? valueFound.title,
+            calendars: updateValue.calendars ?? valueFound.calendars,
+          };
+          const result = this.map.set(id, updatedValue);
 
-        this.emit("update", {
-          args: [id, updateValue],
-          opsSpecific: valueFound,
-          result,
-        });
+          this.emit("update", {
+            args: [id, updateValue],
+            opsSpecific: valueFound,
+            result,
+          });
 
-        return result.unwrap();
-      })
-      .ok(Symbol("Couldn't find any entry for this key"));
+          return result.unwrap();
+        })
+        .ok(Symbol("Couldn't find any entry for this key"));
+    return resultAsync();
   }
 
   @emitEvent("remove")
-  remove(id: string): R.Result<Project, symbol> {
-    return this.map.remove(id);
+  remove(id: string): Promise<R.Result<Project, symbol>> {
+    const resultAsync = async () => this.map.remove(id);
+    return resultAsync();
   }
 
   @emitEvent("removeWithFilter")
-  removeWithFilter(predicate: (value: Project) => boolean): Project[] {
-    return this.removeWithFilter(predicate);
+  removeWithFilter(predicate: (value: Project) => boolean): Promise<Project[]> {
+    const resultAsync = async () => this.removeWithFilter(predicate);
+    return resultAsync();
   }
 
   @emitEvent("removeAll")
   removeAll(listOfIds: Array<Project["id"]>) {
-    return listOfIds
-      .map((id) => {
-        return this.map.remove(id);
-      })
-      .reduce(
-        (acc, value) =>
-          value.mapOrElse(
-            () => acc,
-            (ok) => {
-              acc.push([ok.id, ok]);
-              return acc;
-            },
-          ),
-        [] as Array<[Project["id"], Project]>,
-      );
+    const resultAsync = async () =>
+      listOfIds
+        .map((id) => {
+          return this.map.remove(id);
+        })
+        .reduce(
+          (acc, value) =>
+            value.mapOrElse(
+              () => acc,
+              (ok) => {
+                acc.push([ok.id, ok]);
+                return acc;
+              },
+            ),
+          [] as Array<[Project["id"], Project]>,
+        );
+    return resultAsync();
   }
 
-  findById(id: string): O.Option<Project> {
-    return this.map.get(id);
+  findById(id: string): Promise<O.Option<Project>> {
+    const resultAsync = async () => this.map.get(id);
+    return resultAsync();
   }
 
-  filteredValues(predicate: (value: Project) => boolean): Project[] {
-    return this.map.values().filter(predicate);
+  filteredValues(predicate: (value: Project) => boolean): Promise<Project[]> {
+    const resultAsync = async () => this.map.values().filter(predicate);
+    return resultAsync();
   }
 
-  all(): Project[] {
-    return this.map.values();
+  all(): Promise<Project[]> {
+    const resultAsync = async () => this.map.values();
+    return resultAsync();
   }
 }
