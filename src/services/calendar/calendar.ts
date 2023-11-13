@@ -99,14 +99,17 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
     this.eventEmitter.on(event.toString(), handler);
   }
 
-  findById(id: string): O.Option<Calendar> {
-    return this.map.get(id);
+  findById(id: string): Promise<O.Option<Calendar>> {
+    const resultAsync = async () => this.map.get(id);
+    return resultAsync();
   }
-  filteredValues(predicate: (value: Calendar) => boolean): Calendar[] {
-    return this.map.filterValues(predicate);
+  filteredValues(predicate: (value: Calendar) => boolean): Promise<Calendar[]> {
+    const resultAsync = async () => this.map.filterValues(predicate);
+    return resultAsync();
   }
-  all(): Calendar[] {
-    return this.map.values();
+  all(): Promise<Calendar[]> {
+    const resultAsync = async () => this.map.values();
+    return resultAsync();
   }
 
   static new(forceUpdate: () => void) {
@@ -133,7 +136,7 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
   }
 
   @emitEvent<"add", CalendarStorage>("add")
-  add(calendar: AddValue<Calendar>): R.Result<Calendar, symbol> {
+  add(calendar: AddValue<Calendar>): Promise<R.Result<Calendar, symbol>> {
     const id = Buffer.from(Date.now().toString()).toString("base64");
     const { id: _id, ...validator } = CalendarStorage.validator;
     const validated = validateTypes(calendar, validator);
@@ -150,10 +153,12 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
         });
       }
 
-      return result;
+      const resultAsync = async () => result;
+      return resultAsync();
     }
 
-    return R.Err(validated.unwrap_err());
+    const resultAsync = async () => R.Err(validated.unwrap_err());
+    return resultAsync();
   }
 
   static RemoveCalendarError = Symbol(
@@ -165,86 +170,101 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
   );
 
   @emitEvent("remove")
-  remove(id: string): R.Result<Calendar, symbol> {
+  remove(id: string): Promise<R.Result<Calendar, symbol>> {
     const calendar = this.map.get(id);
-    return calendar.mapOrElse(
-      () => R.Err(CalendarStorage.RemoveCalendarError),
-      (calendar) => {
-        if (calendar.default) {
-          return R.Err(CalendarStorage.RemoveDefaultCalendarError);
-        }
-        return this.map.remove(id);
-      },
-    );
+    const resultAsync = async () =>
+      calendar.mapOrElse(
+        () => R.Err(CalendarStorage.RemoveCalendarError),
+        (calendar) => {
+          if (calendar.default) {
+            return R.Err(CalendarStorage.RemoveDefaultCalendarError);
+          }
+          return this.map.remove(id);
+        },
+      );
+    return resultAsync();
   }
 
   @emitEvent("removeWithFilter")
-  removeWithFilter(predicate: (value: Calendar) => boolean): Calendar[] {
+  removeWithFilter(
+    predicate: (value: Calendar) => boolean,
+  ): Promise<Calendar[]> {
     const result = this.map.removeAll(
       (value) => !value.default && predicate(value),
     );
 
-    return result.unwrap().map(([, calendar]) => calendar);
+    const resultAsync = async () =>
+      result.unwrap().map(([, calendar]) => calendar);
+    return resultAsync();
   }
 
   @emitEvent("removeAll")
   removeAll(listOfIds: Array<Calendar["id"]>) {
-    return listOfIds
-      .map((id) => {
-        return this.map.remove(id);
-      })
-      .reduce(
-        (acc, value) =>
-          value.mapOrElse(
-            () => acc,
-            (ok) => {
-              acc.push([ok.id, ok]);
-              return acc;
-            },
-          ),
-        [] as Array<[Calendar["id"], Calendar]>,
-      );
+    const resultAsync = async () =>
+      listOfIds
+        .map((id) => {
+          return this.map.remove(id);
+        })
+        .reduce(
+          (acc, value) =>
+            value.mapOrElse(
+              () => acc,
+              (ok) => {
+                acc.push([ok.id, ok]);
+                return acc;
+              },
+            ),
+          [] as Array<[Calendar["id"], Calendar]>,
+        );
+    return resultAsync();
   }
 
   update(calendarsId: string, calendar: UpdateCalendar) {
     const calendarGet = this.map.get(calendarsId);
-    return calendarGet
-      .map((calendarFound) => {
-        const newCalendar: Calendar = {
-          id: calendarsId,
-          name: calendar.name ?? calendarFound.name,
-          timezone: calendar.timezone ?? calendarFound.timezone,
-          default: calendarFound.default,
-        };
+    const resultAsync = async () =>
+      calendarGet
+        .map((calendarFound) => {
+          const newCalendar: Calendar = {
+            id: calendarsId,
+            name: calendar.name ?? calendarFound.name,
+            timezone: calendar.timezone ?? calendarFound.timezone,
+            default: calendarFound.default,
+          };
 
-        const validated = validateTypes(newCalendar, CalendarStorage.validator);
-        const result = validated.mapOrElse<R.Result<Calendar, symbol>>(
-          (err) => R.Err(err),
-          () => {
-            return this.map.set(calendarsId, newCalendar);
-          },
-        );
+          const validated = validateTypes(
+            newCalendar,
+            CalendarStorage.validator,
+          );
+          const result = validated.mapOrElse<R.Result<Calendar, symbol>>(
+            (err) => R.Err(err),
+            () => {
+              return this.map.set(calendarsId, newCalendar);
+            },
+          );
 
-        this.emit("update", {
-          args: [calendarsId, calendar],
-          result,
-          opsSpecific: calendarFound,
-        });
+          this.emit("update", {
+            args: [calendarsId, calendar],
+            result,
+            opsSpecific: calendarFound,
+          });
 
-        return result.option();
-      })
-      .flatten()
-      .ok(Symbol("Event not found"));
+          return result.option();
+        })
+        .flatten()
+        .ok(Symbol("Event not found"));
+    return resultAsync();
   }
 
   findDefault() {
     const calendars = this.map.values();
     for (const calendar of calendars) {
       if (calendar.default) {
-        return O.Some(calendar);
+        const resultAsync = async () => O.Some(calendar);
+        return resultAsync();
       }
     }
-    return O.None();
+    const resultAsync = async () => O.None();
+    return resultAsync();
   }
 
   sync() {
