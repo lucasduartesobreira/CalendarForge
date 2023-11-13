@@ -58,87 +58,100 @@ export class TodoStorage implements BetterEventEmitter<Todo["id"], Todo> {
   }
 
   @emitEvent("add")
-  add(value: AddValue<Todo>): Result<Todo, symbol> {
+  add(value: AddValue<Todo>): Promise<Result<Todo, symbol>> {
     const id = idGenerator();
 
-    return this.map.setNotDefined(id, { id, ...value });
+    const resultAsync = async () =>
+      this.map.setNotDefined(id, { id, ...value });
+    return resultAsync();
   }
 
   update(
     id: string,
     updateValue: Partial<AddValue<Todo>>,
-  ): Result<Todo, symbol> {
+  ): Promise<Result<Todo, symbol>> {
     const found = this.map.get(id);
-    return found
-      .map((valueFound) => {
-        const validated = validateTypes(
-          {
-            id,
-            title: updateValue.title ?? valueFound.title,
-            task_id: updateValue.task_id ?? valueFound.task_id,
-            project_id: updateValue.project_id ?? valueFound.project_id,
-            board_id: updateValue.board_id ?? valueFound.board_id,
-            calendar_id: updateValue.calendar_id ?? valueFound.calendar_id,
-          },
-          TodoValidator,
-        );
-        return validated
-          .map((updatedTodo) => {
-            const result = this.map.set(id, updatedTodo);
-            this.emit("update", {
-              result,
-              args: [id, updateValue],
-              opsSpecific: found,
-            });
-            return result;
-          })
-          .flatten();
-      })
-      .ok(Symbol("Cannot find any todo with this id"))
-      .flatten();
+    const resultAsync = async () =>
+      found
+        .map((valueFound) => {
+          const validated = validateTypes(
+            {
+              id,
+              title: updateValue.title ?? valueFound.title,
+              task_id: updateValue.task_id ?? valueFound.task_id,
+              project_id: updateValue.project_id ?? valueFound.project_id,
+              board_id: updateValue.board_id ?? valueFound.board_id,
+              calendar_id: updateValue.calendar_id ?? valueFound.calendar_id,
+            },
+            TodoValidator,
+          );
+          return validated
+            .map((updatedTodo) => {
+              const result = this.map.set(id, updatedTodo);
+              this.emit("update", {
+                result,
+                args: [id, updateValue],
+                opsSpecific: found,
+              });
+              return result;
+            })
+            .flatten();
+        })
+        .ok(Symbol("Cannot find any todo with this id"))
+        .flatten();
+    return resultAsync();
   }
 
   @emitEvent("remove")
-  remove(id: string): Result<Todo, symbol> {
-    return this.map.remove(id);
+  remove(id: string): Promise<Result<Todo, symbol>> {
+    const resultAsync = async () => this.map.remove(id);
+    return resultAsync();
   }
 
   @emitEvent("removeWithFilter")
-  removeWithFilter(predicate: (value: Todo) => boolean): Todo[] {
-    return this.map
-      .removeAll(predicate)
-      .unwrapOrElse(() => [])
-      .map(([, value]) => value);
+  removeWithFilter(predicate: (value: Todo) => boolean): Promise<Todo[]> {
+    const resultAsync = async () =>
+      this.map
+        .removeAll(predicate)
+        .unwrapOrElse(() => [])
+        .map(([, value]) => value);
+
+    return resultAsync();
   }
 
   @emitEvent("removeAll")
-  removeAll(list: string[]): [string, Todo][] {
-    return list
-      .map((id) => {
-        return this.map.remove(id);
-      })
-      .reduce(
-        (acc, value) =>
-          value.mapOrElse(
-            () => acc,
-            (ok) => {
-              acc.push([ok.id, ok]);
-              return acc;
-            },
-          ),
-        [] as Array<[Todo["id"], Todo]>,
-      );
+  removeAll(list: string[]): Promise<[string, Todo][]> {
+    const resultAsync = async () =>
+      list
+        .map((id) => {
+          return this.map.remove(id);
+        })
+        .reduce(
+          (acc, value) =>
+            value.mapOrElse(
+              () => acc,
+              (ok) => {
+                acc.push([ok.id, ok]);
+                return acc;
+              },
+            ),
+          [] as Array<[Todo["id"], Todo]>,
+        );
+    return resultAsync();
   }
 
-  findById(id: string): Option<Todo> {
-    return this.map.get(id);
+  findById(id: string): Promise<Option<Todo>> {
+    const resultAsync = async () => this.map.get(id);
+    return resultAsync();
   }
 
-  filteredValues(predicate: (value: Todo) => boolean): Todo[] {
-    return this.map.filterValues(predicate);
+  filteredValues(predicate: (value: Todo) => boolean): Promise<Todo[]> {
+    const resultAsync = async () => this.map.filterValues(predicate);
+    return resultAsync();
   }
 
-  all(): Todo[] {
-    return this.map.values();
+  all(): Promise<Todo[]> {
+    const resultAsync = async () => this.map.values();
+    return resultAsync();
   }
 }
