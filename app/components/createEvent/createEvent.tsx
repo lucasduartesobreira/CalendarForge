@@ -20,6 +20,8 @@ import {
   UpdateNotificationForm,
   initialNotification,
 } from "../events/notifications/eventNotificationsForm";
+import { EventTemplate } from "@/services/events/eventTemplates";
+import { Calendar } from "@/services/calendar/calendar";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
@@ -55,6 +57,8 @@ const CreateEventForm = ({
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState<string>();
+  const [templates, setTemplates] = useState<EventTemplate[]>([]);
+  const [calendars, setCalendars] = useState<Calendar[]>([]);
   const { storages } = useContext(StorageContext);
 
   useEffect(() => {
@@ -70,12 +74,35 @@ const CreateEventForm = ({
     }
   }, []);
 
+  useEffect(() => {
+    storages.map(async ({ eventsTemplateStorage }) =>
+      setTemplates(await eventsTemplateStorage.all()),
+    );
+  }, []);
+
+  useEffect(() => {
+    storages.map(async ({ calendarsStorage }) =>
+      setCalendars(await calendarsStorage.all()),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (selectedTemplate && selectedTemplate.length > 0) {
+      storages.map(async ({ eventsTemplateStorage }) =>
+        (await eventsTemplateStorage.findById(selectedTemplate)).map(
+          (template) =>
+            setForm({
+              ...template,
+              startDate: form.startDate,
+              endDate: form.endDate,
+            }),
+        ),
+      );
+    }
+  }, [selectedTemplate]);
+
   if (storages.isSome()) {
-    const {
-      eventsStorage,
-      calendarsStorage,
-      eventsTemplateStorage: templateStorage,
-    } = storages.unwrap();
+    const { eventsStorage } = storages.unwrap();
 
     const handleChangeText =
       <
@@ -132,29 +159,20 @@ const CreateEventForm = ({
               <select
                 value={selectedTemplate}
                 className="bg-neutral-300"
-                onChange={async (ev) => {
+                onChange={(ev) => {
                   ev.preventDefault();
                   const selectedValue = ev.currentTarget.value;
                   setSelectedTemplate(selectedValue);
-                  const template = (
-                    await templateStorage.findById(selectedValue)
-                  ).unwrap() as CalendarEvent;
-                  setForm({
-                    ...template,
-                    startDate: form.startDate,
-                    endDate: form.endDate,
-                  });
                 }}
               >
                 <option value={undefined}></option>
-                {(async () =>
-                  (await templateStorage.all()).map((template, index) => {
-                    return (
-                      <option key={index} value={template.id}>
-                        {template.title}
-                      </option>
-                    );
-                  }))()}
+                {templates.map((template, index) => {
+                  return (
+                    <option key={index} value={template.id}>
+                      {template.title}
+                    </option>
+                  );
+                })}
               </select>
             </label>
             <button
@@ -212,14 +230,13 @@ const CreateEventForm = ({
             className="px-2 py-1 rounded-md bg-neutral-200"
             value={form.calendar_id}
           >
-            {(async () =>
-              (await calendarsStorage.all()).map((value, index) => {
-                return (
-                  <option key={index} value={value.id}>
-                    {value.name}
-                  </option>
-                );
-              }))()}
+            {calendars.map((value, index) => {
+              return (
+                <option key={index} value={value.id}>
+                  {value.name}
+                </option>
+              );
+            })}
           </select>
           <select
             value={form.color}

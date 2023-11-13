@@ -7,12 +7,13 @@ import {
 } from "@/services/events/events";
 import { getHTMLDateTime } from "@/utils/date";
 import * as O from "@/utils/option";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   NewEventNotificationForm,
   UpdateNotificationForm,
   initialNotification,
 } from "../notifications/eventNotificationsForm";
+import { Calendar } from "@/services/calendar/calendar";
 
 const UpdateEventForm = ({
   setOpen,
@@ -24,6 +25,13 @@ const UpdateEventForm = ({
   const { storages } = useContext(StorageContext);
   const { id, ...initialFormState } = initialForm;
   const [form, setForm] = useState(initialFormState);
+  const [calendars, setCalendars] = useState<Calendar[]>([]);
+
+  useEffect(() => {
+    storages.map(async ({ calendarsStorage }) =>
+      setCalendars(await calendarsStorage.all()),
+    );
+  }, []);
   if (storages.isSome()) {
     const { eventsStorage, calendarsStorage, eventsTemplateStorage } =
       storages.unwrap();
@@ -123,12 +131,11 @@ const UpdateEventForm = ({
             defaultValue={initialForm.calendar_id}
             className="px-2 py-1 rounded-md bg-neutral-200"
           >
-            {(async () =>
-              (await calendarsStorage.all()).map((value, index) => (
-                <option key={index} value={value.id}>
-                  {value.name}
-                </option>
-              )))()}
+            {calendars.map((value, index) => (
+              <option key={index} value={value.id}>
+                {value.name}
+              </option>
+            ))}
           </select>
           <select
             defaultValue={form.color}

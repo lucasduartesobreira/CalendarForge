@@ -6,10 +6,6 @@ import SideBar from "./components/sideBar/SideBar";
 import { StorageContext, useDataStorage } from "@/hooks/dataHook";
 import { useMap } from "@/hooks/mapHook";
 import { WeekNavigation } from "./components/calendar/navBar";
-import ProjectsSideBar from "@/components/projects/sidebar/sideBar";
-import Container, { Boards } from "./components/boards/boards";
-import { None, Option, Some } from "@/utils/option";
-import { Project } from "@/services/projects/projectsStorage";
 
 const NavBarContainer = ({ children }: { children: any }) => {
   return (
@@ -41,7 +37,7 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
         actions.setAll(fixedCalendars);
       };
     }
-  }, [listeners.calendarsStorageListener]);
+  }, [storages, listeners.calendarsStorageListener]);
 
   return (
     <>
@@ -76,33 +72,6 @@ const useDate = () => {
   return [startDate, setStartDate] as const;
 };
 
-const ProjectsContent = () => {
-  const [project, setProject] = useState<Option<Project>>(None());
-  const { storages } = useContext(StorageContext);
-  useEffect(() => {
-    storages.map(({ projectsStorage }) => {
-      projectsStorage.all().then((projects) => {
-        const firstProject = projects.at(0);
-        setProject(firstProject ? Some(firstProject) : None());
-      });
-    });
-  }, []);
-
-  return (
-    <>
-      <ProjectsSideBar.SideBar>
-        <ProjectsSideBar.Content
-          selectProject={setProject}
-          selectedProject={project}
-        />
-      </ProjectsSideBar.SideBar>
-      <Container>
-        <Boards.ProjectBoards project={project}></Boards.ProjectBoards>
-      </Container>
-    </>
-  );
-};
-
 const Home = () => {
   const data = useDataStorage();
   const [startDate, setStartDate] = useDate();
@@ -123,16 +92,6 @@ const Home = () => {
             >
               Calendar
             </button>
-            <button
-              onClick={() => setMenuType("projects")}
-              className={`font-semibold py-1 px-2 my-2 ${
-                menuType === "projects"
-                  ? "border-text-inverse bg-primary-300 rounded-md border-[1px] border-primary-100"
-                  : ""
-              }`}
-            >
-              Projects
-            </button>
           </nav>
           {menuType === "calendar" && (
             <WeekNavigation startDate={startDate} setStartDate={setStartDate} />
@@ -140,7 +99,6 @@ const Home = () => {
         </NavBarContainer>
         <FlexContent>
           {menuType === "calendar" && <CalendarContent startDate={startDate} />}
-          {menuType === "projects" && <ProjectsContent />}
         </FlexContent>
       </main>
     </StorageContext.Provider>

@@ -4,7 +4,7 @@ import {
   EventTemplate,
   UpdateTemplate,
 } from "@/services/events/eventTemplates";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import OutsideClick from "../utils/outsideClick";
 import * as O from "@/utils/option";
 import {
@@ -13,6 +13,7 @@ import {
   initialNotification,
 } from "../events/notifications/eventNotificationsForm";
 import { EventColors } from "@/services/events/events";
+import { Calendar } from "@/services/calendar/calendar";
 
 export const UpdateEventTemplateForm = ({
   setOpen,
@@ -21,9 +22,17 @@ export const UpdateEventTemplateForm = ({
   setOpen: (open: boolean) => void;
   initialForm: EventTemplate;
 }) => {
-  const { storages } = useContext(StorageContext);
+  const { storages, listeners } = useContext(StorageContext);
   const { id, ...initialFormState } = initialForm;
   const [form, setForm] = useState(initialFormState);
+  const [calendars, setCalendars] = useState<Calendar[]>([]);
+
+  useEffect(() => {
+    storages.map(({ calendarsStorage }) =>
+      calendarsStorage.all().then((allCalendars) => setCalendars(allCalendars)),
+    );
+  }, [storages, listeners.calendarsStorageListener]);
+
   if (storages.isSome()) {
     const { calendarsStorage, eventsTemplateStorage } = storages.unwrap();
 
@@ -71,13 +80,11 @@ export const UpdateEventTemplateForm = ({
             value={form.calendar_id}
             className="text-black m-2 bg-neutral-200"
           >
-            {calendarsStorage.all().then((calendars) =>
-              calendars.map((value, index) => (
-                <option key={index} value={value.id}>
-                  {value.name}
-                </option>
-              )),
-            )}
+            {calendars.map((value, index) => (
+              <option key={index} value={value.id}>
+                {value.name}
+              </option>
+            ))}
           </select>
           <select
             value={form.color}
