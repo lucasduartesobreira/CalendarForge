@@ -93,11 +93,13 @@ class EventStorage
   }
   filteredValues(
     predicate: (value: CalendarEvent) => boolean,
-  ): CalendarEvent[] {
-    return this.map.filterValues(predicate);
+  ): Promise<CalendarEvent[]> {
+    const resultAsync = async () => this.map.filterValues(predicate);
+    return resultAsync();
   }
-  all(): CalendarEvent[] {
-    return this.map.values();
+  all(): Promise<CalendarEvent[]> {
+    const resultAsync = async () => this.map.values();
+    return resultAsync();
   }
 
   static new(forceUpdate: () => void) {
@@ -106,105 +108,123 @@ class EventStorage
       CalendarEvent
     >("eventsMap", forceUpdate);
 
-    return localStorage.map((localStorage) => new EventStorage(localStorage));
+    const resultAsync = async () =>
+      localStorage.map((localStorage) => new EventStorage(localStorage));
+    return resultAsync();
   }
 
   @emitEvent("add")
-  add(event: AddValue<CalendarEvent>): R.Result<CalendarEvent, symbol> {
+  add(
+    event: AddValue<CalendarEvent>,
+  ): Promise<R.Result<CalendarEvent, symbol>> {
     const eventWithId = {
       id: Buffer.from(Date.now().toString()).toString("base64"),
       ...event,
     };
-    return this.map.set(eventWithId.id, eventWithId);
+
+    const resultAsync = async () => this.map.set(eventWithId.id, eventWithId);
+    return resultAsync();
   }
 
   @emitEvent("remove")
-  remove(eventId: string): R.Result<CalendarEvent, symbol> {
-    return this.map.remove(eventId);
+  remove(eventId: string): Promise<R.Result<CalendarEvent, symbol>> {
+    const resultAsync = async () => this.map.remove(eventId);
+    return resultAsync();
   }
 
   @emitEvent("removeWithFilter")
   removeWithFilter(
     predicate: (event: CalendarEvent) => boolean,
-  ): CalendarEvent[] {
+  ): Promise<CalendarEvent[]> {
     const result = this.map.removeAll(predicate);
-    return result.unwrap().map(([, value]) => value);
+    const resultAsync = async () => result.unwrap().map(([, value]) => value);
+    return resultAsync();
   }
 
   @emitEvent("removeAll")
   removeAll(listOfIds: Array<CalendarEvent["id"]>) {
-    return listOfIds
-      .map((id) => {
-        return this.map.remove(id);
-      })
-      .reduce(
-        (acc, value) =>
-          value.mapOrElse(
-            () => acc,
-            (ok) => {
-              acc.push([ok.id, ok]);
-              return acc;
-            },
-          ),
-        [] as Array<[CalendarEvent["id"], CalendarEvent]>,
-      );
+    const resultAsync = async () =>
+      listOfIds
+        .map((id) => {
+          return this.map.remove(id);
+        })
+        .reduce(
+          (acc, value) =>
+            value.mapOrElse(
+              () => acc,
+              (ok) => {
+                acc.push([ok.id, ok]);
+                return acc;
+              },
+            ),
+          [] as Array<[CalendarEvent["id"], CalendarEvent]>,
+        );
+    return resultAsync();
   }
 
-  findById(eventId: string): O.Option<CalendarEvent> {
+  findById(eventId: string): Promise<O.Option<CalendarEvent>> {
     const event = this.map.get(eventId);
-    return event;
+    const resultAsync = async () => event;
+    return resultAsync();
   }
 
   find(predicate: (event: CalendarEvent) => boolean) {
     for (const event of this.map.values()) {
       if (predicate(event)) {
-        return O.Some(event);
+        const resultAsync = async () => O.Some(event);
+        return resultAsync();
       }
     }
 
-    return O.None();
+    const resultAsync = async () => O.None();
+    return resultAsync();
   }
 
   filter(predicate: (event: CalendarEvent) => boolean) {
     const filtered = this.map.filterEntries(predicate);
 
-    return filtered;
+    const resultAsync = async () => filtered;
+    return resultAsync();
   }
 
   update(eventId: string, event: UpdateEvent) {
     const eventFromGet = this.map.get(eventId);
-    return eventFromGet
-      .map((eventFound) => {
-        const newEvent: CalendarEvent = {
-          id: eventId,
-          title: event.title ?? eventFound.title,
-          endDate: event.endDate ?? eventFound.endDate,
-          startDate: event.startDate ?? eventFound.startDate,
-          calendar_id: event.calendar_id ?? eventFound.calendar_id,
-          description: event.description ?? eventFound.description,
-          notifications: event.notifications ?? eventFound.notifications,
-          color: event.color ?? eventFound.color,
-        };
+    const resultAsync = async () =>
+      eventFromGet
+        .map((eventFound) => {
+          const newEvent: CalendarEvent = {
+            id: eventId,
+            title: event.title ?? eventFound.title,
+            endDate: event.endDate ?? eventFound.endDate,
+            startDate: event.startDate ?? eventFound.startDate,
+            calendar_id: event.calendar_id ?? eventFound.calendar_id,
+            description: event.description ?? eventFound.description,
+            notifications: event.notifications ?? eventFound.notifications,
+            color: event.color ?? eventFound.color,
+          };
 
-        const result = this.map.set(eventId, newEvent);
-        const inputEventHandler: [eventId: string, event: UpdateEvent] = [
-          eventId,
-          event,
-        ];
+          const result = this.map.set(eventId, newEvent);
+          const inputEventHandler: [eventId: string, event: UpdateEvent] = [
+            eventId,
+            event,
+          ];
 
-        this.emit("update", {
-          args: inputEventHandler,
-          result,
-          opsSpecific: O.Some(eventFound),
-        });
+          this.emit("update", {
+            args: inputEventHandler,
+            result,
+            opsSpecific: O.Some(eventFound),
+          });
 
-        return result.unwrap();
-      })
-      .ok(Symbol("Event not found"));
+          return result.unwrap();
+        })
+        .ok(Symbol("Event not found"));
+
+    return resultAsync();
   }
 
   values() {
-    return this.map.values();
+    const resultAsync = async () => this.map.values();
+    return resultAsync();
   }
 
   sync() {
