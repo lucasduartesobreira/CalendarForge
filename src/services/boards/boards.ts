@@ -80,14 +80,16 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
   }
 
   @emitEvent("add")
-  add(value: AddValue<Board>): R.Result<Board, symbol> {
+  add(value: AddValue<Board>): Promise<R.Result<Board, symbol>> {
     const id = idGenerator();
-    return this.boards.set(id, { id, ...value });
+
+    const resultAsync = async () => this.boards.set(id, { id, ...value });
+    return resultAsync();
   }
   update(
     id: string,
     updatedValue: Partial<AddValue<Board>>,
-  ): R.Result<Board, symbol> {
+  ): Promise<R.Result<Board, symbol>> {
     const found = this.boards.get(id);
     const result = found
       .map((board) => {
@@ -113,61 +115,72 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
       opsSpecific: found,
     });
 
-    return result;
+    const resultAsync = async () => result;
+    return resultAsync();
   }
   @emitEvent("remove")
-  remove(id: string): R.Result<Board, symbol> {
-    return this.boards.remove(id);
+  remove(id: string): Promise<R.Result<Board, symbol>> {
+    const resultAsync = async () => this.boards.remove(id);
+    return resultAsync();
   }
   @emitEvent("removeWithFilter")
-  removeWithFilter(predicate: (value: Board) => boolean): Board[] {
-    return this.boards
-      .removeAll(predicate)
-      .unwrap()
-      .map(([, board]) => board);
+  removeWithFilter(predicate: (value: Board) => boolean): Promise<Board[]> {
+    const resultAsync = async () =>
+      this.boards
+        .removeAll(predicate)
+        .unwrap()
+        .map(([, board]) => board);
+    return resultAsync();
   }
   @emitEvent("removeAll")
-  removeAll(list: string[]): [string, Board][] {
-    return list
-      .map((id) => this.remove(id))
-      .reduce(
-        (acc, value) => {
-          return value.mapOrElse(
-            () => acc,
-            (ok) => {
-              acc.push(getTuple(ok.id, ok));
-              return acc;
-            },
-          );
-        },
-        [] as Array<[string, Board]>,
-      );
+  removeAll(list: string[]): Promise<[string, Board][]> {
+    const resultAsync = async () => {
+      const asyncList = list.map((id) => this.remove(id));
+
+      const result: Array<[string, Board]> = [];
+      for await (const value of asyncList) {
+        value.mapOrElse(
+          () => {},
+          (ok) => {
+            result.push(getTuple(ok.id, ok));
+          },
+        );
+      }
+
+      return result;
+    };
+    return resultAsync();
   }
-  findById(id: string): O.Option<Board> {
-    return this.boards.get(id);
+  findById(id: string): Promise<O.Option<Board>> {
+    const resultAsync = async () => this.boards.get(id);
+    return resultAsync();
   }
-  filteredValues(predicate: (value: Board) => boolean): Board[] {
-    return this.boards.filterValues(predicate);
+  filteredValues(predicate: (value: Board) => boolean): Promise<Board[]> {
+    const resultAsync = async () => this.boards.filterValues(predicate);
+    return resultAsync();
   }
-  all(): Board[] {
-    return this.boards.values();
+  all(): Promise<Board[]> {
+    const resultAsync = async () => this.boards.values();
+    return resultAsync();
   }
   allBoardsFromProject(projectId: Project["id"]) {
-    return this.boards
-      .allWithIndex("project_id", "id", projectId)
-      .map((ids) =>
-        ids.reduce((acc, id) => {
-          this.boards.get(id).map((value) => acc.push(value));
-          return acc;
-        }, [] as Board[]),
-      )
-      .mapOrElse(
-        () => {
-          return this.boards.filterValues(
-            ({ project_id }) => project_id === projectId,
-          );
-        },
-        (ok) => ok,
-      );
+    const resultAsync = async () =>
+      this.boards
+        .allWithIndex("project_id", "id", projectId)
+        .map((ids) =>
+          ids.reduce((acc, id) => {
+            this.boards.get(id).map((value) => acc.push(value));
+            return acc;
+          }, [] as Board[]),
+        )
+        .mapOrElse(
+          () => {
+            return this.boards.filterValues(
+              ({ project_id }) => project_id === projectId,
+            );
+          },
+          (ok) => ok,
+        );
+    return resultAsync();
   }
 }
