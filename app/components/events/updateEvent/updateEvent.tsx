@@ -126,9 +126,9 @@ const UpdateEventForm = ({
           <select
             onChange={(event) => {
               form.calendar_id = event.target.value;
-              setForm(form);
+              setForm({ ...form });
             }}
-            defaultValue={initialForm.calendar_id}
+            value={form.calendar_id}
             className="px-2 py-1 rounded-md bg-neutral-200"
           >
             {calendars.map((value, index) => (
