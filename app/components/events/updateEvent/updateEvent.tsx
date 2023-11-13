@@ -123,11 +123,12 @@ const UpdateEventForm = ({
             defaultValue={initialForm.calendar_id}
             className="px-2 py-1 rounded-md bg-neutral-200"
           >
-            {calendarsStorage.all().map((value, index) => (
-              <option key={index} value={value.id}>
-                {value.name}
-              </option>
-            ))}
+            {(async () =>
+              (await calendarsStorage.all()).map((value, index) => (
+                <option key={index} value={value.id}>
+                  {value.name}
+                </option>
+              )))()}
           </select>
           <select
             defaultValue={form.color}

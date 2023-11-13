@@ -97,6 +97,18 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
         | {
             type: "remove";
             value: Todo["id"];
+          }
+        | {
+            type: "populate";
+            value: Array<
+              [
+                Todo["id"],
+                {
+                  event: Option<LocalValue<CalendarEvent>>;
+                  todo: LocalValue<Todo>;
+                },
+              ]
+            >;
           },
     ) => {
       if (action.type === "add") {
@@ -168,28 +180,73 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
       }
       return new Map(state);
     },
-    initialTodoList,
-    (todos) => {
-      return new Map(
-        storages
-          .map(({ eventsStorage }) => {
-            return todos.map((todo) => {
-              const event = eventsStorage
-                .find(({ todo_id }) => todo_id != null && todo_id === todo.id)
-                .map<LocalValue<CalendarEvent>>((event) => ({
-                  ...event,
-                  TYPE_OPERATION: "UPDATE",
-                }));
+    new Map(),
+  );
+
+  const changeList = (todos: Todo[]) => {
+    const final = storages
+      .map(({ eventsStorage }) => {
+        return todos.map((todo) => {
+          const event = eventsStorage
+            .find(({ todo_id }) => todo_id != null && todo_id === todo.id)
+            .then((found) => {
+              const event = found.map<LocalValue<CalendarEvent>>((event) => ({
+                ...event,
+                TYPE_OPERATION: "UPDATE",
+              }));
+
               return [
                 todo.id,
                 { todo: { ...todo, TYPE_OPERATION: "UPDATE" }, event },
               ] as const;
             });
-          })
-          .unwrapOrElse(() => []),
-      );
-    },
-  );
+
+          return event;
+        });
+      })
+      .unwrapOrElse(() => [] as Promise<any>[]);
+
+    return final;
+  };
+
+  useEffect(() => {
+    async () => {
+      const result: Array<
+        [
+          Todo["id"],
+          {
+            event: Option<LocalValue<CalendarEvent>>;
+            todo: LocalValue<Todo>;
+          },
+        ]
+      > = [];
+
+      let what: Todo[];
+
+      if (initialTodoList.length == 0) {
+        storages.map(async ({ todosStorage }) => {
+          what = await todosStorage.filteredValues(
+            ({ task_id }) => task_id === task.id,
+          );
+        });
+      } else {
+        what = initialTodoList;
+      }
+      for await (const listItem of changeList(initialTodoList)) {
+        result.push(
+          listItem as [
+            Todo["id"],
+            {
+              event: Option<LocalValue<CalendarEvent>>;
+              todo: LocalValue<Todo>;
+            },
+          ],
+        );
+      }
+
+      setTodosAndEvents({ type: "populate", value: result });
+    };
+  }, []);
 
   return (
     <OutsideClick
@@ -293,7 +350,7 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
           <p className="text-neutral-500">To-Do</p>
           <div className="bg-neutral-200 px-2 py-2 mb-4 w-full gap-1 flex flex-col rounded-md">
             {Array.from(todosAndEvents.values()).map(
-              ({ todo: { id, ...rest }, event }, index) => {
+              ({ todo: { id, ...rest }, event }, _index) => {
                 return (
                   <TodoForm
                     todo={rest}
@@ -329,16 +386,18 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
                 storages.map(({ projectsStorage }) => {
                   projectsStorage
                     .findById(initialForm.project_id)
-                    .map(({ calendars }) => {
-                      setTodosAndEvents({
-                        type: "add",
-                        value: {
-                          title: "New Todo",
-                          calendar_id: calendars[0],
-                          board_id: initialForm.board_id,
-                          task_id: initialForm.id,
-                          project_id: initialForm.project_id,
-                        },
+                    .then((found) => {
+                      found.map(({ calendars }) => {
+                        setTodosAndEvents({
+                          type: "add",
+                          value: {
+                            title: "New Todo",
+                            calendar_id: calendars[0],
+                            board_id: initialForm.board_id,
+                            task_id: initialForm.id,
+                            project_id: initialForm.project_id,
+                          },
+                        });
                       });
                     });
                 });

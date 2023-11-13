@@ -108,9 +108,7 @@ class EventStorage
       CalendarEvent
     >("eventsMap", forceUpdate);
 
-    const resultAsync = async () =>
-      localStorage.map((localStorage) => new EventStorage(localStorage));
-    return resultAsync();
+    return localStorage.map((localStorage) => new EventStorage(localStorage));
   }
 
   @emitEvent("add")

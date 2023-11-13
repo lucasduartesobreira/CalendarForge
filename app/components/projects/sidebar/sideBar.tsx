@@ -38,29 +38,34 @@ const Content = ({
               Projects
             </span>
             <div ref={refList} className="text-sm bg-white p-2 flex flex-col">
-              {projectsStorage.all().map((project) => {
-                return (
-                  <ProjectItemList
-                    key={project.id}
-                    setEdit={setEdit}
-                    selectProject={selectProject}
-                    selectedProject={selectedProject}
-                    project={project}
-                  ></ProjectItemList>
-                );
-              })}
+              {projectsStorage.all().then((projectsFound) =>
+                projectsFound.map((project) => {
+                  return (
+                    <ProjectItemList
+                      key={project.id}
+                      setEdit={setEdit}
+                      selectProject={selectProject}
+                      selectedProject={selectedProject}
+                      project={project}
+                    ></ProjectItemList>
+                  );
+                }),
+              )}
             </div>
 
             {edit.mapOrElse(
               () => null,
               (project) => {
                 const [first, ...rest] = project.calendars;
-                const projectCalendar = first
-                  ? calendarsStorage.findById(first)
-                  : O.None();
-                const calendars = rest
-                  .map((id) => calendarsStorage.findById(id))
-                  .reduce(
+                async () => {
+                  const projectCalendarPromise = first
+                    ? calendarsStorage.findById(first)
+                    : (async () => O.None())();
+                  const projectCalendar = await projectCalendarPromise;
+                  const calendarsPromise = await Promise.all(
+                    rest.map((id) => calendarsStorage.findById(id)),
+                  );
+                  const calendars = calendarsPromise.reduce(
                     (acc, value) => {
                       return acc
                         .map((calendars) => {
@@ -74,117 +79,143 @@ const Content = ({
                     O.Some([] as Calendar[]),
                   );
 
-                return (
-                  projectCalendar.isSome() &&
-                  calendars.isSome() && (
-                    <ProjectForm
-                      setOpenForm={() => setEdit(O.None())}
-                      deleteButton={O.Some(() => {
-                        projectsStorage.remove(project.id);
-                      })}
-                      refs={O.Some([refList])}
-                      initialForm={project as UpdateValue<Project>}
-                      initialProjectCalendar={projectCalendar.unwrap()}
-                      fixProjectCalendar={(form, localCalendars) => {
-                        localCalendars.name = `${form.title} Calendar`;
-                        return { ...localCalendars };
-                      }}
-                      initialCalendars={calendars.unwrap()}
-                      onSubmit={(_e, form, localCalendars) => {
-                        const calendarsSaved = localCalendars.reduce(
-                          (acc, calendar) => {
-                            if (!acc.isOk()) {
-                              return acc;
-                            }
-                            const calendarsSaved = acc.unwrap();
+                  return (
+                    projectCalendar.isSome() &&
+                    calendars.isSome() && (
+                      <ProjectForm
+                        setOpenForm={() => setEdit(O.None())}
+                        deleteButton={O.Some(() => {
+                          projectsStorage.remove(project.id);
+                        })}
+                        refs={O.Some([refList])}
+                        initialForm={project as UpdateValue<Project>}
+                        initialProjectCalendar={projectCalendar.unwrap()}
+                        fixProjectCalendar={(form, localCalendars) => {
+                          localCalendars.name = `${form.title} Calendar`;
+                          return { ...localCalendars };
+                        }}
+                        initialCalendars={calendars.unwrap()}
+                        onSubmit={(_e, form, localCalendars) => {
+                          const calendarsSaved = localCalendars.reduce(
+                            async (accPromise, calendar) => {
+                              const acc = await accPromise;
+                              if (!acc.isOk()) {
+                                return acc;
+                              }
+                              const calendarsSaved = acc.unwrap();
 
-                            const { id, ...restCalendar } = calendar;
+                              const { id, ...restCalendar } = calendar;
 
-                            if (!id) {
-                              return calendarsStorage
-                                .add(restCalendar)
-                                .mapOrElse<
-                                  R.Result<
-                                    [Calendar, O.Option<Calendar>][],
-                                    [symbol, [Calendar, O.Option<Calendar>][]]
-                                  >
-                                >(
-                                  (err) =>
-                                    R.Err([err, calendarsSaved] as [
-                                      symbol,
-                                      [Calendar, O.Option<Calendar>][],
-                                    ]),
-                                  (calendar) => {
-                                    calendarsSaved.push([calendar, O.None()]);
-                                    return R.Ok(calendarsSaved);
-                                  },
-                                );
-                            }
-
-                            const result = calendarsStorage
-                              .findById(id)
-                              .mapOrElse(
-                                () =>
-                                  calendarsStorage
-                                    .add(restCalendar)
-                                    .map(
-                                      (calendar) =>
-                                        [calendar, O.None()] as const,
-                                    ),
-                                (calendar) => {
-                                  return calendarsStorage
-                                    .update(id, restCalendar)
-                                    .map(
-                                      (updatedCalendar) =>
+                              if (!id) {
+                                return calendarsStorage
+                                  .add(restCalendar)
+                                  .then((result) =>
+                                    result.mapOrElse<
+                                      R.Result<
+                                        [Calendar, O.Option<Calendar>][],
                                         [
-                                          updatedCalendar,
-                                          O.Some(calendar),
-                                        ] as const,
-                                    );
-                                },
-                              );
-                            return result
-                              .map(([calendar, option]) => {
-                                calendarsSaved.push([calendar, option]);
-                                return calendarsSaved;
-                              })
-                              .mapErr(
-                                (err) =>
-                                  [err, calendarsSaved] as [
-                                    symbol,
-                                    typeof calendarsSaved,
-                                  ],
-                              );
-                          },
-                          R.Ok([]) as R.Result<
-                            [Calendar, O.Option<Calendar>][],
-                            [symbol, [Calendar, O.Option<Calendar>][]]
-                          >,
-                        );
+                                          symbol,
+                                          [Calendar, O.Option<Calendar>][],
+                                        ]
+                                      >
+                                    >(
+                                      (err) =>
+                                        R.Err([err, calendarsSaved] as [
+                                          symbol,
+                                          [Calendar, O.Option<Calendar>][],
+                                        ]),
+                                      (calendar) => {
+                                        calendarsSaved.push([
+                                          calendar,
+                                          O.None(),
+                                        ]);
+                                        return R.Ok(calendarsSaved);
+                                      },
+                                    ),
+                                  );
+                              }
 
-                        if (!calendarsSaved.isOk()) {
-                          const [_errorMsg, calendars] =
-                            calendarsSaved.unwrap_err();
-
-                          calendars.forEach(([, found]) =>
-                            found.map((calendar) =>
-                              calendarsStorage.update(calendar.id, calendar),
-                            ),
+                              const result = calendarsStorage
+                                .findById(id)
+                                .then((found) =>
+                                  found.mapOrElse(
+                                    () =>
+                                      calendarsStorage
+                                        .add(restCalendar)
+                                        .then((addedCalendar) =>
+                                          addedCalendar.map(
+                                            (calendar) =>
+                                              [calendar, O.None()] as const,
+                                          ),
+                                        ),
+                                    async (calendar) => {
+                                      const updatedCalendar =
+                                        await calendarsStorage.update(
+                                          id,
+                                          restCalendar,
+                                        );
+                                      return updatedCalendar.map(
+                                        (updatedCalendar_1) =>
+                                          [
+                                            updatedCalendar_1,
+                                            O.Some(calendar),
+                                          ] as const,
+                                      );
+                                    },
+                                  ),
+                                );
+                              return result.then((result) =>
+                                result
+                                  .map(([calendar, option]) => {
+                                    calendarsSaved.push([calendar, option]);
+                                    return calendarsSaved;
+                                  })
+                                  .mapErr(
+                                    (err) =>
+                                      [err, calendarsSaved] as [
+                                        symbol,
+                                        typeof calendarsSaved,
+                                      ],
+                                  ),
+                              );
+                            },
+                            (async () => R.Ok([]))() as Promise<
+                              R.Result<
+                                [Calendar, O.Option<Calendar>][],
+                                [symbol, [Calendar, O.Option<Calendar>][]]
+                              >
+                            >,
                           );
 
-                          return;
-                        }
+                          calendarsSaved.then((calendarsSaved) => {
+                            if (!calendarsSaved.isOk()) {
+                              const [_errorMsg, calendars] =
+                                calendarsSaved.unwrap_err();
 
-                        projectsStorage.update(project.id, {
-                          ...form,
-                          calendars: calendarsSaved
-                            .unwrap()
-                            .map(([{ id }]) => id),
-                        });
-                      }}
-                    />
-                  )
-                );
+                              calendars.forEach(([, found]) =>
+                                found.map((calendar) =>
+                                  calendarsStorage.update(
+                                    calendar.id,
+                                    calendar,
+                                  ),
+                                ),
+                              );
+
+                              return;
+                            }
+
+                            projectsStorage.update(project.id, {
+                              ...form,
+                              calendars: calendarsSaved
+                                .unwrap()
+                                .map(([{ id }]) => id),
+                            });
+                          });
+                        }}
+                      />
+                    )
+                  );
+                };
               },
             )}
           </>
@@ -287,45 +318,47 @@ const AddNew = () => {
             }}
             initialCalendars={[]}
             onSubmit={(_e, form, localCalendars) => {
-              const calendarsSaved = localCalendars.reduce(
-                (acc, calendar) => {
-                  if (!acc.isOk()) {
-                    return acc;
-                  }
-                  const calendarsSaved = acc.unwrap();
+              (async () => {
+                const calendarsSaved = await localCalendars.reduce(
+                  async (accPromise, calendar) => {
+                    const acc = await accPromise;
+                    if (!acc.isOk()) {
+                      return acc;
+                    }
+                    const calendarsSaved = acc.unwrap();
 
-                  const result = calendarsStorage.add(calendar);
-                  if (result.isOk()) {
-                    const finalCalendar = result.unwrap();
-                    calendarsSaved.push(finalCalendar.id);
-                    return R.Ok(calendarsSaved);
-                  }
+                    const result = await calendarsStorage.add(calendar);
+                    if (result.isOk()) {
+                      const finalCalendar = result.unwrap();
+                      calendarsSaved.push(finalCalendar.id);
+                      return R.Ok(calendarsSaved);
+                    }
 
-                  return R.Err([result.unwrap_err(), calendarsSaved] as [
-                    symbol,
-                    Calendar["id"][],
-                  ]);
-                },
-                R.Ok([]) as R.Result<
-                  Calendar["id"][],
-                  [symbol, Calendar["id"][]]
-                >,
-              );
-
-              if (!calendarsSaved.isOk()) {
-                const [_errorMsg, calendars] = calendarsSaved.unwrap_err();
-                calendarsStorage.removeWithFilter(
-                  (value) =>
-                    calendars.find((id) => id === value.id) != undefined,
+                    return R.Err([result.unwrap_err(), calendarsSaved] as [
+                      symbol,
+                      Calendar["id"][],
+                    ]);
+                  },
+                  (async () => R.Ok([]))() as Promise<
+                    R.Result<Calendar["id"][], [symbol, Calendar["id"][]]>
+                  >,
                 );
 
-                return;
-              }
+                if (!calendarsSaved.isOk()) {
+                  const [_errorMsg, calendars] = calendarsSaved.unwrap_err();
+                  calendarsStorage.removeWithFilter(
+                    (value) =>
+                      calendars.find((id) => id === value.id) != undefined,
+                  );
 
-              projectsStorage.add({
-                ...form,
-                calendars: calendarsSaved.unwrap(),
-              });
+                  return;
+                }
+
+                projectsStorage.add({
+                  ...form,
+                  calendars: calendarsSaved.unwrap(),
+                });
+              })();
             }}
           />
         )}

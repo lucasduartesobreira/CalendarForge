@@ -251,19 +251,19 @@ const CalendarWeek = ({
         startDate.getTime() + 6 * 24 * 60 * 60 * 1000,
       );
       lastDayOfTheWeek.setHours(23, 59, 59, 999);
-      setEvents(
-        eventsStorage
-          .filter(
-            (event) =>
-              (viewableCalendarsState.unwrap()[0].get(event.calendar_id) ??
-                true) &&
-              event.startDate >= startDate.getTime() &&
-              event.endDate >= startDate.getTime() &&
-              event.startDate <= lastDayOfTheWeek.getTime() &&
-              event.endDate <= lastDayOfTheWeek.getTime(),
-          )
-          .map(([, value]) => value),
-      );
+      eventsStorage
+        .filter(
+          (event) =>
+            (viewableCalendarsState.unwrap()[0].get(event.calendar_id) ??
+              true) &&
+            event.startDate >= startDate.getTime() &&
+            event.endDate >= startDate.getTime() &&
+            event.startDate <= lastDayOfTheWeek.getTime() &&
+            event.endDate <= lastDayOfTheWeek.getTime(),
+        )
+        .then((filteredValue) => {
+          setEvents(filteredValue.map(([, value]) => value));
+        });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listeners.eventsStorageListener, startDate, viewableCalendarsState]);

@@ -71,11 +71,13 @@ export const UpdateEventTemplateForm = ({
             value={form.calendar_id}
             className="text-black m-2 bg-neutral-200"
           >
-            {calendarsStorage.all().map((value, index) => (
-              <option key={index} value={value.id}>
-                {value.name}
-              </option>
-            ))}
+            {calendarsStorage.all().then((calendars) =>
+              calendars.map((value, index) => (
+                <option key={index} value={value.id}>
+                  {value.name}
+                </option>
+              )),
+            )}
           </select>
           <select
             value={form.color}

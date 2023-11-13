@@ -24,11 +24,10 @@ const UpdateCalendarForm = ({
   const [templates, setTemplates] = useState<EventTemplate[]>([]);
 
   useEffect(() => {
-    storages.map(({ eventsTemplateStorage }) => {
+    storages.map(async ({ eventsTemplateStorage }) => {
+      const allTemplates = await eventsTemplateStorage.all();
       setTemplates(() =>
-        eventsTemplateStorage
-          .all()
-          .filter((template) => template.calendar_id === id),
+        allTemplates.filter((template) => template.calendar_id === id),
       );
     });
   }, [listeners.eventsTemplateStorageListener]);

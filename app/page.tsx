@@ -30,14 +30,16 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
 
   useEffect(() => {
     if (storages.isSome() && viewableCalendarsState.isSome()) {
-      const { calendarsStorage } = storages.unwrap();
-      const calendars = calendarsStorage.all();
-      const [viewableCalendars, actions] = viewableCalendarsState.unwrap();
-      const fixedCalendars = calendars.reduce((acc, calendar) => {
-        acc.get(calendar.id) ?? acc.set(calendar.id, true);
-        return acc;
-      }, new Map(viewableCalendars));
-      actions.setAll(fixedCalendars);
+      async () => {
+        const { calendarsStorage } = storages.unwrap();
+        const calendars = await calendarsStorage.all();
+        const [viewableCalendars, actions] = viewableCalendarsState.unwrap();
+        const fixedCalendars = calendars.reduce((acc, calendar) => {
+          acc.get(calendar.id) ?? acc.set(calendar.id, true);
+          return acc;
+        }, new Map(viewableCalendars));
+        actions.setAll(fixedCalendars);
+      };
     }
   }, [listeners.calendarsStorageListener]);
 
@@ -79,10 +81,13 @@ const ProjectsContent = () => {
   const { storages } = useContext(StorageContext);
   useEffect(() => {
     storages.map(({ projectsStorage }) => {
-      const project = projectsStorage.all().at(0);
-      setProject(project ? Some(project) : None());
+      projectsStorage.all().then((projects) => {
+        const firstProject = projects.at(0);
+        setProject(firstProject ? Some(firstProject) : None());
+      });
     });
   }, []);
+
   return (
     <>
       <ProjectsSideBar.SideBar>

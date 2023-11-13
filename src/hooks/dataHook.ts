@@ -228,11 +228,13 @@ export function useDataStorage(): StorageContext {
         });
       });
 
-      for (const event of eventsStorageSome.values()) {
-        event.notifications.forEach((notification) => {
-          notificationManager.push(notification, event);
-        });
-      }
+      (async () => {
+        for (const event of await eventsStorageSome.values()) {
+          event.notifications.forEach((notification) => {
+            notificationManager.push(notification, event);
+          });
+        }
+      })();
 
       setClientData(
         O.Some({

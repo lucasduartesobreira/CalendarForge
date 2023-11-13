@@ -56,14 +56,18 @@ const CreateEventForm = ({
 
   const [selectedTemplate, setSelectedTemplate] = useState<string>();
   const { storages } = useContext(StorageContext);
-  let defaultValue: string | undefined = undefined;
 
   useEffect(() => {
-    if (defaultValue) {
-      form.calendar_id = defaultValue;
-      setForm(form);
+    if (storages.isSome()) {
+      (async () => {
+        const { calendarsStorage } = storages.unwrap();
+        const foundDefault = await calendarsStorage.findDefault();
+        foundDefault.map(({ id }) => {
+          form.calendar_id = id;
+          setForm({ ...form });
+        });
+      })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (storages.isSome()) {
@@ -105,10 +109,6 @@ const CreateEventForm = ({
     startDate.setSeconds(0, 0);
     const endDate = new Date(initialForm.endDate);
     endDate.setSeconds(0, 0);
-    const defaultCalendar = calendarsStorage.findDefault();
-    defaultValue = defaultCalendar.isSome()
-      ? defaultCalendar.unwrap().id
-      : undefined;
 
     return (
       <OutsideClick
@@ -132,13 +132,13 @@ const CreateEventForm = ({
               <select
                 value={selectedTemplate}
                 className="bg-neutral-300"
-                onChange={(ev) => {
+                onChange={async (ev) => {
                   ev.preventDefault();
                   const selectedValue = ev.currentTarget.value;
                   setSelectedTemplate(selectedValue);
-                  const template = templateStorage
-                    .findById(selectedValue)
-                    .unwrap() as CalendarEvent;
+                  const template = (
+                    await templateStorage.findById(selectedValue)
+                  ).unwrap() as CalendarEvent;
                   setForm({
                     ...template,
                     startDate: form.startDate,
@@ -147,13 +147,14 @@ const CreateEventForm = ({
                 }}
               >
                 <option value={undefined}></option>
-                {templateStorage.all().map((template, index) => {
-                  return (
-                    <option key={index} value={template.id}>
-                      {template.title}
-                    </option>
-                  );
-                })}
+                {(async () =>
+                  (await templateStorage.all()).map((template, index) => {
+                    return (
+                      <option key={index} value={template.id}>
+                        {template.title}
+                      </option>
+                    );
+                  }))()}
               </select>
             </label>
             <button
@@ -211,13 +212,14 @@ const CreateEventForm = ({
             className="px-2 py-1 rounded-md bg-neutral-200"
             value={form.calendar_id}
           >
-            {calendarsStorage.all().map((value, index) => {
-              return (
-                <option key={index} value={value.id}>
-                  {value.name}
-                </option>
-              );
-            })}
+            {(async () =>
+              (await calendarsStorage.all()).map((value, index) => {
+                return (
+                  <option key={index} value={value.id}>
+                    {value.name}
+                  </option>
+                );
+              }))()}
           </select>
           <select
             value={form.color}
