@@ -2,12 +2,14 @@ import { StorageActions } from "./storage";
 
 export type EventArg<
   Event extends keyof Prototype,
-  Prototype extends StorageActions<any, any>,
+  Prototype extends StorageActions<unknown, any>,
 > = {
   args: Parameters<Prototype[Event]>;
   opsSpecific?: any;
-  result: ReturnType<Prototype[Event]>;
+  result: RemovePromise<ReturnType<Prototype[Event]>>;
 };
+
+type RemovePromise<Type> = Type extends Promise<infer V> ? V : Type;
 
 export const emitEvent = <
   Event extends keyof Prototype,
@@ -26,7 +28,14 @@ export const emitEvent = <
     if (path === context.name) {
       return function (this: This, ...args: Args) {
         const result = target.apply(this, args);
-        this.emit(path, { args, result });
+        if (result instanceof Promise) {
+          result.then((result) => {
+            this.emit(path, { args, result });
+          });
+        } else {
+          const resultWithoutPromise = result as RemovePromise<Return>;
+          this.emit(path, { args, result: resultWithoutPromise });
+        }
         return result;
       };
     }

@@ -305,12 +305,12 @@ export class Index<
 export type AddValue<V> = Omit<V, "id">;
 export type UpdateValue<V> = Partial<AddValue<V>>;
 export interface StorageActions<K, V extends Record<string, any> & { id: K }> {
-  add(value: AddValue<V>): R.Result<V, symbol>;
-  update(id: K, updateValue: UpdateValue<V>): R.Result<V, symbol>;
-  remove(id: K): R.Result<V, symbol>;
-  removeWithFilter(predicate: (value: V) => boolean): V[];
-  removeAll(list: K[]): Array<[K, V]>;
-  findById(id: K): O.Option<V>;
-  filteredValues(predicate: (value: V) => boolean): V[];
-  all(): V[];
+  add(value: AddValue<V>): Promise<R.Result<V, symbol>>;
+  update(id: K, updateValue: UpdateValue<V>): Promise<R.Result<V, symbol>>;
+  remove(id: K): Promise<R.Result<V, symbol>>;
+  removeWithFilter(predicate: (value: V) => boolean): Promise<V[]>;
+  removeAll(list: K[]): Promise<Array<[K, V]>>;
+  findById(id: K): Promise<O.Option<V>>;
+  filteredValues(predicate: (value: V) => boolean): Promise<V[]>;
+  all(): Promise<V[]>;
 }
