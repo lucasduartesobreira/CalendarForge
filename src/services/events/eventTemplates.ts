@@ -47,43 +47,49 @@ export class EventTemplateStorage
   }
 
   @emitEvent("remove")
-  remove(id: string): R.Result<EventTemplate, symbol> {
-    return this.eventTemplates.remove(id);
+  remove(id: string): Promise<R.Result<EventTemplate, symbol>> {
+    const resultAsync = async () => this.eventTemplates.remove(id);
+    return resultAsync();
   }
 
   @emitEvent("removeWithFilter")
   removeWithFilter(
     predicate: (value: EventTemplate) => boolean,
-  ): EventTemplate[] {
-    return this.eventTemplates
-      .removeAll(predicate)
-      .unwrap()
-      .map(([, value]) => value);
+  ): Promise<EventTemplate[]> {
+    const resultAsync = async () =>
+      this.eventTemplates
+        .removeAll(predicate)
+        .unwrap()
+        .map(([, value]) => value);
+    return resultAsync();
   }
 
   @emitEvent("removeAll")
   removeAll(listOfIds: Array<EventTemplate["id"]>) {
-    return listOfIds
-      .map((id) => {
-        return this.eventTemplates.remove(id);
-      })
-      .reduce(
-        (acc, value) =>
-          value.mapOrElse(
-            () => acc,
-            (ok) => {
-              acc.push([ok.id, ok]);
-              return acc;
-            },
-          ),
-        [] as Array<[EventTemplate["id"], EventTemplate]>,
-      );
+    const resultAsync = async () =>
+      listOfIds
+        .map((id) => {
+          return this.eventTemplates.remove(id);
+        })
+        .reduce(
+          (acc, value) =>
+            value.mapOrElse(
+              () => acc,
+              (ok) => {
+                acc.push([ok.id, ok]);
+                return acc;
+              },
+            ),
+          [] as Array<[EventTemplate["id"], EventTemplate]>,
+        );
+    return resultAsync();
   }
 
   filteredValues(
     predicate: (value: EventTemplate) => boolean,
-  ): EventTemplate[] {
-    return this.eventTemplates.filterValues(predicate);
+  ): Promise<EventTemplate[]> {
+    const resultAsync = async () => this.eventTemplates.filterValues(predicate);
+    return resultAsync();
   }
 
   static new(forceUpdate: () => void) {
@@ -96,45 +102,52 @@ export class EventTemplateStorage
   }
 
   @emitEvent("add")
-  add(template: AddValue<EventTemplate>): R.Result<EventTemplate, symbol> {
+  add(
+    template: AddValue<EventTemplate>,
+  ): Promise<R.Result<EventTemplate, symbol>> {
     const id = idGenerator();
     const newTemplate = { ...template, id } satisfies EventTemplate;
     this.eventTemplates.setNotDefined(id, newTemplate);
-    return R.Ok(newTemplate);
+    const resultAsync = async () => R.Ok(newTemplate);
+    return resultAsync();
   }
 
   update(id: EventTemplate["id"], template: UpdateTemplate) {
     const templateGet = this.eventTemplates.get(id);
-    return templateGet
-      .map((template) => {
-        const templateFound = templateGet.unwrap();
-        const updatedTemplate: EventTemplate = {
-          calendar_id: template.calendar_id ?? templateFound.calendar_id,
-          title: template.title ?? templateFound.title,
-          id: id,
+    const resultAsync = async () =>
+      templateGet
+        .map((templateFound) => {
+          const updatedTemplate: EventTemplate = {
+            calendar_id: template.calendar_id ?? templateFound.calendar_id,
+            title: template.title ?? templateFound.title,
+            id: id,
 
-          color: template.color ?? templateFound.color,
-          description: template.description ?? templateFound.description,
-          notifications: template.notifications ?? templateFound.notifications,
-        };
+            color: template.color ?? templateFound.color,
+            description: template.description ?? templateFound.description,
+            notifications:
+              template.notifications ?? templateFound.notifications,
+          };
 
-        const result = this.eventTemplates.set(id, updatedTemplate);
-        this.emit("update", {
-          args: [id, template],
-          opsSpecific: templateFound,
-          result,
-        });
+          const result = this.eventTemplates.set(id, updatedTemplate);
+          this.emit("update", {
+            args: [id, template],
+            opsSpecific: templateFound,
+            result,
+          });
 
-        return result.unwrap();
-      })
-      .ok(Symbol("Couldn't find any template with this Id"));
+          return result.unwrap();
+        })
+        .ok(Symbol("Couldn't find any template with this Id"));
+    return resultAsync();
   }
 
-  findById(id: EventTemplate["id"]): O.Option<EventTemplate> {
-    return this.eventTemplates.get(id);
+  findById(id: EventTemplate["id"]): Promise<O.Option<EventTemplate>> {
+    const resultAsync = async () => this.eventTemplates.get(id);
+    return resultAsync();
   }
 
   all() {
-    return this.eventTemplates.values();
+    const resultAsync = async () => this.eventTemplates.values();
+    return resultAsync();
   }
 }
