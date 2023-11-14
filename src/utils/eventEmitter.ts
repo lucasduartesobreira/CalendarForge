@@ -46,18 +46,12 @@ export const emitEvent = <
 export interface BetterEventEmitter<
   K,
   V extends Record<string, any> & { id: K },
-> extends StorageActions<K, V> {
-  emit<
-    This extends StorageActions<K, V>,
-    Event extends keyof StorageActions<K, V>,
-  >(
+> {
+  emit<This extends StorageActions<K, V>, Event extends keyof This & string>(
     event: Event,
     args: EventArg<Event, This>,
   ): void;
-  on<
-    This extends StorageActions<K, V>,
-    Event extends keyof StorageActions<K, V>,
-  >(
+  on<This extends StorageActions<K, V>, Event extends keyof This & string>(
     event: Event,
     handler: (args: EventArg<Event, This>) => void,
   ): void;

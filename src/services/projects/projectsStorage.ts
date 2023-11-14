@@ -22,7 +22,9 @@ export type Project = {
 };
 
 export class ProjectStorage
-  implements BetterEventEmitter<Project["id"], Project>
+  implements
+    StorageActions<Project["id"], Project>,
+    BetterEventEmitter<Project["id"], Project>
 {
   private map: MapLocalStorage<Project["id"], Project>;
   private eventEmitter: MyEventEmitter;
@@ -32,13 +34,13 @@ export class ProjectStorage
   }
   emit<
     This extends StorageActions<string, Project>,
-    Event extends keyof StorageActions<Project["id"], Project>,
+    Event extends keyof This & string,
   >(event: Event, args: EventArg<Event, This>): void {
     this.eventEmitter.emit(event, args);
   }
   on<
     This extends StorageActions<string, Project>,
-    Event extends keyof StorageActions<Project["id"], Project>,
+    Event extends keyof This & string,
   >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
     this.eventEmitter.on(event, handler);
   }

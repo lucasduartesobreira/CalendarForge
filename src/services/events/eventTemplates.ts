@@ -25,7 +25,9 @@ export type CreateTemplate = Omit<EventTemplate, "id">;
 export type UpdateTemplate = Partial<CreateTemplate>;
 
 export class EventTemplateStorage
-  implements BetterEventEmitter<EventTemplate["id"], EventTemplate>
+  implements
+    StorageActions<EventTemplate["id"], EventTemplate>,
+    BetterEventEmitter<EventTemplate["id"], EventTemplate>
 {
   private eventTemplates: MapLocalStorage<string, EventTemplate>;
   private eventEmitter: MyEventEmitter;
@@ -35,13 +37,13 @@ export class EventTemplateStorage
   }
   emit<
     This extends StorageActions<string, EventTemplate>,
-    Event extends keyof StorageActions<string, EventTemplate>,
+    Event extends keyof This & string,
   >(event: Event, args: EventArg<Event, This>): void {
     this.eventEmitter.emit(event, args);
   }
   on<
     This extends StorageActions<string, EventTemplate>,
-    Event extends keyof StorageActions<string, EventTemplate>,
+    Event extends keyof This & string,
   >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
     this.eventEmitter.on(event, handler);
   }

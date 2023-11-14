@@ -68,7 +68,9 @@ const fix = <T extends CalendarEvent[K], K extends keyof CalendarEvent>(
 };
 
 class EventStorage
-  implements BetterEventEmitter<CalendarEvent["id"], CalendarEvent>
+  implements
+    StorageActions<CalendarEvent["id"], CalendarEvent>,
+    BetterEventEmitter<CalendarEvent["id"], CalendarEvent>
 {
   private map: MapLocalStorage<CalendarEvent["id"], CalendarEvent>;
   private eventEmitter: MyEventEmitter;
@@ -81,13 +83,13 @@ class EventStorage
   }
   emit<
     This extends StorageActions<string, CalendarEvent>,
-    Event extends keyof StorageActions<string, CalendarEvent>,
+    Event extends keyof This & string,
   >(event: Event, args: EventArg<Event, This>): void {
     this.eventEmitter.emit(event, args);
   }
   on<
     This extends StorageActions<string, CalendarEvent>,
-    Event extends keyof StorageActions<string, CalendarEvent>,
+    Event extends keyof This & string,
   >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
     this.eventEmitter.on(event, handler);
   }

@@ -50,7 +50,11 @@ const TaskValidator: ValidatorType<Task> = {
   },
 };
 
-export class TaskStorage implements BetterEventEmitter<Task["id"], Task> {
+export class TaskStorage
+  implements
+    BetterEventEmitter<Task["id"], Task>,
+    StorageActions<Task["id"], Task>
+{
   private map: MapLocalStorage<Task["id"], Task>;
   private eventEmitter: MyEventEmitter;
 
@@ -67,13 +71,13 @@ export class TaskStorage implements BetterEventEmitter<Task["id"], Task> {
 
   emit<
     This extends StorageActions<string, Task>,
-    Event extends keyof StorageActions<Task["id"], Task>,
+    Event extends keyof This & string,
   >(event: Event, args: EventArg<Event, This>): void {
     this.eventEmitter.emit(event, args);
   }
   on<
     This extends StorageActions<string, Task>,
-    Event extends keyof StorageActions<Task["id"], Task>,
+    Event extends keyof This & string,
   >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
     this.eventEmitter.on(event, handler);
   }

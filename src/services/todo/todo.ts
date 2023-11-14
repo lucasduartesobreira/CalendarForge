@@ -28,7 +28,11 @@ const TodoValidator: ValidatorType<Todo> = {
   calendar_id: { optional: false, type: "string" },
 };
 
-export class TodoStorage implements BetterEventEmitter<Todo["id"], Todo> {
+export class TodoStorage
+  implements
+    StorageActions<Todo["id"], Todo>,
+    BetterEventEmitter<Todo["id"], Todo>
+{
   private map: MapLocalStorage<Todo["id"], Todo>;
   private eventEmitter: MyEventEmitter;
 
@@ -45,14 +49,14 @@ export class TodoStorage implements BetterEventEmitter<Todo["id"], Todo> {
 
   emit<
     This extends StorageActions<string, Todo>,
-    Event extends keyof StorageActions<Todo["id"], Todo>,
+    Event extends keyof This & string,
   >(event: Event, args: EventArg<Event, This>): void {
     this.eventEmitter.emit(event, args);
   }
 
   on<
     This extends StorageActions<string, Todo>,
-    Event extends keyof StorageActions<Todo["id"], Todo>,
+    Event extends keyof This & string,
   >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
     this.eventEmitter.on(event, handler);
   }

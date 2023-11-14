@@ -44,7 +44,11 @@ const getTuple = <Args extends Array<unknown>>(
   return [...args];
 };
 
-export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
+export class BoardStorage
+  implements
+    StorageActions<Board["id"], Board>,
+    BetterEventEmitter<Board["id"], Board>
+{
   private boards: MapLocalStorage<Board["id"], Board>;
   private eventEmitter: MyEventEmitter;
 
@@ -68,13 +72,13 @@ export class BoardStorage implements BetterEventEmitter<Board["id"], Board> {
 
   emit<
     This extends StorageActions<string, Board>,
-    Event extends keyof StorageActions<string, Board>,
+    Event extends keyof This & string,
   >(event: Event, args: EventArg<Event, This>): void {
     this.eventEmitter.emit(event, args);
   }
   on<
     This extends StorageActions<string, Board>,
-    Event extends keyof StorageActions<string, Board>,
+    Event extends keyof This & string,
   >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
     this.eventEmitter.on(event, handler);
   }

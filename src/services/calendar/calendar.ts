@@ -52,7 +52,11 @@ type Calendar = {
 type CreateCalendar = AddValue<Calendar>;
 type UpdateCalendar = UpdateValue<Calendar>;
 
-class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
+class CalendarStorage
+  implements
+    StorageActions<Calendar["id"], Calendar>,
+    BetterEventEmitter<Calendar["id"], Calendar>
+{
   private eventEmitter: MyEventEmitter;
   private static validator: ValidatorType<Calendar> = {
     id: { optional: false, type: "string" },
@@ -88,15 +92,15 @@ class CalendarStorage implements BetterEventEmitter<Calendar["id"], Calendar> {
   }
   emit<
     This extends StorageActions<string, Calendar>,
-    Event extends keyof StorageActions<string, Calendar>,
+    Event extends keyof This & string,
   >(event: Event, args: EventArg<Event, This>): void {
     this.eventEmitter.emit(event, args);
   }
-  on<This extends StorageActions<string, Calendar>, Event extends keyof This>(
-    event: Event,
-    handler: (args: EventArg<Event, This>) => void,
-  ): void {
-    this.eventEmitter.on(event.toString(), handler);
+  on<
+    This extends StorageActions<string, Calendar>,
+    Event extends keyof This & string,
+  >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
+    this.eventEmitter.on(event, handler);
   }
 
   findById(id: string): Promise<O.Option<Calendar>> {
