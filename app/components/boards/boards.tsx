@@ -18,7 +18,7 @@ import {
 import { Board, BoardStorage } from "@/services/boards/boards";
 import { Task, TaskStorage } from "@/services/task/task";
 import { LocalValue, MiniatureTask, TaskForm } from "../tasks/forms/createTask";
-import { AddValue, UpdateValue } from "@/utils/storage";
+import { AddValue, StorageActions, UpdateValue } from "@/utils/storage";
 import { Todo, TodoStorage } from "@/services/todo/todo";
 import { Err, Ok, Result } from "@/utils/result";
 import { CalendarEvent, EventStorage } from "@/services/events/events";
@@ -111,7 +111,8 @@ function AddBoard({
 
 const internalReduceTodo =
   <
-    A extends BetterEventEmitter<Type["id"], Type>,
+    A extends BetterEventEmitter<Type["id"], Type> &
+      StorageActions<Type["id"], Type>,
     Type extends Record<string, unknown> & { id: string },
   >(
     todosStorage: A,
