@@ -107,6 +107,7 @@ function ExpandedTodo({
                       id: idGenerator(),
                       endDate: Date.now(),
                       startDate: date.getTime(),
+                      task_id: None(),
                     }),
                   );
                 setEvent(updatedEvent);
@@ -139,6 +140,7 @@ function ExpandedTodo({
                       id: "",
                       startDate: Date.now(),
                       endDate: date.getTime(),
+                      task_id: None(),
                     }),
                   );
                 setEvent(updatedEvent);

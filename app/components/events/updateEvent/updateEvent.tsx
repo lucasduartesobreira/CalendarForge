@@ -40,7 +40,7 @@ const UpdateEventForm = ({
       <
         A extends keyof Omit<
           CreateEvent,
-          "endDate" | "startDate" | "notifications" | "color"
+          "endDate" | "startDate" | "notifications" | "color" | "task_id"
         >,
       >(
         prop: A,

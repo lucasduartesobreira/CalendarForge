@@ -2,6 +2,7 @@ import * as R from "@/utils/result";
 import * as O from "@/utils/option";
 import {
   AddValue,
+  Index,
   MapLocalStorage,
   StorageActions,
   UpdateValue,
@@ -46,6 +47,7 @@ type CalendarEvent = {
   todo_id?: string;
   notifications: EventNotification[];
   color: FromTupleToUnion<typeof COLORS>;
+  task_id: O.Option<string>;
 };
 
 type CreateEvent = AddValue<CalendarEvent>;
@@ -108,7 +110,9 @@ class EventStorage
     const localStorage = MapLocalStorage.new<
       CalendarEvent["id"],
       CalendarEvent
-    >("eventsMap", forceUpdate);
+    >("eventsMap", forceUpdate, new Map(), {
+      task_id: [new Index(new Map(), "task_id", "id")],
+    });
 
     return localStorage.map((localStorage) => new EventStorage(localStorage));
   }
@@ -200,6 +204,7 @@ class EventStorage
             calendar_id: event.calendar_id ?? eventFound.calendar_id,
             description: event.description ?? eventFound.description,
             notifications: event.notifications ?? eventFound.notifications,
+            task_id: event.task_id ?? eventFound.task_id,
             color: event.color ?? eventFound.color,
           };
 

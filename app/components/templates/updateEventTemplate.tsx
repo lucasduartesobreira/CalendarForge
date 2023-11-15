@@ -37,7 +37,12 @@ export const UpdateEventTemplateForm = ({
     const { calendarsStorage, eventsTemplateStorage } = storages.unwrap();
 
     const handleChangeText =
-      <A extends keyof Omit<UpdateTemplate, "notifications" | "color">>(
+      <
+        A extends keyof Omit<
+          UpdateTemplate,
+          "notifications" | "color" | "task_id"
+        >,
+      >(
         prop: A,
       ) =>
       (event: React.ChangeEvent<HTMLInputElement>) => {

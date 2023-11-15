@@ -19,7 +19,10 @@ export const INITIAL_TEMPLATE: EventTemplate = {
   color: "#7a5195",
 };
 
-export type EventTemplate = Omit<CalendarEvent, "startDate" | "endDate">;
+export type EventTemplate = Omit<
+  CalendarEvent,
+  "startDate" | "endDate" | "task_id"
+>;
 
 export type CreateTemplate = Omit<EventTemplate, "id">;
 export type UpdateTemplate = Partial<CreateTemplate>;
