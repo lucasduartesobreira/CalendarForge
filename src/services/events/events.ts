@@ -53,22 +53,6 @@ type CalendarEvent = {
 type CreateEvent = AddValue<CalendarEvent>;
 type UpdateEvent = UpdateValue<CalendarEvent>;
 
-const fix = <T extends CalendarEvent[K], K extends keyof CalendarEvent>(
-  def: T,
-  key: K,
-  events: IterableIterator<[string, CalendarEvent]>,
-) => {
-  const final = [] as [string, CalendarEvent][];
-  for (const [id, event] of events) {
-    if (event[key] == null) {
-      event[key] = def;
-    }
-    final.push([id, event]);
-  }
-
-  return final;
-};
-
 class EventStorage
   implements
     StorageActions<CalendarEvent["id"], CalendarEvent>,
