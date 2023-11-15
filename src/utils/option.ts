@@ -88,6 +88,6 @@ class Nothing extends Option<never> {
 const Some = <T>(some: T): Option<T> => new Something(some);
 const None = (): Option<never> => new Nothing();
 
-export { None, Some };
+export { None, Some, Option as OptionClass };
 
 export type { Option };

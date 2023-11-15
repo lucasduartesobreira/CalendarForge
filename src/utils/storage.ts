@@ -70,7 +70,10 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
 
     const localStorageItemsString = localStorage.getItem(path);
     if (localStorageItemsString) {
-      const parsed: Array<[K, V]> = JSON.parse(localStorageItemsString);
+      const parsed: Array<[K, V]> = JSON.parse(
+        localStorageItemsString,
+        defaultReviver,
+      );
       const initialData = parsed.length === 0 ? initialValue : parsed;
       this.map = new Map(initialData);
     } else {
@@ -196,6 +199,7 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
 
     return indexedValues ? O.Some(indexedValues) : O.None();
   }
+
   get(key: K) {
     const found = this.map.get(key);
     return found ? O.Some(found) : O.None();
@@ -232,8 +236,48 @@ export class MapLocalStorage<K, V extends Record<any, any>> {
   }
 
   syncLocalStorage() {
-    localStorage.setItem(this.path, JSON.stringify(this.thisMapToString()));
+    localStorage.setItem(
+      this.path,
+      JSON.stringify(this.thisMapToString(), defaultReplacer),
+    );
   }
+}
+
+function defaultReviver<K extends keyof V, V extends Record<any, any>>(
+  key: K,
+  value: unknown,
+) {
+  return value != null &&
+    typeof value === "object" &&
+    "option_type" in value &&
+    "value" in value
+    ? value["option_type"] === "Some"
+      ? O.Some(value.value)
+      : value["option_type"] === "None"
+      ? O.None()
+      : undefined
+    : value;
+}
+
+function defaultReplacer<K extends keyof V, V extends Record<any, any>>(
+  this: V,
+  _key: K,
+  value: unknown,
+) {
+  if (value instanceof O.OptionClass) {
+    if (value.isSome()) return { option_type: "Some", value: value.unwrap() };
+    return { option_type: "None", value: null };
+  }
+
+  return value;
+}
+
+function treatForOption(value: string | O.Option<string>) {
+  return value instanceof O.OptionClass
+    ? value.isSome()
+      ? value.unwrap()
+      : null
+    : value;
 }
 
 type Sla<From extends KeyType, To extends KeyType> = Record<To, string> &
@@ -263,8 +307,12 @@ export class Index<
   }
 
   add(value: V) {
-    const valueFrom = value[this.from];
-    const valueTo = value[this.to];
+    const valueFrom = treatForOption(value[this.from]);
+    if (valueFrom == null) return;
+
+    const valueTo = treatForOption(value[this.to]);
+    if (valueTo == null) return;
+
     const found = this.map.get(valueFrom);
     if (found) {
       const valueTo = value[this.to];
@@ -280,7 +328,9 @@ export class Index<
   }
 
   remove(value: V) {
-    const valueFrom = value[this.from];
+    const valueFrom = treatForOption(value[this.from]);
+    if (valueFrom == null) return;
+
     const found = this.map.get(valueFrom);
     if (found) {
       const valueTo = value[this.to];
@@ -294,7 +344,10 @@ export class Index<
   }
 
   all(valueFrom: V[From]) {
-    const found = this.map.get(valueFrom.toString());
+    const valueFromTreated = treatForOption(valueFrom);
+    if (valueFromTreated == null) return;
+
+    const found = this.map.get(valueFromTreated);
     if (found) {
       return found;
     }
