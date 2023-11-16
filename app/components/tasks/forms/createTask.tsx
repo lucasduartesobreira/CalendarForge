@@ -188,7 +188,7 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
       .map(({ eventsStorage }) => {
         return todos.map((todo) => {
           const event = eventsStorage
-            .find(({ todo_id }) => todo_id != null && todo_id === todo.id)
+            .find({ todo_id: todo.id })
             .then((found) => {
               const event = found.map<LocalValue<CalendarEvent>>((event) => ({
                 ...event,
@@ -234,7 +234,7 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
       }
       for await (const listItem of changeList(initialTodoList)) {
         result.push(
-          listItem as [
+          listItem as unknown as [
             Todo["id"],
             {
               event: Option<LocalValue<CalendarEvent>>;

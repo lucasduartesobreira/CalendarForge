@@ -32,6 +32,7 @@ export class ProjectStorage
     this.eventEmitter = new MyEventEmitter();
     this.map = map;
   }
+
   emit<
     This extends StorageActions<string, Project>,
     Event extends keyof This & string,
@@ -126,6 +127,33 @@ export class ProjectStorage
   findById(id: string): Promise<O.Option<Project>> {
     const resultAsync = async () => this.map.get(id);
     return resultAsync();
+  }
+
+  find(searched: Partial<Project>): Promise<Project[]> {
+    return (async () => {
+      const keys = Object.keys(searched) as (keyof Project)[];
+      if (keys.length === 1 && keys[0] !== "id") {
+        const from = keys[0];
+        const valueFrom = searched[from];
+
+        if (valueFrom != null) {
+          const foundOnIndex = this.map.allWithIndex(from, "id", valueFrom);
+          if (foundOnIndex.isSome()) {
+            const valuesFromIndex = [];
+            for (const id of foundOnIndex.unwrap()) {
+              const value = this.map.get(id);
+              if (value.isSome()) valuesFromIndex.push(value.unwrap());
+            }
+
+            return valuesFromIndex;
+          }
+        }
+      }
+      const keysToLook = Object.keys(searched) as (keyof Project)[];
+      return this.filteredValues((searchee) => {
+        return !keysToLook.some((key) => searchee[key] !== searched[key]);
+      });
+    })();
   }
 
   filteredValues(predicate: (value: Project) => boolean): Promise<Project[]> {
