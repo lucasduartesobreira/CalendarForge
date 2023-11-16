@@ -11,19 +11,13 @@ import * as O from "@/utils/option";
 import { CalendarStorage } from "@/services/calendar/calendar";
 import { NotificationManager } from "@/services/notifications/notificationPermission";
 import { EventTemplateStorage } from "@/services/events/eventTemplates";
-import { Project, ProjectStorage } from "@/services/projects/projectsStorage";
-import { BoardStorage } from "@/services/boards/boards";
 import { TaskStorage } from "@/services/task/task";
-import { TodoStorage } from "@/services/todo/todo";
 
 type Storages = {
   eventsStorage: EventStorage;
   calendarsStorage: CalendarStorage;
   eventsTemplateStorage: EventTemplateStorage;
-  projectsStorage: ProjectStorage;
-  boardsStorage: BoardStorage;
   tasksStorage: TaskStorage;
-  todosStorage: TodoStorage;
 };
 
 type StorageContext = {
@@ -41,10 +35,7 @@ const StorageContext = createContext<StorageContext>({
     eventsStorageListener: undefined,
     calendarsStorageListener: undefined,
     eventsTemplateStorageListener: undefined,
-    projectsStorageListener: undefined,
-    boardsStorageListener: undefined,
     tasksStorageListener: undefined,
-    todosStorageListener: undefined,
   },
 });
 type StateUpdate = {} | undefined;
@@ -59,39 +50,27 @@ export function useDataStorage(): StorageContext {
   const [calendarsUpdated, forceCalendarUpdate] = useForceUpdate();
   const [eventsUpdated, forceEventsUpdate] = useForceUpdate();
   const [templatesUpdated, forceTemplatesUpdate] = useForceUpdate();
-  const [projectsUpdated, forceProjectsUpdate] = useForceUpdate();
-  const [boardsUpdated, forceBoardsUpdate] = useForceUpdate();
   const [tasksUpdated, forceTasksUpdate] = useForceUpdate();
-  const [todosUpdated, forceTodosUpdate] = useForceUpdate();
 
   const [clientData, setClientData] = useState<O.Option<Storages>>(O.None());
 
   const eventsStorage = EventStorage.new(forceEventsUpdate);
   const calendarStorage = CalendarStorage.new(forceCalendarUpdate);
   const templateStorage = EventTemplateStorage.new(forceTemplatesUpdate);
-  const projectsStorage = ProjectStorage.new(forceProjectsUpdate);
-  const boardsStorage = BoardStorage.new(forceBoardsUpdate);
   const tasksStorage = TaskStorage.new(forceTasksUpdate);
-  const todosStorage = TodoStorage.new(forceTodosUpdate);
 
   const isDataReady =
     eventsStorage.isOk() &&
     calendarStorage.isOk() &&
     templateStorage.isOk() &&
-    projectsStorage.isOk() &&
-    boardsStorage.isOk() &&
-    tasksStorage.isOk() &&
-    todosStorage.isOk();
+    tasksStorage.isOk();
 
   useEffect(() => {
     if (isDataReady) {
       const notificationManager = new NotificationManager();
       const eventsStorageSome = eventsStorage.unwrap();
       const calendarStorageUnwraped = calendarStorage.unwrap();
-      const projectsStorageUnwraped = projectsStorage.unwrap();
-      const boardsStorageUnwrapped = boardsStorage.unwrap();
       const tasksStorageUnwrapped = tasksStorage.unwrap();
-      const todosStorageUnwrapped = todosStorage.unwrap();
 
       eventsStorageSome.on("add", ({ result: output }) => {
         if (output.isOk()) {
@@ -159,75 +138,6 @@ export function useDataStorage(): StorageContext {
         // TODO: When using the timezones
       });
 
-      projectsStorageUnwraped.on("update", ({ result, opsSpecific: found }) => {
-        result.map((project) => {
-          const foundProject: Project = found;
-          const removed = foundProject.calendars.filter(
-            (calendar, index) => !project.calendars.includes(calendar, index),
-          );
-
-          if (removed.length > 0) {
-            calendarStorageUnwraped.removeAll(removed);
-          }
-        });
-        result;
-      });
-
-      projectsStorageUnwraped.on("remove", ({ result }) => {
-        result.map(({ id, calendars }) => {
-          // TODO: Improve this to only delete the ones that are listed to the project
-          calendarStorageUnwraped.removeAll(calendars);
-          boardsStorageUnwrapped.removeWithFilter(
-            ({ project_id }) => project_id === id,
-          );
-        });
-      });
-      projectsStorageUnwraped.on("removeAll", ({ result }) => {
-        result.map(([, { id, calendars }]) => {
-          // TODO: Improve this to only delete the ones that are listed to the project
-          calendarStorageUnwraped.removeAll(calendars);
-          boardsStorageUnwrapped.removeWithFilter(
-            ({ project_id }) => project_id === id,
-          );
-        });
-      });
-
-      projectsStorageUnwraped.on("removeWithFilter", ({ result }) => {
-        result.map(({ id, calendars }) => {
-          {
-            // TODO: Improve this to only delete the ones that are listed to the project
-            calendarStorageUnwraped.removeAll(calendars);
-            boardsStorageUnwrapped.removeWithFilter(
-              ({ project_id }) => project_id === id,
-            );
-          }
-        });
-      });
-
-      boardsStorageUnwrapped.on("remove", ({ result }) => {
-        result.map((removedBoard) => {
-          tasksStorageUnwrapped.removeWithFilter(
-            ({ board_id }) => board_id === removedBoard.id,
-          );
-        });
-      });
-
-      boardsStorageUnwrapped.on("removeWithFilter", ({ result }) => {
-        result.map((removedBoard) => {
-          tasksStorageUnwrapped.removeWithFilter(
-            ({ board_id }) => board_id === removedBoard.id,
-          );
-        });
-      });
-
-      boardsStorageUnwrapped.on("removeAll", ({ result }) => {
-        result.map(([, removedBoard]) => {
-          tasksStorageUnwrapped.removeWithFilter(
-            ({ board_id }) => board_id === removedBoard.id,
-          );
-        });
-      });
-
       (async () => {
         for (const event of await eventsStorageSome.values()) {
           event.notifications.forEach((notification) => {
@@ -241,10 +151,7 @@ export function useDataStorage(): StorageContext {
           eventsStorage: eventsStorageSome,
           calendarsStorage: calendarStorageUnwraped,
           eventsTemplateStorage: templateStorage.unwrap(),
-          projectsStorage: projectsStorageUnwraped,
-          boardsStorage: boardsStorageUnwrapped,
           tasksStorage: tasksStorageUnwrapped,
-          todosStorage: todosStorageUnwrapped,
         }),
       );
     }
@@ -257,10 +164,7 @@ export function useDataStorage(): StorageContext {
         eventsTemplateStorageListener: templatesUpdated,
         calendarsStorageListener: calendarsUpdated,
         eventsStorageListener: eventsUpdated,
-        projectsStorageListener: projectsUpdated,
-        boardsStorageListener: boardsUpdated,
         tasksStorageListener: tasksUpdated,
-        todosStorageListener: todosUpdated,
       },
     };
   }, [
@@ -268,10 +172,7 @@ export function useDataStorage(): StorageContext {
     calendarsUpdated,
     eventsUpdated,
     templatesUpdated,
-    projectsUpdated,
-    boardsUpdated,
     tasksUpdated,
-    todosUpdated,
   ]);
 
   return memoized;
