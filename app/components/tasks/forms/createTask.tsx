@@ -1,13 +1,9 @@
-import { TodoForm } from "@/components/todo/form/editTodo";
 import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import { Task } from "@/services/task/task";
-import { Todo } from "@/services/todo/todo";
 import { getHTMLDateTime } from "@/utils/date";
-import { idGenerator } from "@/utils/idGenerator";
-import { None, Option, Some } from "@/utils/option";
-import { AddValue } from "@/utils/storage";
+import { Option, Some } from "@/utils/option";
 import {
   DetailedHTMLProps,
   HTMLAttributes,
@@ -25,30 +21,20 @@ export type LocalValue<A> = A & {
 type PropsFullPage<A> = {
   closeForm: () => void;
   initialForm: A;
-  initialTodoList: Todo[];
   onSubmit: (
     task: A,
     todos: Array<{
       event: Option<LocalValue<CalendarEvent>>;
-      todo: LocalValue<Todo>;
     }>,
   ) => void;
   refs: Option<RefObject<null>[]>;
 };
 
-const operationType = <A,>(prev: LocalValue<A>, next: LocalValue<A>) => {
-  return prev.TYPE_OPERATION === "CREATE" ? "CREATE" : next.TYPE_OPERATION;
-};
-
 export function TaskForm<Props extends PropsFullPage<Task>>({
   refs,
   closeForm,
-  onSubmit,
   initialForm,
-  initialTodoList = [],
 }: Props) {
-  const { storages } = useContext(StorageContext);
-
   const [task, setTask] = useReducer(
     (
       state: Task,
@@ -72,180 +58,8 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
     initialForm,
   );
 
-  const [todosAndEvents, setTodosAndEvents] = useReducer(
-    (
-      state: Map<
-        Todo["id"],
-        { event: Option<LocalValue<CalendarEvent>>; todo: LocalValue<Todo> }
-      >,
-      action:
-        | {
-            type: "add";
-            value: AddValue<Todo>;
-          }
-        | {
-            type: "update_event";
-            value: {
-              todoId: Todo["id"];
-              event: Option<CalendarEvent>;
-            };
-          }
-        | {
-            type: "update_todo";
-            value: Todo;
-          }
-        | {
-            type: "remove";
-            value: Todo["id"];
-          }
-        | {
-            type: "populate";
-            value: Array<
-              [
-                Todo["id"],
-                {
-                  event: Option<LocalValue<CalendarEvent>>;
-                  todo: LocalValue<Todo>;
-                },
-              ]
-            >;
-          },
-    ) => {
-      if (action.type === "add") {
-        const todo = action.value;
-        const id = idGenerator();
-        state.set(id, {
-          event: None(),
-          todo: { ...todo, id, TYPE_OPERATION: "CREATE" },
-        });
-      } else if (action.type === "update_todo") {
-        const todo = action.value;
-        const found = state.get(todo.id);
-        if (found) {
-          const newOperationType = operationType(found.todo, {
-            ...todo,
-            TYPE_OPERATION: "UPDATE",
-          });
-          state.set(todo.id, {
-            event: found.event,
-            todo: { ...todo, TYPE_OPERATION: newOperationType },
-          });
-        }
-      } else if (action.type === "update_event") {
-        const { todoId, event } = action.value;
-        const found = state.get(todoId);
-        if (found) {
-          const newUpdatedEvent = found.event
-            .map((foundEvent) =>
-              event.map((updatedEvent) => ({
-                ...updatedEvent,
-                TYPE_OPERATION: operationType(foundEvent, {
-                  ...updatedEvent,
-                  TYPE_OPERATION: "UPDATE",
-                }),
-              })),
-            )
-            .unwrapOrElse(() =>
-              event.map((event) => ({ ...event, TYPE_OPERATION: "CREATE" })),
-            );
-          state.set(todoId, {
-            event: newUpdatedEvent,
-            todo: found.todo,
-          });
-        }
-      } else if (action.type === "remove") {
-        const found = state.get(action.value);
-        if (found) {
-          if (found.todo.TYPE_OPERATION !== "CREATE") {
-            found.todo = {
-              ...found.todo,
-              TYPE_OPERATION: operationType(found.todo, {
-                ...found.todo,
-                TYPE_OPERATION: "REMOVE",
-              }),
-            };
-            found.event = found.event.map((event) => ({
-              ...event,
-              TYPE_OPERATION: operationType(event, {
-                ...event,
-                TYPE_OPERATION: "REMOVE",
-              }),
-            }));
-            state.set(action.value, found);
-            return new Map(state);
-          }
-
-          state.delete(action.value);
-        }
-      }
-      return new Map(state);
-    },
-    new Map(),
-  );
-
-  const changeList = (todos: Todo[]) => {
-    const final = storages
-      .map(({ eventsStorage }) => {
-        return todos.map((todo) => {
-          const event = eventsStorage
-            .find({ todo_id: todo.id })
-            .then((found) => {
-              const event = found.map<LocalValue<CalendarEvent>>((event) => ({
-                ...event,
-                TYPE_OPERATION: "UPDATE",
-              }));
-
-              return [
-                todo.id,
-                { todo: { ...todo, TYPE_OPERATION: "UPDATE" }, event },
-              ] as const;
-            });
-
-          return event;
-        });
-      })
-      .unwrapOrElse(() => [] as Promise<any>[]);
-
-    return final;
-  };
-
   useEffect(() => {
-    async () => {
-      const result: Array<
-        [
-          Todo["id"],
-          {
-            event: Option<LocalValue<CalendarEvent>>;
-            todo: LocalValue<Todo>;
-          },
-        ]
-      > = [];
-
-      let what: Todo[];
-
-      if (initialTodoList.length == 0) {
-        storages.map(async ({ todosStorage }) => {
-          what = await todosStorage.filteredValues(
-            ({ task_id }) => task_id === task.id,
-          );
-        });
-      } else {
-        what = initialTodoList;
-      }
-      for await (const listItem of changeList(initialTodoList)) {
-        result.push(
-          listItem as unknown as [
-            Todo["id"],
-            {
-              event: Option<LocalValue<CalendarEvent>>;
-              todo: LocalValue<Todo>;
-            },
-          ],
-        );
-      }
-
-      setTodosAndEvents({ type: "populate", value: result });
-    };
+    async () => {};
   }, []);
 
   return (
@@ -257,7 +71,6 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit(task, Array.from(todosAndEvents.values()));
           closeForm();
         }}
         className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
@@ -349,58 +162,10 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
         <div className="flex flex-col flex-nowrap justify-center">
           <p className="text-neutral-500">To-Do</p>
           <div className="bg-neutral-200 px-2 py-2 mb-4 w-full gap-1 flex flex-col rounded-md">
-            {Array.from(todosAndEvents.values()).map(
-              ({ todo: { id, ...rest }, event }, _index) => {
-                return (
-                  <TodoForm
-                    todo={rest}
-                    onSubmit={(updatedTodo, updatedEvent) => {
-                      setTodosAndEvents({
-                        type: "update_todo",
-                        value: {
-                          id,
-                          ...updatedTodo,
-                        },
-                      });
-                      setTodosAndEvents({
-                        type: "update_event",
-                        value: {
-                          todoId: id,
-                          event: updatedEvent.map((value) => ({
-                            ...value,
-                            TYPE_OPERATION: "UPDATE",
-                          })),
-                        },
-                      });
-                    }}
-                    key={id}
-                    event={event}
-                  ></TodoForm>
-                );
-              },
-            )}
             <button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                storages.map(({ projectsStorage }) => {
-                  projectsStorage
-                    .findById(initialForm.project_id)
-                    .then((found) => {
-                      found.map(({ calendars }) => {
-                        setTodosAndEvents({
-                          type: "add",
-                          value: {
-                            title: "New Todo",
-                            calendar_id: calendars[0],
-                            board_id: initialForm.board_id,
-                            task_id: initialForm.id,
-                            project_id: initialForm.project_id,
-                          },
-                        });
-                      });
-                    });
-                });
               }}
               className="text-primary-500 border-[1px] border-primary-500 rounded-md px-2 py-1"
             >
