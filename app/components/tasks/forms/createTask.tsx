@@ -1,4 +1,3 @@
-import { TodoForm } from "@/components/todo/form/editTodo";
 import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
@@ -349,36 +348,6 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
         <div className="flex flex-col flex-nowrap justify-center">
           <p className="text-neutral-500">To-Do</p>
           <div className="bg-neutral-200 px-2 py-2 mb-4 w-full gap-1 flex flex-col rounded-md">
-            {Array.from(todosAndEvents.values()).map(
-              ({ todo: { id, ...rest }, event }, _index) => {
-                return (
-                  <TodoForm
-                    todo={rest}
-                    onSubmit={(updatedTodo, updatedEvent) => {
-                      setTodosAndEvents({
-                        type: "update_todo",
-                        value: {
-                          id,
-                          ...updatedTodo,
-                        },
-                      });
-                      setTodosAndEvents({
-                        type: "update_event",
-                        value: {
-                          todoId: id,
-                          event: updatedEvent.map((value) => ({
-                            ...value,
-                            TYPE_OPERATION: "UPDATE",
-                          })),
-                        },
-                      });
-                    }}
-                    key={id}
-                    event={event}
-                  ></TodoForm>
-                );
-              },
-            )}
             <button
               onClick={(e) => {
                 e.preventDefault();
