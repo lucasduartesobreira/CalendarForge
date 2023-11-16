@@ -149,6 +149,33 @@ export class TodoStorage
     return resultAsync();
   }
 
+  find(searched: Partial<Todo>): Promise<Todo[]> {
+    return (async () => {
+      const keys = Object.keys(searched) as (keyof Todo)[];
+      if (keys.length === 1 && keys[0] !== "id") {
+        const from = keys[0];
+        const valueFrom = searched[from];
+
+        if (valueFrom != null) {
+          const foundOnIndex = this.map.allWithIndex(from, "id", valueFrom);
+          if (foundOnIndex.isSome()) {
+            const valuesFromIndex = [];
+            for (const id of foundOnIndex.unwrap()) {
+              const value = this.map.get(id);
+              if (value.isSome()) valuesFromIndex.push(value.unwrap());
+            }
+
+            return valuesFromIndex;
+          }
+        }
+      }
+      const keysToLook = Object.keys(searched) as (keyof Todo)[];
+      return this.filteredValues((searchee) => {
+        return !keysToLook.some((key) => searchee[key] !== searched[key]);
+      });
+    })();
+  }
+
   filteredValues(predicate: (value: Todo) => boolean): Promise<Todo[]> {
     const resultAsync = async () => this.map.filterValues(predicate);
     return resultAsync();

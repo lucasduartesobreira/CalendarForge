@@ -151,6 +151,37 @@ export class EventTemplateStorage
     return resultAsync();
   }
 
+  find(searched: Partial<EventTemplate>): Promise<EventTemplate[]> {
+    return (async () => {
+      const keys = Object.keys(searched) as (keyof EventTemplate)[];
+      if (keys.length === 1 && keys[0] !== "id") {
+        const from = keys[0];
+        const valueFrom = searched[from];
+
+        if (valueFrom != null) {
+          const foundOnIndex = this.eventTemplates.allWithIndex(
+            from,
+            "id",
+            valueFrom,
+          );
+          if (foundOnIndex.isSome()) {
+            const valuesFromIndex = [];
+            for (const id of foundOnIndex.unwrap()) {
+              const value = this.eventTemplates.get(id);
+              if (value.isSome()) valuesFromIndex.push(value.unwrap());
+            }
+
+            return valuesFromIndex;
+          }
+        }
+      }
+      const keysToLook = Object.keys(searched) as (keyof EventTemplate)[];
+      return this.filteredValues((searchee) => {
+        return !keysToLook.some((key) => searchee[key] !== searched[key]);
+      });
+    })();
+  }
+
   all() {
     const resultAsync = async () => this.eventTemplates.values();
     return resultAsync();

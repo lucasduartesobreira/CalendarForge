@@ -259,6 +259,33 @@ class CalendarStorage
     return resultAsync();
   }
 
+  find(searched: Partial<Calendar>): Promise<Calendar[]> {
+    return (async () => {
+      const keys = Object.keys(searched) as (keyof Calendar)[];
+      if (keys.length === 1 && keys[0] !== "id") {
+        const from = keys[0];
+        const valueFrom = searched[from];
+
+        if (valueFrom != null) {
+          const foundOnIndex = this.map.allWithIndex(from, "id", valueFrom);
+          if (foundOnIndex.isSome()) {
+            const valuesFromIndex = [];
+            for (const id of foundOnIndex.unwrap()) {
+              const value = this.map.get(id);
+              if (value.isSome()) valuesFromIndex.push(value.unwrap());
+            }
+
+            return valuesFromIndex;
+          }
+        }
+      }
+      const keysToLook = Object.keys(searched) as (keyof Calendar)[];
+      return this.filteredValues((searchee) => {
+        return !keysToLook.some((key) => searchee[key] !== searched[key]);
+      });
+    })();
+  }
+
   findDefault() {
     const calendars = this.map.values();
     for (const calendar of calendars) {

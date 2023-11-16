@@ -53,22 +53,6 @@ type CalendarEvent = {
 type CreateEvent = AddValue<CalendarEvent>;
 type UpdateEvent = UpdateValue<CalendarEvent>;
 
-const fix = <T extends CalendarEvent[K], K extends keyof CalendarEvent>(
-  def: T,
-  key: K,
-  events: IterableIterator<[string, CalendarEvent]>,
-) => {
-  const final = [] as [string, CalendarEvent][];
-  for (const [id, event] of events) {
-    if (event[key] == null) {
-      event[key] = def;
-    }
-    final.push([id, event]);
-  }
-
-  return final;
-};
-
 class EventStorage
   implements
     StorageActions<CalendarEvent["id"], CalendarEvent>,
@@ -172,16 +156,55 @@ class EventStorage
     return resultAsync();
   }
 
-  find(predicate: (event: CalendarEvent) => boolean) {
-    for (const event of this.map.values()) {
-      if (predicate(event)) {
-        const resultAsync = async () => O.Some(event);
-        return resultAsync();
-      }
-    }
+  find(searched: Partial<CalendarEvent>): Promise<CalendarEvent[]> {
+    return (async () => {
+      const keys = Object.keys(searched) as (keyof CalendarEvent)[];
+      if (keys.length === 1 && keys[0] !== "id") {
+        const from = keys[0];
+        const valueFrom = searched[from];
 
-    const resultAsync = async () => O.None();
-    return resultAsync();
+        if (valueFrom != null) {
+          const foundOnIndex = this.map.allWithIndex(from, "id", valueFrom);
+          if (foundOnIndex.isSome()) {
+            const valuesFromIndex = [];
+            for (const id of foundOnIndex.unwrap()) {
+              const value = this.map.get(id);
+              if (value.isSome()) valuesFromIndex.push(value.unwrap());
+            }
+
+            return valuesFromIndex;
+          }
+        }
+      }
+      const keysToLook = Object.keys(searched) as (keyof CalendarEvent)[];
+      return this.filteredValues((searchee) => {
+        return !keysToLook.some((key) => {
+          const searchedValue = searched[key];
+          const searcheeValue = searchee[key];
+          if (searchedValue instanceof O.OptionClass) {
+            if (
+              searcheeValue instanceof O.OptionClass &&
+              searcheeValue.isSome() &&
+              searchedValue.isSome()
+            ) {
+              return searchedValue.unwrap() !== searcheeValue.unwrap();
+            }
+
+            if (
+              searcheeValue instanceof O.OptionClass &&
+              !searcheeValue.isSome() &&
+              !searchedValue.isSome()
+            ) {
+              return false;
+            }
+
+            return true;
+          }
+
+          return searchee[key] !== searched[key];
+        });
+      });
+    })();
   }
 
   filter(predicate: (event: CalendarEvent) => boolean) {

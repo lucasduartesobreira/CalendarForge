@@ -159,6 +159,34 @@ export class BoardStorage
     const resultAsync = async () => this.boards.get(id);
     return resultAsync();
   }
+
+  find(searched: Partial<Board>): Promise<Board[]> {
+    return (async () => {
+      const keys = Object.keys(searched) as (keyof Board)[];
+      if (keys.length === 1 && keys[0] !== "id") {
+        const from = keys[0];
+        const valueFrom = searched[from];
+
+        if (valueFrom != null) {
+          const foundOnIndex = this.boards.allWithIndex(from, "id", valueFrom);
+          if (foundOnIndex.isSome()) {
+            const valuesFromIndex = [];
+            for (const id of foundOnIndex.unwrap()) {
+              const value = this.boards.get(id);
+              if (value.isSome()) valuesFromIndex.push(value.unwrap());
+            }
+
+            return valuesFromIndex;
+          }
+        }
+      }
+      const keysToLook = Object.keys(searched) as (keyof Board)[];
+      return this.filteredValues((searchee) => {
+        return !keysToLook.some((key) => searchee[key] !== searched[key]);
+      });
+    })();
+  }
+
   filteredValues(predicate: (value: Board) => boolean): Promise<Board[]> {
     const resultAsync = async () => this.boards.filterValues(predicate);
     return resultAsync();
