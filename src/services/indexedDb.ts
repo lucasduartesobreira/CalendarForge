@@ -17,7 +17,7 @@ export interface StorageAPI<
 }
 
 const DB_NAME = "calendar";
-const DB_VERSION = 6;
+const DB_VERSION = 8;
 
 const requestIntoResult = <T>(
   req: IDBRequest<T>,
@@ -97,7 +97,7 @@ export const openDb = (
 
 export class IndexedDbStorageBuilder<
   K extends keyof V & string,
-  V extends Record<string, any>,
+  V extends Record<string, any> & { id: string },
 > {
   private storeName: string = "";
   private indexesNames: {
@@ -105,8 +105,22 @@ export class IndexedDbStorageBuilder<
     keyPath: (keyof V & string)[];
     options?: IDBIndexParameters;
   }[] = new Array(10);
+  private defaultValue?: V;
+  private key = "id";
 
-  setStoreName(name: string) {
+  private constructor(defaultValue?: V) {
+    this.defaultValue = defaultValue;
+  }
+
+  static new<
+    K extends keyof V & string,
+    V extends Record<string, any> & { id: string },
+  >(storeName: string, _defaultValue?: Omit<V, "id">, _key?: K) {
+    const builder = new IndexedDbStorageBuilder<K, V>();
+    return builder.setStoreName(storeName);
+  }
+
+  private setStoreName(name: string) {
     if (this.storeName.length === 0) this.storeName = name;
 
     return this;
@@ -139,18 +153,19 @@ export class IndexedDbStorageBuilder<
           const indexName = keyPath.join(",");
           store.createIndex(indexName, keyPath, options);
         });
-
-        console.log(store.indexNames);
       } else {
         const transaction = (ev.target as any)?.transaction as any;
-        const store = transaction.objectStore(storeName);
+        const store: IDBObjectStore = transaction.objectStore(storeName);
+        Array.from(store.indexNames).forEach((indexName) =>
+          store.deleteIndex(indexName),
+        );
+
         indexes.forEach(({ keyPath, options }) => {
           const indexName = keyPath.join(",");
           if (!store.indexNames.contains(indexName)) {
-            console.log(store.createIndex(indexName, keyPath, options));
+            store.createIndex(indexName, keyPath, options);
           }
         });
-        console.log(store.indexNames);
       }
     };
   }
