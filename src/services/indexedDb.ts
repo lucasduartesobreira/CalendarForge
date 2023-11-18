@@ -72,6 +72,29 @@ const foreachCursor = (
   });
 };
 
+export const openDb = (
+  upgradeCallback: ((
+    this: IDBOpenDBRequest,
+    db: IDBVersionChangeEvent,
+  ) => void)[],
+): Promise<Result<IDBDatabase, symbol>> => {
+  const req = window.indexedDB.open(DB_NAME, DB_VERSION);
+
+  return new Promise((resolve, reject) => {
+    req.onsuccess = function () {
+      resolve(Ok(this.result));
+    };
+
+    req.onerror = function () {
+      resolve(Err(Symbol(this.error?.name)));
+    };
+
+    req.onupgradeneeded = function (ev) {
+      upgradeCallback.forEach((callback) => callback.call(this, ev));
+    };
+  });
+};
+
 export class IndexedDbStorage<
   K extends keyof V & string,
   V extends Record<string, any>,
