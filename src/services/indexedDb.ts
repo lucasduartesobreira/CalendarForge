@@ -95,6 +95,71 @@ export const openDb = (
   });
 };
 
+export class IndexedDbStorageBuilder<
+  K extends keyof V & string,
+  V extends Record<string, any>,
+> {
+  private storeName: string = "";
+  private indexesNames: {
+    indexName: string;
+    keyPath: (keyof V & string)[];
+    options?: IDBIndexParameters;
+  }[] = new Array(10);
+
+  setStoreName(name: string) {
+    if (this.storeName.length === 0) this.storeName = name;
+
+    return this;
+  }
+
+  addIndex(indexConfig: { keyPath: string[]; options?: IDBIndexParameters }) {
+    const { keyPath, options } = indexConfig;
+    const indexName = keyPath.join(",");
+
+    this.indexesNames.push({ indexName, keyPath, options });
+
+    return this;
+  }
+
+  upgradeVersionHandler(): (
+    this: IDBOpenDBRequest,
+    ev: IDBVersionChangeEvent,
+  ) => void {
+    const storeName = this.storeName;
+    const indexes = this.indexesNames;
+
+    return function (this: IDBOpenDBRequest, ev: IDBVersionChangeEvent) {
+      const db = this.result;
+      if (!db.objectStoreNames.contains(storeName)) {
+        const store = db.createObjectStore(storeName, {
+          keyPath: "id",
+        });
+
+        indexes.forEach(({ keyPath, options }) => {
+          const indexName = keyPath.join(",");
+          store.createIndex(indexName, keyPath, options);
+        });
+
+        console.log(store.indexNames);
+      } else {
+        const transaction = (ev.target as any)?.transaction as any;
+        const store = transaction.objectStore(storeName);
+        indexes.forEach(({ keyPath, options }) => {
+          const indexName = keyPath.join(",");
+          if (!store.indexNames.contains(indexName)) {
+            console.log(store.createIndex(indexName, keyPath, options));
+          }
+        });
+        console.log(store.indexNames);
+      }
+    };
+  }
+
+  build(db: IDBDatabase): IndexedDbStorage<K, V> {
+    return new IndexedDbStorage(db, this.storeName, this.indexesNames);
+  }
+}
+
 export class IndexedDbStorage<
   K extends keyof V & string,
   V extends Record<string, any>,
