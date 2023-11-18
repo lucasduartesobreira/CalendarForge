@@ -260,90 +260,96 @@ export class IndexedDbStorage<
     return await op(store);
   }
 
-  static upgradeVersionHandler<V extends Record<string, any>>(
-    storeName: string,
-    indexes: {
-      keyPath: (keyof V & string)[];
-      options?: IDBIndexParameters;
-    }[],
-  ) {
-    return function (this: IDBOpenDBRequest, ev: IDBVersionChangeEvent) {
-      const db = this.result;
-      if (!db.objectStoreNames.contains(storeName)) {
-        const store = db.createObjectStore(storeName, {
-          keyPath: "id",
-        });
-
-        indexes.forEach(({ keyPath, options }) => {
-          const indexName = keyPath.join(",");
-          store.createIndex(indexName, keyPath, options);
-        });
-
-        console.log(store.indexNames);
-      } else {
-        const transaction = (ev.target as any)?.transaction as any;
-        const store = transaction.objectStore(storeName);
-        indexes.forEach(({ keyPath, options }) => {
-          const indexName = keyPath.join(",");
-          if (!store.indexNames.contains(indexName)) {
-            console.log(store.createIndex(indexName, keyPath, options));
-          }
-        });
-        console.log(store.indexNames);
-      }
-    };
-  }
-
-  find(searched: Partial<V>): Promise<Option<V>> {
-    const resultAsync = async () => {
-      const aList = Object.keys(searched).reduce(
-        (acc, key) => {
-          const indexesNames = this.indexesNames.get(key);
-          if (!indexesNames)
-            return {
-              indexesNames: acc.indexesNames,
-              notFound: [...acc.notFound, key],
-            };
-
-          if (acc.indexesNames.length === 0) {
-            return {
-              indexesNames: Array.from(indexesNames.values()),
-              notFound: acc.notFound,
-            };
-          }
-
+  selectPlan(
+    searched: Partial<V>,
+  ): [
+    indexKeys: string,
+    query: (string | V[string])[] | (string | V[string]),
+    notCovered: (keyof V & string)[],
+  ] {
+    const aList = Object.keys(searched).reduce(
+      (acc, key) => {
+        const indexesNames = this.indexesNames.get(key);
+        if (!indexesNames)
           return {
-            indexesNames: acc.indexesNames.filter((possibleIndexes) =>
-              possibleIndexes.includes(key),
-            ),
+            indexesNames: acc.indexesNames,
+            notFound: [...acc.notFound, key],
+          };
+
+        if (acc.indexesNames.length === 0) {
+          return {
+            indexesNames: Array.from(indexesNames.values()),
             notFound: acc.notFound,
           };
-        },
-        { indexesNames: [], notFound: [] } as {
-          indexesNames: string[];
-          notFound: string[];
-        },
+        }
+
+        return {
+          indexesNames: acc.indexesNames.filter((possibleIndexes) =>
+            possibleIndexes.includes(key),
+          ),
+          notFound: acc.notFound,
+        };
+      },
+      { indexesNames: [], notFound: [] } as {
+        indexesNames: string[];
+        notFound: string[];
+      },
+    );
+    const keys = Object.keys(searched).filter(
+      (key) => !aList.notFound.includes(key),
+    );
+
+    const indexMatches = aList.indexesNames
+      .map((indexName) =>
+        indexName
+          .split(",")
+          .reduce(
+            (count, indexKey) =>
+              keys.includes(indexKey) ? count + 1 : count - 1,
+            0,
+          ),
+      )
+      .reduce(
+        ([max, maxIndex], value, index) =>
+          value > max
+            ? ([value, index] as [number, number])
+            : ([max, maxIndex] as [number, number]),
+        [-1, -1] as [maxValue: number, maxIndex: number],
       );
 
-      console.log(aList, this.indexesNames);
+    const indexKeys = aList.indexesNames[indexMatches[1]];
 
-      const indexKeys = aList.indexesNames.reduce((previous, current) =>
-        current.length > previous.length ? current : previous,
-      );
+    const indexKeySplitted = indexKeys.split(",");
 
-      const indexKeySplitted = indexKeys.split(",");
+    const query = Object.keys(searched).reduce(
+      (acc, key) => {
+        const index = indexKeySplitted.findIndex(
+          (indexKey) => indexKey === key,
+        );
 
-      const query = Object.keys(searched).reduce(
-        (acc, key) => {
-          const index = indexKeySplitted.findIndex(
-            (indexKey) => indexKey === key,
-          );
-          acc.splice(index, 1, searched[key] as V[string]);
+        const value = searched[key];
 
-          return acc;
-        },
-        new Array(indexKeySplitted.length) as V[string][],
-      );
+        acc.splice(
+          index,
+          1,
+          value === true
+            ? "true"
+            : value === false
+            ? "false"
+            : value === null
+            ? "null"
+            : value === undefined
+            ? "undefined"
+            : value,
+        );
+
+        return acc;
+      },
+      new Array(1) as (V[string] | string)[],
+    );
+
+    return [indexKeys, query, aList.notFound];
+  }
 
       const storeOperation = await this.storeOperation(async (store) => {
         if (indexKeys.length > 0) {
