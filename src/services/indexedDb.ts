@@ -175,7 +175,7 @@ export class IndexedDbStorageBuilder<
   }
 }
 
-export class IndexedDbStorage<
+class IndexedDbStorage<
   K extends keyof V & string,
   V extends Record<string, any>,
 > implements StorageAPI<K, V>
