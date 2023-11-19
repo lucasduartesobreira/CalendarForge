@@ -393,8 +393,19 @@ class IndexedDbStorage<
     return resultAsync();
   }
 
-  remove(key: K): Promise<Result<V, symbol>> {
-    throw new Error("Method not implemented.");
+  remove(key: V[K]): Promise<Result<V, symbol>> {
+    const resultAsync = async () => {
+      return await this.storeOperation(async (store) => {
+        const [foundValue, result] = await Promise.all([
+          requestIntoResult<V>(store.get(key)),
+          requestIntoResult(store.delete(key)),
+        ]);
+
+        return result.map(() => foundValue).flatten();
+      }, "readwrite");
+    };
+
+    return resultAsync();
   }
 
   removeAll(searched: [Partial<V>]): Promise<Result<V, symbol>> {
