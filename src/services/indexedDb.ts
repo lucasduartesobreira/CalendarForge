@@ -13,7 +13,7 @@ export interface StorageAPI<
   removeAll(searched: Partial<V>): Promise<Result<V[], symbol>>;
   findAndUpdate(searched: Partial<V>, updated: Partial<V>): Promise<V[]>;
   getAll(): Promise<V[]>;
-  cursor(): Promise<Iterator<V>>;
+  findAll(searched: Partial<V>): Promise<V[]>;
 }
 
 const DB_NAME = "calendar";
@@ -483,7 +483,56 @@ class IndexedDbStorage<
       ))();
   }
 
-  cursor(): Promise<Iterator<V, any, undefined>> {
-    throw new Error("Method not implemented.");
+  findAll(searched: Partial<V>): Promise<V[]> {
+    const [indexKeys, query, notFound] = this.selectPlan(searched);
+    const resultAsync = async () => {
+      const storeOperation = await this.storeOperation(async (store) => {
+        if (indexKeys.length > 0) {
+          const index = store.index(indexKeys);
+          if (notFound.length === 0) {
+            const queryResult = await requestIntoResult<V[]>(
+              index.getAll(query),
+            );
+
+            return queryResult;
+          }
+          const list: V[] = [];
+          const queryResult = await foreachCursor(
+            index.openCursor(query),
+            (cursor) => {
+              const value = cursor.value;
+              const matches = notFound.some(
+                (current) => value[current] !== searched[current],
+              );
+
+              if (matches) list.push(value);
+            },
+          );
+
+          return queryResult.map(() => list);
+        }
+
+        const found: V[] = [];
+
+        const keys = Object.keys(searched);
+
+        const cursor = await foreachCursor(store.openCursor(), (cursor) => {
+          if (
+            keys.some(
+              (searchedKey) =>
+                searched[searchedKey] !== cursor.value[searchedKey],
+            )
+          )
+            cursor.continue();
+
+          found.push(cursor.value);
+        });
+
+        return cursor.map(() => found);
+      }, "readonly");
+
+      return storeOperation.option().unwrapOrElse(() => []);
+    };
+    return resultAsync();
   }
 }
