@@ -295,7 +295,7 @@ export class IndexedDbStorage<
         notFound: string[];
       },
     );
-    const keys = Object.keys(searched).filter(
+    const keysWithIndex = Object.keys(searched).filter(
       (key) => !aList.notFound.includes(key),
     );
 
@@ -305,7 +305,7 @@ export class IndexedDbStorage<
           .split(",")
           .reduce(
             (count, indexKey) =>
-              keys.includes(indexKey) ? count + 1 : count - 1,
+              keysWithIndex.includes(indexKey) ? count + 1 : count - 1,
             0,
           ),
       )
