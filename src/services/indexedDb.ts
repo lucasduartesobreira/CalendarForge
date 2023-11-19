@@ -11,7 +11,10 @@ export interface StorageAPI<
   find(searched: Partial<V>): Promise<Option<V>>;
   remove(key: V[K]): Promise<Result<V, symbol>>;
   removeAll(searched: Partial<V>): Promise<Result<V[], symbol>>;
-  findAndUpdate(searched: Partial<V>, updated: Partial<V>): Promise<V[]>;
+  findAndUpdate(
+    searched: Partial<V>,
+    updated: Partial<V>,
+  ): Promise<Result<V[], symbol>>;
   getAll(): Promise<V[]>;
   findAll(searched: Partial<V>): Promise<V[]>;
 }
@@ -469,7 +472,10 @@ class IndexedDbStorage<
     return resultAsync();
   }
 
-  findAndUpdate(searched: Partial<V>, updated: Partial<V>): Promise<V[]> {
+  findAndUpdate(
+    searched: Partial<V>,
+    updated: Partial<V>,
+  ): Promise<Result<V[], symbol>> {
     return (async () => {
       const [indexKeys, query, notFound] = this.selectPlan(searched);
       const result = await this.storeOperation(async (store) => {
@@ -503,7 +509,7 @@ class IndexedDbStorage<
         return result.map(() => list);
       }, "readwrite");
 
-      return result.unwrapOrElse(() => []);
+      return result;
     })();
   }
 
