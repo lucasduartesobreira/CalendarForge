@@ -180,6 +180,7 @@ export class IndexedDbStorageBuilder<
 }
 
 const NOT_FOUND = Symbol("Record Not Found");
+const COULDNT_CREATE = Symbol("Couldn't Create New Record");
 
 class IndexedDbStorage<
   K extends keyof V & string,
@@ -222,11 +223,14 @@ class IndexedDbStorage<
         );
         const valueFound = await addedKey
           .map(
-            async (addedKey) => await requestIntoResult<V>(store.get(addedKey)),
+            async (addedKey) =>
+              await requestIntoResult<V | undefined>(store.get(addedKey)),
           )
           .asyncFlatten();
 
-        return valueFound;
+        return valueFound.andThen((value) =>
+          value != null ? Ok(value) : Err(COULDNT_CREATE),
+        );
       }, "readwrite");
     };
 
