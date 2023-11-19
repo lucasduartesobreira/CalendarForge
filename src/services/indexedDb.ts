@@ -238,20 +238,21 @@ class IndexedDbStorage<
 
   findById(key: V[K]): Promise<Option<V>> {
     const resultAsync = async () => {
-      const transaction = this.db.transaction(this.storeName, "readonly");
-      const store = transaction.objectStore(this.storeName);
+      const storeOperation = await this.storeOperation(async (store) => {
+        const foundValue = await requestIntoResult<V | undefined>(
+          store.get(key),
+        );
 
-      const foundValue = await requestIntoResult<V | undefined>(store.get(key));
+        return foundValue
+          .map(() =>
+            foundValue.map((value) => (value != null ? Some(value) : None())),
+          )
+          .flatten()
+          .option()
+          .flatten();
+      }, "readonly");
 
-      const transactionFinished = await transactionIntoResult(transaction);
-
-      return transactionFinished
-        .map(() =>
-          foundValue.map((value) => (value != null ? Some(value) : None())),
-        )
-        .flatten()
-        .option()
-        .flatten();
+      return storeOperation;
     };
     return resultAsync();
   }
