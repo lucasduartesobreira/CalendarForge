@@ -10,7 +10,7 @@ export interface StorageAPI<
   findById(key: V[K]): Promise<Option<V>>;
   find(searched: Partial<V>): Promise<Option<V>>;
   remove(key: V[K]): Promise<Result<V, symbol>>;
-  removeAll(searched: [Partial<V>]): Promise<Result<V, symbol>>;
+  removeAll(searched: Partial<V>): Promise<Result<V[], symbol>>;
   findAndUpdate(searched: Partial<V>, updated: Partial<V>): Promise<V[]>;
   getAll(): Promise<V[]>;
   cursor(): Promise<Iterator<V>>;
@@ -408,8 +408,55 @@ class IndexedDbStorage<
     return resultAsync();
   }
 
-  removeAll(searched: [Partial<V>]): Promise<Result<V, symbol>> {
-    throw new Error("Method not implemented.");
+  removeAll(searched: Partial<V>): Promise<Result<V[], symbol>> {
+    const [indexName, query, notFound] = this.selectPlan(searched);
+    const resultAsync = async () => {
+      return await this.storeOperation(async (store) => {
+        if (indexName.length > 0) {
+          const index = store.index(indexName);
+          const deleted: V[] = [];
+          const result = await foreachCursor(
+            index.openCursor(query),
+            (cursor, stop) => {
+              const toDelete = !notFound.some(
+                (key) => cursor.value[key] !== searched[key],
+              );
+              if (toDelete) {
+                const value: V = cursor.value;
+                cursor.delete().onsuccess = () => {
+                  deleted.push(value);
+                };
+              }
+
+              cursor.continue();
+            },
+          );
+
+          return result.map(() => deleted);
+        }
+
+        const deleted: V[] = [];
+        const result = await foreachCursor(store.openCursor(), (cursor) => {
+          if (
+            Object.keys(searched).some(
+              (searchedKey) =>
+                searched[searchedKey] !== cursor.value[searchedKey],
+            )
+          ) {
+            const value = cursor.value;
+            cursor.delete().onsuccess = () => {
+              deleted.push(value);
+            };
+          }
+
+          cursor.continue();
+        });
+
+        return result.map(() => deleted);
+      }, "readwrite");
+    };
+
+    return resultAsync();
   }
 
   findAndUpdate(searched: Partial<V>, updated: Partial<V>): Promise<V[]> {
