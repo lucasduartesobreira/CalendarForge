@@ -264,7 +264,7 @@ export class IndexedDbStorage<
     searched: Partial<V>,
   ): [
     indexKeys: string,
-    query: (string | V[string])[] | (string | V[string]),
+    query: (string | V[string])[],
     notCovered: (keyof V & string)[],
   ] {
     const aList = Object.keys(searched).reduce(
