@@ -53,9 +53,9 @@ const transactionIntoResult = (
   });
 };
 
-const foreachCursor = (
-  req: IDBRequest<IDBCursorWithValue | null>,
-  iterator: (cursor: IDBCursorWithValue, stop: () => void) => void,
+const foreachCursor = <V>(
+  req: IDBRequest<IDBCursorTyped<V> | null>,
+  iterator: (cursor: IDBCursorTyped<V>, stop: () => void) => void,
 ): Promise<Result<null, symbol>> => {
   return new Promise((resolve, _reject) => {
     const stop = () => {
@@ -74,6 +74,32 @@ const foreachCursor = (
       resolve(Err(Symbol(this.error?.name)));
     };
   });
+};
+
+type IDBCursorTyped<V> = IDBCursorWithValue & { readonly value: V | undefined };
+
+const cursorReduce = async <T, V>(
+  req: IDBRequest<IDBCursorWithValue | null>,
+  iterator: (
+    acc: T,
+    cursor: Omit<
+      IDBCursorTyped<V>,
+      "continue" | "advance" | "continuePrimaryKey"
+    >,
+    stop: () => void,
+  ) => T,
+  initial: T,
+) => {
+  let acc = initial;
+  const cursorResult = await foreachCursor<V | undefined>(
+    req,
+    (cursor, stop) => {
+      acc = iterator(acc, cursor, stop);
+      cursor.continue();
+    },
+  );
+
+  return cursorResult.map(() => acc);
 };
 
 const partialEqual = <V extends Record<string, any>>(
@@ -396,18 +422,20 @@ class IndexedDbStorage<
           keys = Object.keys(searched);
         }
 
-        let found: V | undefined = undefined;
+        const cursor = await cursorReduce(
+          cursorReq,
+          (acc, cursor, stop) => {
+            if (partialEqual(searched, cursor.value, keys)) {
+              acc = cursor.value;
+              stop();
+            }
 
-        const cursor = await foreachCursor(cursorReq, (cursor, stop) => {
-          if (partialEqual(searched, cursor.value, keys)) {
-            found = cursor.value;
-            return stop();
-          }
+            return acc;
+          },
+          undefined,
+        );
 
-          cursor.continue();
-        });
-
-        return cursor.map(() => found);
+        return cursor.map((found) => found);
       }, "readonly");
 
       return storeOperation
@@ -449,21 +477,26 @@ class IndexedDbStorage<
           keys = Object.keys(searched);
         }
 
-        const deleted: V[] = [];
-        const result = await foreachCursor(cursorReq, (cursor) => {
-          const matches = partialEqual(searched, cursor.value, keys);
-          if (matches) {
-            const value = cursor.value;
-            cursor.delete().onsuccess = () => {
-              deleted.push(value);
-            };
-          }
+        const result = await cursorReduce<V[], V>(
+          cursorReq,
+          (acc, cursor) => {
+            const matches = partialEqual(searched, cursor.value, keys);
+            if (matches) {
+              const value = cursor.value;
+              cursor.delete().onsuccess = () => {
+                acc.push(value);
+              };
+            }
 
-          cursor.continue();
-        });
+            return acc;
+          },
+          [],
+        );
 
         return result
-          .map(() => (deleted.length === 0 ? Err(NOT_FOUND) : Ok(deleted)))
+          .map((deleted) =>
+            deleted.length === 0 ? Err(NOT_FOUND) : Ok(deleted),
+          )
           .flatten();
       }, "readwrite");
     };
@@ -489,22 +522,25 @@ class IndexedDbStorage<
           keys = Object.keys(searched);
         }
 
-        const list: V[] = [];
-        const result = await foreachCursor(cursorReq, (cursor) => {
-          const value = cursor.value;
-          const matches = partialEqual(searched, value, keys);
+        const result = await cursorReduce<V[], V>(
+          cursorReq,
+          (acc, cursor) => {
+            const value = cursor.value;
+            const matches = partialEqual(searched, value, keys);
 
-          if (matches) {
-            const updatedValue = { ...value, ...updated };
-            requestIntoResult(cursor.update(updatedValue)).then(() => {
-              list.push(value);
-            });
-          }
+            if (matches) {
+              const updatedValue = { ...value, ...updated };
+              requestIntoResult(cursor.update(updatedValue)).then(() => {
+                acc.push(value);
+              });
+            }
 
-          cursor.continue();
-        });
+            return acc;
+          },
+          [],
+        );
 
-        return result.andThen(() =>
+        return result.andThen((list) =>
           list.length === 0 ? Err(NOT_FOUND) : Ok(list),
         );
       }, "readwrite");
@@ -549,17 +585,19 @@ class IndexedDbStorage<
           keys = Object.keys(searched);
         }
 
-        const found: V[] = [];
+        const result = await cursorReduce(
+          cursorReq,
+          (acc, cursor) => {
+            if (partialEqual(searched, cursor.value, keys)) {
+              acc.push(cursor.value);
+            }
 
-        const cursor = await foreachCursor(cursorReq, (cursor) => {
-          if (partialEqual(searched, cursor.value, keys)) {
-            found.push(cursor.value);
-          }
+            return acc;
+          },
+          [] as V[],
+        );
 
-          cursor.continue();
-        });
-
-        return cursor.map(() => found);
+        return result;
       }, "readonly");
 
       return storeOperation.unwrapOrElse(() => []);
