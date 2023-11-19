@@ -267,6 +267,10 @@ class IndexedDbStorage<
     query: (string | V[string])[],
     notCovered: (keyof V & string)[],
   ] {
+    if (this.indexesNames.size === 0) {
+      return ["", [""], []];
+    }
+
     const aList = Object.keys(searched).reduce(
       (acc, key) => {
         const indexesNames = this.indexesNames.get(key);
