@@ -384,8 +384,10 @@ class IndexedDbStorage<
                 (searchedKey) =>
                   searched[searchedKey] !== cursor.value[searchedKey],
               )
-            )
+            ) {
               cursor.continue();
+              return;
+            }
 
             found = cursor.value;
             stop();
@@ -549,8 +551,10 @@ class IndexedDbStorage<
               (searchedKey) =>
                 searched[searchedKey] !== cursor.value[searchedKey],
             )
-          )
+          ) {
             cursor.continue();
+            return;
+          }
 
           found.push(cursor.value);
         });
