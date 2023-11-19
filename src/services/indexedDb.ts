@@ -380,7 +380,10 @@ class IndexedDbStorage<
           store.openCursor(),
           (cursor, stop) => {
             if (
-              keys.some((searchedKey) => searched[searchedKey] !== cursor.value)
+              keys.some(
+                (searchedKey) =>
+                  searched[searchedKey] !== cursor.value[searchedKey],
+              )
             )
               cursor.continue();
 
