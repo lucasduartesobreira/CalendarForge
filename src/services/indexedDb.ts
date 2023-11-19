@@ -449,17 +449,18 @@ class IndexedDbStorage<
             },
           );
 
-          return result.map(() => deleted);
+          return result
+            .map(() => (deleted.length === 0 ? Err(NOT_FOUND) : Ok(deleted)))
+            .flatten();
         }
 
         const deleted: V[] = [];
         const result = await foreachCursor(store.openCursor(), (cursor) => {
-          if (
-            Object.keys(searched).some(
-              (searchedKey) =>
-                searched[searchedKey] !== cursor.value[searchedKey],
-            )
-          ) {
+          const matches = !Object.keys(searched).some(
+            (searchedKey) =>
+              searched[searchedKey] !== cursor.value[searchedKey],
+          );
+          if (matches) {
             const value = cursor.value;
             cursor.delete().onsuccess = () => {
               deleted.push(value);
@@ -469,7 +470,9 @@ class IndexedDbStorage<
           cursor.continue();
         });
 
-        return result.map(() => deleted);
+        return result
+          .map(() => (deleted.length === 0 ? Err(NOT_FOUND) : Ok(deleted)))
+          .flatten();
       }, "readwrite");
     };
 
