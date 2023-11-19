@@ -464,7 +464,16 @@ class IndexedDbStorage<
   }
 
   getAll(): Promise<V[]> {
-    throw new Error("Method not implemented.");
+    return (async () =>
+      (
+        await this.storeOperation(
+          async (store) => await requestIntoResult<V[]>(store.getAll()),
+          "readonly",
+        )
+      ).mapOrElse(
+        () => [],
+        (result) => result,
+      ))();
   }
 
   cursor(): Promise<Iterator<V, any, undefined>> {
