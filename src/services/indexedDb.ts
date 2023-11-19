@@ -17,7 +17,7 @@ export interface StorageAPI<
 }
 
 const DB_NAME = "calendar";
-const DB_VERSION = 8;
+const DB_VERSION = 9;
 
 const requestIntoResult = <T>(
   req: IDBRequest<T>,
