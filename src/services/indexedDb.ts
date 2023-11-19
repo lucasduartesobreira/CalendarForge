@@ -364,16 +364,18 @@ class IndexedDbStorage<
       const storeOperation = await this.storeOperation(async (store) => {
         if (indexKeys.length > 0) {
           const index = store.index(indexKeys);
-          const queryResult = await requestIntoResult<V>(index.get(query));
+          const queryResult = await requestIntoResult<V | undefined>(
+            index.get(query),
+          );
 
           if (notFound.length > 0) {
             return queryResult
-              .map((value) =>
+              .andThen((value) => (value != null ? Ok(value) : Err(NOT_FOUND)))
+              .andThen((value) =>
                 notFound.some((current) => value[current] !== searched[current])
                   ? Err(Symbol("Item Not Found"))
                   : Ok(value),
-              )
-              .flatten();
+              );
           }
           return queryResult;
         }
