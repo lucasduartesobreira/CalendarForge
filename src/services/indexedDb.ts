@@ -179,6 +179,8 @@ export class IndexedDbStorageBuilder<
   }
 }
 
+const NOT_FOUND = Symbol("Record Not Found");
+
 class IndexedDbStorage<
   K extends keyof V & string,
   V extends Record<string, any>,
@@ -414,7 +416,9 @@ class IndexedDbStorage<
           requestIntoResult(store.delete(key)),
         ]);
 
-        return result.map(() => foundValue).flatten();
+        return result
+          .map((result) => (result == null ? Err(NOT_FOUND) : foundValue))
+          .flatten();
       }, "readwrite");
     };
 
