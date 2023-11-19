@@ -348,18 +348,18 @@ export class IndexedDbStorage<
     return [indexKeys, query, aList.notFound];
   }
 
+  find(searched: Partial<V>): Promise<Option<V>> {
+    const [indexKeys, query, notFound] = this.selectPlan(searched);
+    const resultAsync = async () => {
       const storeOperation = await this.storeOperation(async (store) => {
         if (indexKeys.length > 0) {
-          console.log(store.indexNames);
           const index = store.index(indexKeys);
           const queryResult = await requestIntoResult<V>(index.get(query));
 
-          if (aList.notFound.length != 0) {
+          if (notFound.length != 0) {
             return queryResult
               .map((value) =>
-                aList.notFound.some(
-                  (current) => value[current] !== searched[current],
-                )
+                notFound.some((current) => value[current] !== searched[current])
                   ? Err(Symbol("Item Not Found"))
                   : Ok(value),
               )
