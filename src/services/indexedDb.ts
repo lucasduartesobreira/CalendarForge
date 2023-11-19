@@ -521,7 +521,9 @@ class IndexedDbStorage<
           cursor.continue();
         });
 
-        return result.map(() => list);
+        return result.andThen(() =>
+          list.length === 0 ? Err(NOT_FOUND) : Ok(list),
+        );
       }, "readwrite");
 
       return result;
