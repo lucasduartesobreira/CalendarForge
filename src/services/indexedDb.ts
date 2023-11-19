@@ -378,7 +378,7 @@ class IndexedDbStorage<
           return queryResult;
         }
 
-        let found: V;
+        let found: V | undefined = undefined;
 
         const keys = Object.keys(searched);
 
@@ -403,7 +403,10 @@ class IndexedDbStorage<
         return cursor.map(() => found);
       }, "readonly");
 
-      return storeOperation.option();
+      return storeOperation
+        .option()
+        .map((value) => (value == null ? None() : Some(value)))
+        .flatten();
     };
     return resultAsync();
   }
