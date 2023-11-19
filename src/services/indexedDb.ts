@@ -214,23 +214,20 @@ class IndexedDbStorage<
 
   add(value: Omit<V, "id">): Promise<Result<V, symbol>> {
     const resultAsync = async () => {
-      const transaction = this.db.transaction(this.storeName, "readwrite");
-      const store = transaction.objectStore(this.storeName);
+      return await this.storeOperation(async (store) => {
+        const idGenerated = idGenerator();
 
-      const idGenerated = idGenerator();
+        const addedKey = await requestIntoResult(
+          store.add({ ...value, id: idGenerated }),
+        );
+        const valueFound = await addedKey
+          .map(
+            async (addedKey) => await requestIntoResult<V>(store.get(addedKey)),
+          )
+          .asyncFlatten();
 
-      const addedKey = await requestIntoResult(
-        store.add({ ...value, id: idGenerated }),
-      );
-      const valueFound = await addedKey
-        .map(
-          async (addedKey) => await requestIntoResult<V>(store.get(addedKey)),
-        )
-        .asyncFlatten();
-
-      const transactionFinished = await transactionIntoResult(transaction);
-
-      return transactionFinished.map(() => valueFound).flatten();
+        return valueFound;
+      }, "readwrite");
     };
 
     return resultAsync();
@@ -264,7 +261,12 @@ class IndexedDbStorage<
     const transaction = this.db.transaction(this.storeName, mode);
     const store = transaction.objectStore(this.storeName);
 
-    return await op(store);
+    return (
+      await Promise.all([
+        await op(store),
+        await transactionIntoResult(transaction),
+      ])
+    )[0];
   }
 
   selectPlan(
