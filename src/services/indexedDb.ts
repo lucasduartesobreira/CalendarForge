@@ -360,7 +360,7 @@ class IndexedDbStorage<
           const index = store.index(indexKeys);
           const queryResult = await requestIntoResult<V>(index.get(query));
 
-          if (notFound.length != 0) {
+          if (notFound.length > 0) {
             return queryResult
               .map((value) =>
                 notFound.some((current) => value[current] !== searched[current])
@@ -426,7 +426,7 @@ class IndexedDbStorage<
           const deleted: V[] = [];
           const result = await foreachCursor(
             index.openCursor(query),
-            (cursor, stop) => {
+            (cursor) => {
               const toDelete = !notFound.some(
                 (key) => cursor.value[key] !== searched[key],
               );
