@@ -76,6 +76,17 @@ const foreachCursor = (
   });
 };
 
+const partialEqual = <V extends Record<string, any>>(
+  partial: Partial<V>,
+  searched: V,
+  keys?: (keyof V)[],
+) =>
+  !(keys == null
+    ? Object.keys(partial).some((key) => {
+        searched[key] !== partial[key];
+      })
+    : keys.some((key) => searched[key] !== partial[key]));
+
 export const openDb = (
   upgradeCallback: ((
     this: IDBOpenDBRequest,
@@ -369,45 +380,32 @@ class IndexedDbStorage<
     const [indexKeys, query, notFound] = this.selectPlan(searched);
     const resultAsync = async () => {
       const storeOperation = await this.storeOperation(async (store) => {
+        let cursorReq;
+        let keys: (keyof V)[];
         if (indexKeys.length > 0) {
           const index = store.index(indexKeys);
-          const queryResult = await requestIntoResult<V | undefined>(
-            index.get(query),
-          );
 
-          if (notFound.length > 0) {
-            return queryResult
-              .andThen((value) => (value != null ? Ok(value) : Err(NOT_FOUND)))
-              .andThen((value) =>
-                notFound.some((current) => value[current] !== searched[current])
-                  ? Err(Symbol("Item Not Found"))
-                  : Ok(value),
-              );
+          if (notFound.length === 0) {
+            return await requestIntoResult<V | undefined>(index.get(query));
           }
-          return queryResult;
+
+          cursorReq = store.openCursor(query);
+          keys = notFound;
+        } else {
+          cursorReq = store.openCursor();
+          keys = Object.keys(searched);
         }
 
         let found: V | undefined = undefined;
 
-        const keys = Object.keys(searched);
-
-        const cursor = await foreachCursor(
-          store.openCursor(),
-          (cursor, stop) => {
-            if (
-              keys.some(
-                (searchedKey) =>
-                  searched[searchedKey] !== cursor.value[searchedKey],
-              )
-            ) {
-              cursor.continue();
-              return;
-            }
-
+        const cursor = await foreachCursor(cursorReq, (cursor, stop) => {
+          if (partialEqual(searched, cursor.value, keys)) {
             found = cursor.value;
-            stop();
-          },
-        );
+            return stop();
+          }
+
+          cursor.continue();
+        });
 
         return cursor.map(() => found);
       }, "readonly");
@@ -441,37 +439,19 @@ class IndexedDbStorage<
     const [indexName, query, notFound] = this.selectPlan(searched);
     const resultAsync = async () => {
       return await this.storeOperation(async (store) => {
+        let cursorReq;
+        let keys: (keyof V)[] | undefined = undefined;
         if (indexName.length > 0) {
-          const index = store.index(indexName);
-          const deleted: V[] = [];
-          const result = await foreachCursor(
-            index.openCursor(query),
-            (cursor) => {
-              const toDelete = !notFound.some(
-                (key) => cursor.value[key] !== searched[key],
-              );
-              if (toDelete) {
-                const value: V = cursor.value;
-                cursor.delete().onsuccess = () => {
-                  deleted.push(value);
-                };
-              }
-
-              cursor.continue();
-            },
-          );
-
-          return result
-            .map(() => (deleted.length === 0 ? Err(NOT_FOUND) : Ok(deleted)))
-            .flatten();
+          cursorReq = store.index(indexName).openCursor(query);
+          keys = notFound;
+        } else {
+          cursorReq = store.openCursor();
+          keys = Object.keys(searched);
         }
 
         const deleted: V[] = [];
-        const result = await foreachCursor(store.openCursor(), (cursor) => {
-          const matches = !Object.keys(searched).some(
-            (searchedKey) =>
-              searched[searchedKey] !== cursor.value[searchedKey],
-          );
+        const result = await foreachCursor(cursorReq, (cursor) => {
+          const matches = partialEqual(searched, cursor.value, keys);
           if (matches) {
             const value = cursor.value;
             cursor.delete().onsuccess = () => {
@@ -500,6 +480,7 @@ class IndexedDbStorage<
       const result = await this.storeOperation(async (store) => {
         let cursorReq;
         let keys: (keyof V)[];
+
         if (indexKeys.length > 0) {
           cursorReq = store.index(indexKeys).openCursor(query);
           keys = notFound;
@@ -511,9 +492,7 @@ class IndexedDbStorage<
         const list: V[] = [];
         const result = await foreachCursor(cursorReq, (cursor) => {
           const value = cursor.value;
-          const matches = !keys.some((current) => {
-            return value[current] !== searched[current];
-          });
+          const matches = partialEqual(searched, value, keys);
 
           if (matches) {
             const updatedValue = { ...value, ...updated };
@@ -551,6 +530,8 @@ class IndexedDbStorage<
     const [indexKeys, query, notFound] = this.selectPlan(searched);
     const resultAsync = async () => {
       const storeOperation = await this.storeOperation(async (store) => {
+        let cursorReq;
+        let keys: (keyof V)[];
         if (indexKeys.length > 0) {
           const index = store.index(indexKeys);
           if (notFound.length === 0) {
@@ -560,35 +541,18 @@ class IndexedDbStorage<
 
             return queryResult;
           }
-          const list: V[] = [];
-          const queryResult = await foreachCursor(
-            index.openCursor(query),
-            (cursor) => {
-              const value = cursor.value;
-              const matches = notFound.some(
-                (current) => value[current] !== searched[current],
-              );
 
-              if (matches) list.push(value);
-
-              cursor.continue();
-            },
-          );
-
-          return queryResult.map(() => list);
+          cursorReq = index.openCursor(query);
+          keys = notFound;
+        } else {
+          cursorReq = store.openCursor();
+          keys = Object.keys(searched);
         }
 
         const found: V[] = [];
 
-        const keys = Object.keys(searched);
-
-        const cursor = await foreachCursor(store.openCursor(), (cursor) => {
-          if (
-            !keys.some(
-              (searchedKey) =>
-                searched[searchedKey] !== cursor.value[searchedKey],
-            )
-          ) {
+        const cursor = await foreachCursor(cursorReq, (cursor) => {
+          if (partialEqual(searched, cursor.value, keys)) {
             found.push(cursor.value);
           }
 
