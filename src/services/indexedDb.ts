@@ -55,12 +55,13 @@ const foreachCursor = (
   iterator: (cursor: IDBCursorWithValue, stop: () => void) => void,
 ): Promise<Result<null, symbol>> => {
   return new Promise((resolve, _reject) => {
+    const stop = () => {
+      resolve(Ok(null));
+    };
     req.onsuccess = function (ev) {
       const cursor = this.result;
       if (cursor) {
-        iterator(cursor, () => {
-          resolve(Ok(null));
-        });
+        iterator(cursor, stop);
       } else {
         resolve(Ok(null));
       }
@@ -490,6 +491,8 @@ class IndexedDbStorage<
               list.push(value);
             };
           }
+
+          cursor.continue();
         });
 
         return result.map(() => list);
@@ -535,6 +538,8 @@ class IndexedDbStorage<
               );
 
               if (matches) list.push(value);
+
+              cursor.continue();
             },
           );
 
@@ -547,22 +552,21 @@ class IndexedDbStorage<
 
         const cursor = await foreachCursor(store.openCursor(), (cursor) => {
           if (
-            keys.some(
+            !keys.some(
               (searchedKey) =>
                 searched[searchedKey] !== cursor.value[searchedKey],
             )
           ) {
-            cursor.continue();
-            return;
+            found.push(cursor.value);
           }
 
-          found.push(cursor.value);
+          cursor.continue();
         });
 
         return cursor.map(() => found);
       }, "readonly");
 
-      return storeOperation.option().unwrapOrElse(() => []);
+      return storeOperation.unwrapOrElse(() => []);
     };
     return resultAsync();
   }
