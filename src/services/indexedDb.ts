@@ -467,7 +467,34 @@ class IndexedDbStorage<
   }
 
   findAndUpdate(searched: Partial<V>, updated: Partial<V>): Promise<V[]> {
-    throw new Error("Method not implemented.");
+    return (async () => {
+      const [indexKeys, query, notFound] = this.selectPlan(searched);
+      const result = await this.storeOperation(async (store) => {
+        let cursorReq;
+        if (indexKeys.length > 0)
+          cursorReq = store.index(indexKeys).openCursor(query);
+        else cursorReq = store.openCursor();
+
+        const list: V[] = [];
+        const result = await foreachCursor(cursorReq, (cursor) => {
+          const value = cursor.value;
+          const matches = notFound.some(
+            (current) => value[current] !== searched[current],
+          );
+
+          if (matches) {
+            const updatedValue = { ...value, ...updated };
+            cursor.update(updatedValue).onsuccess = () => {
+              list.push(value);
+            };
+          }
+        });
+
+        return result.map(() => list);
+      }, "readwrite");
+
+      return result.unwrapOrElse(() => []);
+    })();
   }
 
   getAll(): Promise<V[]> {
