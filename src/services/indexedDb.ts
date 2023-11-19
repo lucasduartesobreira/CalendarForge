@@ -321,32 +321,29 @@ export class IndexedDbStorage<
 
     const indexKeySplitted = indexKeys.split(",");
 
-    const query = Object.keys(searched).reduce(
-      (acc, key) => {
-        const index = indexKeySplitted.findIndex(
-          (indexKey) => indexKey === key,
-        );
-
-        const value = searched[key];
-
-        acc.splice(
-          index,
-          1,
-          value === true
-            ? "true"
-            : value === false
-            ? "false"
-            : value === null
-            ? "null"
-            : value === undefined
-            ? "undefined"
-            : value,
-        );
-
+    const query = indexKeySplitted.reduce((acc, indexKey, currentIndex) => {
+      if (!Object.keys(searched).includes(indexKey)) {
         return acc;
-      },
-      new Array(1) as (V[string] | string)[],
-    );
+      }
+
+      const value = searched[indexKey];
+      acc[currentIndex] =
+        value === true
+          ? "true"
+          : value === false
+          ? "false"
+          : value === null
+          ? "null"
+          : value === undefined
+          ? "undefined"
+          : value;
+
+      return acc;
+    }, new Array<V[string] | string>(indexKeySplitted.length));
+
+    if (Object.values(query).length !== query.length) {
+      return ["", query, aList.notFound];
+    }
 
     return [indexKeys, query, aList.notFound];
   }
