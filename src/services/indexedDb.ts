@@ -121,24 +121,25 @@ export const openDb = (
     db: IDBVersionChangeEvent,
   ) => void)[],
 ): Promise<Result<IDBDatabase, symbol>> => {
-  if (typeof window === undefined)
+  if (typeof window === "undefined")
     return new Promise((resolve) => resolve(Err(Symbol("Client side only"))));
+  else {
+    const req = window?.indexedDB.open(dbName, DB_VERSION);
 
-  const req = window.indexedDB.open(dbName, DB_VERSION);
+    return new Promise((resolve) => {
+      req.onsuccess = function () {
+        resolve(Ok(this.result));
+      };
 
-  return new Promise((resolve) => {
-    req.onsuccess = function () {
-      resolve(Ok(this.result));
-    };
+      req.onerror = function () {
+        resolve(Err(Symbol(this.error?.name)));
+      };
 
-    req.onerror = function () {
-      resolve(Err(Symbol(this.error?.name)));
-    };
-
-    req.onupgradeneeded = function (ev) {
-      upgradeCallback.forEach((callback) => callback.call(this, ev));
-    };
-  });
+      req.onupgradeneeded = function (ev) {
+        upgradeCallback.forEach((callback) => callback.call(this, ev));
+      };
+    });
+  }
 };
 
 export class IndexedDbStorageBuilder<
@@ -220,7 +221,7 @@ export class IndexedDbStorageBuilder<
     db: IDBDatabase,
     forceUpdate: () => void,
   ): Result<IndexedDbStorage<K, V>, symbol> {
-    if (typeof window !== undefined) {
+    if (typeof window !== "undefined") {
       return Ok(
         new IndexedDbStorage(
           db,
@@ -248,11 +249,14 @@ function forceRender<
     (this: This, ...args: Args) => Promise<ReturnT>
   >,
 ) {
-  async function replacementMethod(this: This, ...args: Args): Promise<ReturnT> {
+  async function replacementMethod(
+    this: This,
+    ...args: Args
+  ): Promise<ReturnT> {
     const result = target.call(this, ...args);
-          const value = await result;
-          this.forceUpdate();
-          return value;
+    const value = await result;
+    this.forceUpdate();
+    return value;
   }
 
   return replacementMethod;
