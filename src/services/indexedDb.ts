@@ -26,8 +26,8 @@ const DB_VERSION = 9;
 const requestIntoResult = <T>(
   req: IDBRequest<T>,
 ): Promise<Result<T, symbol>> => {
-  return new Promise((resolve, reject) => {
-    req.onsuccess = function (ev) {
+  return new Promise((resolve) => {
+    req.onsuccess = function () {
       resolve(Ok(this.result));
     };
 
@@ -41,7 +41,7 @@ const requestIntoResult = <T>(
 const transactionIntoResult = (
   transaction: IDBTransaction,
 ): Promise<Result<null, symbol>> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     transaction.oncomplete = function () {
       resolve(Ok(null));
     };
@@ -62,7 +62,7 @@ const foreachCursor = <V>(
     const stop = () => {
       resolve(Ok(null));
     };
-    req.onsuccess = function (ev) {
+    req.onsuccess = function () {
       const cursor = this.result;
       if (cursor) {
         iterator(cursor, stop);
@@ -71,7 +71,7 @@ const foreachCursor = <V>(
       }
     };
 
-    req.onerror = function (ev) {
+    req.onerror = function () {
       resolve(Err(Symbol(this.error?.name)));
     };
   });
@@ -126,7 +126,7 @@ export const openDb = (
 
   const req = window.indexedDB.open(dbName, DB_VERSION);
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     req.onsuccess = function () {
       resolve(Ok(this.result));
     };
@@ -248,17 +248,11 @@ function forceRender<
     (this: This, ...args: Args) => Promise<ReturnT>
   >,
 ) {
-  function replacementMethod(this: This, ...args: Args): Promise<ReturnT> {
+  async function replacementMethod(this: This, ...args: Args): Promise<ReturnT> {
     const result = target.call(this, ...args);
-    return result
-      .then((value) => {
-        this.forceUpdate();
-        return value;
-      })
-      .catch((reason) => {
-        this.forceUpdate();
-        return reason;
-      });
+          const value = await result;
+          this.forceUpdate();
+          return value;
   }
 
   return replacementMethod;
@@ -357,7 +351,7 @@ class IndexedDbStorage<
     try {
       const transaction = this.db.transaction(this.storeName, mode);
       const store = transaction.objectStore(this.storeName);
-      const [opResult, transactionResult] = await Promise.all([
+      const [opResult] = await Promise.all([
         op(store),
         transactionIntoResult(transaction),
       ]);
