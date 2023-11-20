@@ -337,9 +337,10 @@ export class CalendarStorageIndexedDb
     };
   }
 
+  private static DB_NAME = "calendars";
   private static indexedDbBuilder: IndexedDbStorageBuilder<"id", Calendar> =
     IndexedDbStorageBuilder.new(
-      "calendars",
+      CalendarStorageIndexedDb.DB_NAME,
       CalendarStorageIndexedDb.DEFAULT_VALUE(),
     );
 
@@ -377,7 +378,7 @@ export class CalendarStorageIndexedDb
   }
 
   static async new(forceUpdate: () => void) {
-    const dbResult = await openDb("calendars", [
+    const dbResult = await openDb(CalendarStorageIndexedDb.DB_NAME, [
       this.indexedDbBuilder.upgradeVersionHandler(),
     ]);
 
