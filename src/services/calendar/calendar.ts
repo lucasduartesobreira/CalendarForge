@@ -388,23 +388,21 @@ export class CalendarStorageIndexedDb
       })
       .map((value) => new CalendarStorageIndexedDb(value));
 
-    const addDefault = storage.map(async (storage) => {
-      const foundDefault = await storage.find({ default: true });
-      if (foundDefault.length === 0) {
+    return storage;
+  }
+
+  setupDefaults() {
+    return (async () => {
+      const foundDefault = await this.find({ default: true });
+      if (!foundDefault.isSome()) {
         const timezone = (-new Date().getTimezoneOffset() / 60) as Timezones;
-        await storage.add({
+        await this.map.add({
           name: "Default Calendar",
           default: true,
           timezone,
         });
       }
-    });
-
-    if (addDefault.isOk()) {
-      await addDefault.unwrap();
-    }
-
-    return storage;
+    })();
   }
 
   @emitEvent("add")
