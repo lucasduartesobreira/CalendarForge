@@ -403,10 +403,16 @@ export class EventStorageIndexedDb
     return resultAsync();
   }
 
-  find(searched: Partial<CalendarEvent>): Promise<CalendarEvent[]> {
+  findAll(searched: Partial<CalendarEvent>): Promise<CalendarEvent[]> {
     return (async () => {
       return this.map.findAll(searched);
     })();
+  }
+
+  find(
+    searched: Partial<CalendarEvent>,
+  ): Promise<O.OptionClass<CalendarEvent>> {
+    return this.map.find(searched);
   }
 
   filter(predicate: (event: CalendarEvent) => boolean) {

@@ -362,10 +362,16 @@ export class EventTemplateStorageIndexedDb
     return resultAsync();
   }
 
-  find(searched: Partial<EventTemplate>): Promise<EventTemplate[]> {
+  findAll(searched: Partial<EventTemplate>): Promise<EventTemplate[]> {
     return (async () => {
       return this.eventTemplates.findAll(searched);
     })();
+  }
+
+  find(
+    searched: Partial<EventTemplate>,
+  ): Promise<O.OptionClass<EventTemplate>> {
+    return this.eventTemplates.find(searched);
   }
 
   all() {

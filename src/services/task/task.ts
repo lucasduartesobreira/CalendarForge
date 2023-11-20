@@ -377,10 +377,14 @@ export class TaskStorageIndexedDb
     return resultAsync();
   }
 
-  find(searched: Partial<Task>): Promise<Task[]> {
+  findAll(searched: Partial<Task>): Promise<Task[]> {
     return (async () => {
       return this.map.findAll(searched);
     })();
+  }
+
+  find(searched: Partial<Task>): Promise<Option<Task>> {
+    return this.map.find(searched);
   }
 
   filteredValues(predicate: (value: Task) => boolean): Promise<Task[]> {

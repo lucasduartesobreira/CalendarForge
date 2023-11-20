@@ -534,10 +534,13 @@ export class CalendarStorageIndexedDb
     return resultAsync();
   }
 
-  find(searched: Partial<Calendar>): Promise<Calendar[]> {
+  findAll(searched: Partial<Calendar>): Promise<Calendar[]> {
     return (async () => this.map.findAll(searched))();
   }
 
+  find(searched: Partial<Calendar>): Promise<O.OptionClass<Calendar>> {
+    return this.map.find(searched);
+  }
   findDefault() {
     return (async () => {
       const calendars = this.map.getAll();
