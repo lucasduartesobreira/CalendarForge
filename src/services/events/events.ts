@@ -275,6 +275,7 @@ export class EventStorageIndexedDb
   private map: StorageAPI<"id", CalendarEvent>;
   private eventEmitter: MyEventEmitter;
 
+  private static DB_NAME = "events";
   private static DEFAULT_VALUE(): Omit<CalendarEvent, "id"> {
     return {
       title: "",
@@ -291,7 +292,7 @@ export class EventStorageIndexedDb
     "id",
     CalendarEvent
   > = IndexedDbStorageBuilder.new(
-    "events",
+    EventStorageIndexedDb.DB_NAME,
     EventStorageIndexedDb.DEFAULT_VALUE(),
   );
 
@@ -323,7 +324,7 @@ export class EventStorageIndexedDb
   }
 
   static async new(forceUpdate: () => void) {
-    const dbResult = await openDb("events", [
+    const dbResult = await openDb(EventStorageIndexedDb.DB_NAME, [
       this.indexedDbBuilder.upgradeVersionHandler(),
     ]);
 
