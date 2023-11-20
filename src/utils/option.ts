@@ -71,6 +71,14 @@ class Option<T> {
       return None();
     }
   }
+
+  asyncFlatten<V>(this: Option<Promise<Option<V>>>): Promise<Option<V>> {
+    if (this.value.kind === "some") {
+      return this.value.value;
+    } else {
+      return new Promise((resolve) => resolve(None()));
+    }
+  }
 }
 
 class Something<T> extends Option<T> {
