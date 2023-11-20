@@ -6,6 +6,7 @@ export interface StorageAPI<
   K extends keyof V & string,
   V extends Record<string, any>,
 > {
+  close(): void;
   add(value: Omit<V, K>): Promise<Result<V, symbol>>;
   findById(key: V[K]): Promise<Option<V>>;
   find(searched: Partial<V>): Promise<Option<V>>;
@@ -120,6 +121,9 @@ export const openDb = (
     db: IDBVersionChangeEvent,
   ) => void)[],
 ): Promise<Result<IDBDatabase, symbol>> => {
+  if (typeof window === undefined)
+    return new Promise((resolve) => resolve(Err(Symbol("Client side only"))));
+
   const req = window.indexedDB.open(dbName, DB_VERSION);
 
   return new Promise((resolve, reject) => {
@@ -301,23 +305,25 @@ class IndexedDbStorage<
   @forceRender
   add(value: Omit<V, K>): Promise<Result<V, symbol>> {
     const resultAsync = async () => {
-      return await this.storeOperation(async (store) => {
-        const idGenerated = idGenerator();
+      return (
+        await this.storeOperation(async (store) => {
+          const idGenerated = idGenerator();
 
-        const addedKey = await requestIntoResult(
-          store.add({ ...value, id: idGenerated }),
-        );
-        const valueFound = await addedKey
-          .map(
-            async (addedKey) =>
-              await requestIntoResult<V | undefined>(store.get(addedKey)),
-          )
-          .asyncFlatten();
+          const addedKey = await requestIntoResult(
+            store.add({ ...value, id: idGenerated }),
+          );
+          const valueFound = await addedKey
+            .map(
+              async (addedKey) =>
+                await requestIntoResult<V | undefined>(store.get(addedKey)),
+            )
+            .asyncFlatten();
 
-        return valueFound.andThen((value) =>
-          value != null ? Ok(value) : Err(COULDNT_CREATE),
-        );
-      }, "readwrite");
+          return valueFound.andThen((value) =>
+            value != null ? Ok(value) : Err(COULDNT_CREATE),
+          );
+        }, "readwrite")
+      ).flatten();
     };
 
     return resultAsync();
@@ -339,7 +345,7 @@ class IndexedDbStorage<
           .flatten();
       }, "readonly");
 
-      return storeOperation;
+      return storeOperation.option().flatten();
     };
     return resultAsync();
   }
@@ -347,16 +353,19 @@ class IndexedDbStorage<
   async storeOperation<T>(
     op: (store: IDBObjectStore) => Promise<T>,
     mode: "readonly" | "readwrite" | "versionchange",
-  ) {
-    const transaction = this.db.transaction(this.storeName, mode);
-    const store = transaction.objectStore(this.storeName);
+  ): Promise<Result<T, symbol>> {
+    try {
+      const transaction = this.db.transaction(this.storeName, mode);
+      const store = transaction.objectStore(this.storeName);
+      const [opResult, transactionResult] = await Promise.all([
+        op(store),
+        transactionIntoResult(transaction),
+      ]);
 
-    return (
-      await Promise.all([
-        await op(store),
-        await transactionIntoResult(transaction),
-      ])
-    )[0];
+      return Ok(opResult);
+    } catch (e) {
+      return Err(Symbol("Transaction Error"));
+    }
   }
 
   selectPlan(
@@ -488,6 +497,7 @@ class IndexedDbStorage<
       }, "readonly");
 
       return storeOperation
+        .flatten()
         .option()
         .map((value) => (value == null ? None() : Some(value)))
         .flatten();
@@ -498,16 +508,18 @@ class IndexedDbStorage<
   @forceRender
   remove(key: V[K]): Promise<Result<V, symbol>> {
     const resultAsync = async () => {
-      return await this.storeOperation(async (store) => {
-        const [foundValue, result] = await Promise.all([
-          requestIntoResult<V>(store.get(key)),
-          requestIntoResult(store.delete(key)),
-        ]);
+      return (
+        await this.storeOperation(async (store) => {
+          const [foundValue, result] = await Promise.all([
+            requestIntoResult<V>(store.get(key)),
+            requestIntoResult(store.delete(key)),
+          ]);
 
-        return result
-          .map((result) => (result == null ? Err(NOT_FOUND) : foundValue))
-          .flatten();
-      }, "readwrite");
+          return result
+            .map((result) => (result == null ? Err(NOT_FOUND) : foundValue))
+            .flatten();
+        }, "readwrite")
+      ).flatten();
     };
 
     return resultAsync();
@@ -517,39 +529,41 @@ class IndexedDbStorage<
   removeAll(searched: Partial<V>): Promise<Result<V[], symbol>> {
     const [indexName, query, notFound] = this.selectPlan(searched);
     const resultAsync = async () => {
-      return await this.storeOperation(async (store) => {
-        let cursorReq;
-        let keys: (keyof V)[] | undefined = undefined;
-        if (indexName.length > 0) {
-          cursorReq = store.index(indexName).openCursor(query);
-          keys = notFound;
-        } else {
-          cursorReq = store.openCursor();
-          keys = Object.keys(searched);
-        }
+      return (
+        await this.storeOperation(async (store) => {
+          let cursorReq;
+          let keys: (keyof V)[] | undefined = undefined;
+          if (indexName.length > 0) {
+            cursorReq = store.index(indexName).openCursor(query);
+            keys = notFound;
+          } else {
+            cursorReq = store.openCursor();
+            keys = Object.keys(searched);
+          }
 
-        const result = await cursorReduce<V[], V>(
-          cursorReq,
-          (acc, cursor) => {
-            const matches = partialEqual(searched, cursor.value, keys);
-            if (matches) {
-              const value = cursor.value;
-              cursor.delete().onsuccess = () => {
-                acc.push(value);
-              };
-            }
+          const result = await cursorReduce<V[], V>(
+            cursorReq,
+            (acc, cursor) => {
+              const matches = partialEqual(searched, cursor.value, keys);
+              if (matches) {
+                const value = cursor.value;
+                cursor.delete().onsuccess = () => {
+                  acc.push(value);
+                };
+              }
 
-            return acc;
-          },
-          [],
-        );
+              return acc;
+            },
+            [],
+          );
 
-        return result
-          .map((deleted) =>
-            deleted.length === 0 ? Err(NOT_FOUND) : Ok(deleted),
-          )
-          .flatten();
-      }, "readwrite");
+          return result
+            .map((deleted) =>
+              deleted.length === 0 ? Err(NOT_FOUND) : Ok(deleted),
+            )
+            .flatten();
+        }, "readwrite")
+      ).flatten();
     };
 
     return resultAsync();
@@ -597,7 +611,7 @@ class IndexedDbStorage<
         );
       }, "readwrite");
 
-      return result;
+      return result.flatten();
     })();
   }
 
@@ -608,10 +622,12 @@ class IndexedDbStorage<
           async (store) => await requestIntoResult<V[]>(store.getAll()),
           "readonly",
         )
-      ).mapOrElse(
-        () => [],
-        (result) => result,
-      ))();
+      )
+        .flatten()
+        .mapOrElse(
+          () => [],
+          (result) => result,
+        ))();
   }
 
   findAll(searched: Partial<V>): Promise<V[]> {
@@ -652,9 +668,13 @@ class IndexedDbStorage<
         return result;
       }, "readonly");
 
-      return storeOperation.unwrapOrElse(() => []);
+      return storeOperation.flatten().unwrapOrElse(() => []);
     };
     return resultAsync();
+  }
+
+  close(): void {
+    this.db.close();
   }
 }
 
