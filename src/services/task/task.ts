@@ -328,7 +328,24 @@ export class TaskStorageIndexedDb
 
   @emitEvent("removeWithFilter")
   removeWithFilter(predicate: (value: Task) => boolean): Promise<Task[]> {
-    const resultAsync = async () => (await this.map.getAll()).filter(predicate);
+    const resultAsync = async () =>
+      (
+        await Promise.all(
+          (await this.map.getAll())
+            .filter(predicate)
+            .map((task) => this.map.remove(task.id)),
+        )
+      ).reduce(
+        (acc, curr) =>
+          curr.mapOrElse(
+            () => acc,
+            (task) => {
+              acc.push(task);
+              return acc;
+            },
+          ),
+        [] as Task[],
+      );
     return resultAsync();
   }
 
