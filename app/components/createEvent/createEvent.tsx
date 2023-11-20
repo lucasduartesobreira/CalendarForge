@@ -66,7 +66,7 @@ const CreateEventForm = ({
     if (storages.isSome()) {
       (async () => {
         const { calendarsStorage } = storages.unwrap();
-        const foundDefault = await calendarsStorage.findDefault();
+        const foundDefault = await calendarsStorage.find({ default: true });
         foundDefault.map(({ id }) => {
           form.calendar_id = id;
           setForm({ ...form });
