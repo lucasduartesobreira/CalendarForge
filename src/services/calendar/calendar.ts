@@ -92,7 +92,6 @@ export class CalendarStorageIndexedDb
   private constructor(map: IndexedDbStorage<"id", Calendar>) {
     this.map = map;
     this.eventEmitter = new MyEventEmitter();
-    CalendarStorageIndexedDb.wasBuilt = true;
   }
 
   emit<
@@ -121,13 +120,7 @@ export class CalendarStorageIndexedDb
     return resultAsync();
   }
 
-  private static wasBuilt = false;
-
   static async new(forceUpdate: () => void) {
-    if (CalendarStorageIndexedDb.wasBuilt) {
-      return R.Err(Symbol("Already built"));
-    }
-
     const dbResult = await openDb(CalendarStorageIndexedDb.DB_NAME, [
       this.indexedDbBuilder.upgradeVersionHandler(),
     ]);
