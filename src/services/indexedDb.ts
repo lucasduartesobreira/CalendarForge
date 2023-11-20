@@ -6,7 +6,7 @@ export interface StorageAPI<
   K extends keyof V & string,
   V extends Record<string, any>,
 > {
-  add(value: V): Promise<Result<V, symbol>>;
+  add(value: Omit<V, K>): Promise<Result<V, symbol>>;
   findById(key: V[K]): Promise<Option<V>>;
   find(searched: Partial<V>): Promise<Option<V>>;
   remove(key: V[K]): Promise<Result<V, symbol>>;
@@ -114,12 +114,13 @@ const partialEqual = <V extends Record<string, any>>(
     : keys.some((key) => searched[key] !== partial[key]));
 
 export const openDb = (
+  dbName = DB_NAME,
   upgradeCallback: ((
     this: IDBOpenDBRequest,
     db: IDBVersionChangeEvent,
   ) => void)[],
 ): Promise<Result<IDBDatabase, symbol>> => {
-  const req = window.indexedDB.open(DB_NAME, DB_VERSION);
+  const req = window.indexedDB.open(dbName, DB_VERSION);
 
   return new Promise((resolve, reject) => {
     req.onsuccess = function () {
@@ -211,13 +212,56 @@ export class IndexedDbStorageBuilder<
     };
   }
 
-  build(db: IDBDatabase): IndexedDbStorage<K, V> {
-    return new IndexedDbStorage(db, this.storeName, this.indexesNames);
+  build(
+    db: IDBDatabase,
+    forceUpdate: () => void,
+  ): Result<IndexedDbStorage<K, V>, symbol> {
+    if (typeof window !== undefined) {
+      return Ok(
+        new IndexedDbStorage(
+          db,
+          this.storeName,
+          this.indexesNames,
+          forceUpdate,
+        ),
+      );
+    }
+
+    return Err(Symbol("Not Client Side"));
   }
 }
 
-const NOT_FOUND = Symbol("Record Not Found");
-const COULDNT_CREATE = Symbol("Couldn't Create New Record");
+function forceRender<
+  K extends keyof V & string,
+  V extends Record<string, any>,
+  This extends IndexedDbStorage<K, V>,
+  Args extends any[],
+  ReturnT,
+>(
+  target: (this: This, ...args: Args) => Promise<ReturnT>,
+  _context: ClassMethodDecoratorContext<
+    This,
+    (this: This, ...args: Args) => Promise<ReturnT>
+  >,
+) {
+  function replacementMethod(this: This, ...args: Args): Promise<ReturnT> {
+    const result = target.call(this, ...args);
+    return result
+      .then((value) => {
+        this.forceUpdate();
+        return value;
+      })
+      .catch((reason) => {
+        this.forceUpdate();
+        return reason;
+      });
+  }
+
+  return replacementMethod;
+}
+
+export const NOT_FOUND = Symbol("Record Not Found");
+export const COULDNT_CREATE = Symbol("Couldn't Create New Record");
 
 class IndexedDbStorage<
   K extends keyof V & string,
@@ -227,6 +271,8 @@ class IndexedDbStorage<
   private db: IDBDatabase;
   private storeName: string;
   private indexesNames: Map<string, Set<string>> = new Map();
+  forceUpdate: () => void;
+
   constructor(
     db: IDBDatabase,
     storeName: string,
@@ -234,6 +280,7 @@ class IndexedDbStorage<
       keyPath: (keyof V & string)[];
       options?: IDBIndexParameters;
     }[],
+    forceUpdate: () => void,
   ) {
     indexes.forEach(({ keyPath }) => {
       const indexName = keyPath.join(",");
@@ -248,9 +295,11 @@ class IndexedDbStorage<
 
     this.db = db;
     this.storeName = storeName;
+    this.forceUpdate = forceUpdate;
   }
 
-  add(value: Omit<V, "id">): Promise<Result<V, symbol>> {
+  @forceRender
+  add(value: Omit<V, K>): Promise<Result<V, symbol>> {
     const resultAsync = async () => {
       return await this.storeOperation(async (store) => {
         const idGenerated = idGenerator();
@@ -446,6 +495,7 @@ class IndexedDbStorage<
     return resultAsync();
   }
 
+  @forceRender
   remove(key: V[K]): Promise<Result<V, symbol>> {
     const resultAsync = async () => {
       return await this.storeOperation(async (store) => {
@@ -463,6 +513,7 @@ class IndexedDbStorage<
     return resultAsync();
   }
 
+  @forceRender
   removeAll(searched: Partial<V>): Promise<Result<V[], symbol>> {
     const [indexName, query, notFound] = this.selectPlan(searched);
     const resultAsync = async () => {
@@ -504,6 +555,7 @@ class IndexedDbStorage<
     return resultAsync();
   }
 
+  @forceRender
   findAndUpdate(
     searched: Partial<V>,
     updated: Partial<V>,
@@ -605,3 +657,5 @@ class IndexedDbStorage<
     return resultAsync();
   }
 }
+
+export type { IndexedDbStorage };
