@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { EventStorage } from "@/services/events/events";
+import { CalendarEvent, EventStorageIndexedDb } from "@/services/events/events";
 import {
   createContext,
   useCallback,
@@ -8,16 +8,23 @@ import {
   useState,
 } from "react";
 import * as O from "@/utils/option";
-import { CalendarStorage } from "@/services/calendar/calendar";
+import {
+  Calendar,
+  CalendarStorageIndexedDb,
+} from "@/services/calendar/calendar";
 import { NotificationManager } from "@/services/notifications/notificationPermission";
-import { EventTemplateStorage } from "@/services/events/eventTemplates";
-import { TaskStorage } from "@/services/task/task";
+import {
+  EventTemplate,
+  EventTemplateStorageIndexedDb,
+} from "@/services/events/eventTemplates";
+import { Task, TaskStorageIndexedDb } from "@/services/task/task";
+import { StorageActions } from "@/utils/storage";
 
 type Storages = {
-  eventsStorage: EventStorage;
-  calendarsStorage: CalendarStorage;
-  eventsTemplateStorage: EventTemplateStorage;
-  tasksStorage: TaskStorage;
+  eventsStorage: StorageActions<string, CalendarEvent>;
+  calendarsStorage: StorageActions<string, Calendar>;
+  eventsTemplateStorage: StorageActions<string, EventTemplate>;
+  tasksStorage: StorageActions<string, Task>;
 };
 
 type StorageContext = {
@@ -53,109 +60,140 @@ export function useDataStorage(): StorageContext {
   const [tasksUpdated, forceTasksUpdate] = useForceUpdate();
 
   const [clientData, setClientData] = useState<O.Option<Storages>>(O.None());
+  const [setupDefaults, setFunctionSetup] = useState<
+    O.Option<() => Promise<void>>
+  >(O.None());
 
-  const eventsStorage = EventStorage.new(forceEventsUpdate);
-  const calendarStorage = CalendarStorage.new(forceCalendarUpdate);
-  const templateStorage = EventTemplateStorage.new(forceTemplatesUpdate);
-  const tasksStorage = TaskStorage.new(forceTasksUpdate);
+  const storages = [
+    EventStorageIndexedDb.new(forceEventsUpdate),
+    CalendarStorageIndexedDb.new(forceCalendarUpdate),
+    TaskStorageIndexedDb.new(forceTasksUpdate),
+    EventTemplateStorageIndexedDb.new(forceTemplatesUpdate),
+  ] as const;
 
-  const isDataReady =
-    eventsStorage.isOk() &&
-    calendarStorage.isOk() &&
-    templateStorage.isOk() &&
-    tasksStorage.isOk();
+  let isDataReady: boolean = false;
 
+  Promise.all(storages).then((value) => {
+    isDataReady = !value.some((value) => !value.isOk());
+  });
   useEffect(() => {
-    if (isDataReady) {
-      const notificationManager = new NotificationManager();
-      const eventsStorageSome = eventsStorage.unwrap();
-      const calendarStorageUnwraped = calendarStorage.unwrap();
-      const tasksStorageUnwrapped = tasksStorage.unwrap();
+    (async () => {
+      const [
+        eventsStorageIDB,
+        calendarStorageIDB,
+        taskStorageIDB,
+        eventTemplatesIDB,
+      ] = await Promise.all(storages);
 
-      eventsStorageSome.on("add", ({ result: output }) => {
-        if (output.isOk()) {
-          const eventCreated = output.unwrap();
-          eventCreated.notifications.forEach((notification) => {
-            notificationManager.push(notification, eventCreated);
-          });
-        }
-      });
+      if (isDataReady) {
+        const notificationManager = new NotificationManager();
+        const eventsUnwrapped = eventsStorageIDB.unwrap();
+        const calendarsUnwrapped = calendarStorageIDB.unwrap();
+        const tasksUnwraped = taskStorageIDB.unwrap();
+        const templatesUnwrapped = eventTemplatesIDB.unwrap();
 
-      eventsStorageSome.on(
-        "update",
-        ({ args: input, result: output, opsSpecific: found }) => {
-          const [_id, eventPreUpdate] = input;
-          if (output.isOk() && found.isSome() && eventPreUpdate.notifications) {
-            const updatedEvent = output.unwrap();
-            const foundEvent = found.unwrap();
-            foundEvent.notifications.forEach(({ id }: { id: string }) => {
-              notificationManager.remove(id);
-            });
-
-            updatedEvent.notifications.forEach((notification) => {
-              notificationManager.push(notification, updatedEvent);
+        eventsUnwrapped.on("add", ({ result: output }) => {
+          if (output.isOk()) {
+            const eventCreated = output.unwrap();
+            eventCreated.notifications.forEach((notification) => {
+              notificationManager.push(notification, eventCreated);
             });
           }
-        },
-      );
+        });
 
-      eventsStorageSome.on("removeWithFilter", ({ result: output }) => {
-        const deletedEvents = output;
-        if (deletedEvents) {
-          deletedEvents.forEach((event) => {
-            event.notifications.forEach((notification) => {
-              notificationManager.remove(notification.id);
+        eventsUnwrapped.on(
+          "update",
+          ({ args: input, result: output, opsSpecific: found }) => {
+            const [_id, eventPreUpdate] = input;
+            if (
+              output.isOk() &&
+              found.isSome() &&
+              eventPreUpdate.notifications
+            ) {
+              const updatedEvent = output.unwrap();
+              const foundEvent = found.unwrap();
+              foundEvent.notifications.forEach(({ id }: { id: string }) => {
+                notificationManager.remove(id);
+              });
+
+              updatedEvent.notifications.forEach((notification) => {
+                notificationManager.push(notification, updatedEvent);
+              });
+            }
+          },
+        );
+
+        eventsUnwrapped.on("removeWithFilter", ({ result: output }) => {
+          const deletedEvents = output;
+          if (deletedEvents) {
+            deletedEvents.forEach((event) => {
+              event.notifications.forEach((notification) => {
+                notificationManager.remove(notification.id);
+              });
             });
-          });
-        }
-      });
+          }
+        });
 
-      calendarStorageUnwraped.on("remove", ({ result }) => {
-        result.map(({ id: deletedCalendar }) => {
-          eventsStorageSome.removeWithFilter(
-            (event) => event.calendar_id === deletedCalendar,
+        calendarsUnwrapped.on("remove", ({ result }) => {
+          result.map(({ id: deletedCalendar }) => {
+            eventsUnwrapped.removeWithFilter(
+              (event) => event.calendar_id === deletedCalendar,
+            );
+          });
+        });
+
+        calendarsUnwrapped.on("removeAll", ({ result }) => {
+          result.map(([id]) =>
+            eventsUnwrapped.removeWithFilter(
+              ({ calendar_id }) => id === calendar_id,
+            ),
           );
         });
-      });
 
-      calendarStorageUnwraped.on("removeAll", ({ result }) => {
-        result.map(([id]) =>
-          eventsStorageSome.removeWithFilter(
-            ({ calendar_id }) => id === calendar_id,
-          ),
-        );
-      });
+        calendarsUnwrapped.on("removeWithFilter", ({ result }) => {
+          result.map(({ id }) =>
+            eventsUnwrapped.removeWithFilter(
+              ({ calendar_id }) => id === calendar_id,
+            ),
+          );
+        });
 
-      calendarStorageUnwraped.on("removeWithFilter", ({ result }) => {
-        result.map(({ id }) =>
-          eventsStorageSome.removeWithFilter(
-            ({ calendar_id }) => id === calendar_id,
-          ),
-        );
-      });
+        calendarsUnwrapped.on("update", () => {
+          // TODO: When using the timezones
+        });
 
-      calendarStorageUnwraped.on("update", () => {
-        // TODO: When using the timezones
-      });
-
-      (async () => {
-        for (const event of await eventsStorageSome.values()) {
+        for (const event of await eventsUnwrapped.all()) {
           event.notifications.forEach((notification) => {
             notificationManager.push(notification, event);
           });
         }
-      })();
 
-      setClientData(
-        O.Some({
-          eventsStorage: eventsStorageSome,
-          calendarsStorage: calendarStorageUnwraped,
-          eventsTemplateStorage: templateStorage.unwrap(),
-          tasksStorage: tasksStorageUnwrapped,
-        }),
-      );
-    }
+        setClientData(
+          O.Some({
+            tasksStorage: tasksUnwraped,
+            eventsStorage: eventsUnwrapped,
+            calendarsStorage: calendarsUnwrapped,
+            eventsTemplateStorage: templatesUnwrapped,
+          }),
+        );
+
+        setFunctionSetup(
+          O.Some(async () => {
+            calendarsUnwrapped.setupDefaults();
+          }),
+        );
+      }
+    })();
   }, [isDataReady]);
+
+  const setupDefaultOnce = useCallback(
+    () => setupDefaults.map((setup) => setup()),
+    [setupDefaults.isSome()],
+  );
+
+  useEffect(() => {
+    setupDefaultOnce();
+  }, [setupDefaultOnce]);
 
   const memoized: StorageContext = useMemo(() => {
     return {

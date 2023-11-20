@@ -7,7 +7,7 @@ import {
 import { idGenerator } from "@/utils/idGenerator";
 import { Option } from "@/utils/option";
 import { Err, Ok, Result } from "@/utils/result";
-import { StorageActions, AddValue, MapLocalStorage } from "@/utils/storage";
+import { StorageActions, AddValue } from "@/utils/storage";
 import { ValidatorType, validateTypes } from "@/utils/validator";
 import {
   IndexedDbStorageBuilder,
@@ -55,164 +55,6 @@ const TaskValidator: ValidatorType<Task> = {
     },
   },
 };
-
-export class TaskStorage
-  implements
-    BetterEventEmitter<Task["id"], Task>,
-    StorageActions<Task["id"], Task>
-{
-  private map: MapLocalStorage<Task["id"], Task>;
-  private eventEmitter: MyEventEmitter;
-
-  private constructor(map: MapLocalStorage<string, Task>) {
-    this.map = map;
-    this.eventEmitter = new MyEventEmitter();
-  }
-
-  static new(forceUpdate: () => void) {
-    const path = "tasks";
-    const newStorage = MapLocalStorage.new<Task["id"], Task>(path, forceUpdate);
-    return newStorage.map((storage) => new TaskStorage(storage));
-  }
-
-  emit<
-    This extends StorageActions<string, Task>,
-    Event extends keyof This & string,
-  >(event: Event, args: EventArg<Event, This>): void {
-    this.eventEmitter.emit(event, args);
-  }
-  on<
-    This extends StorageActions<string, Task>,
-    Event extends keyof This & string,
-  >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
-    this.eventEmitter.on(event, handler);
-  }
-
-  @emitEvent("add")
-  add(value: AddValue<Task>): Promise<Result<Task, symbol>> {
-    const id = idGenerator();
-    const validated = validateTypes({ id, ...value }, TaskValidator);
-    const resultAsync = async () =>
-      validated.map((created) => this.map.set(id, created)).flatten();
-    return resultAsync();
-  }
-
-  update(
-    id: string,
-    updateValue: Partial<AddValue<Task>>,
-  ): Promise<Result<Task, symbol>> {
-    const found = this.map.get(id);
-    const resultAsync = async () =>
-      found
-        .map((foundTask) => {
-          const validated = validateTypes(
-            {
-              id,
-              project_id: updateValue.project_id ?? foundTask.project_id,
-              board_id: updateValue.board_id ?? foundTask.board_id,
-              title: updateValue.title ?? foundTask.title,
-              description: updateValue.description ?? foundTask.description,
-              position: updateValue.position ?? foundTask.position,
-              startDate: updateValue.startDate ?? foundTask.startDate,
-              endDate: updateValue.endDate ?? foundTask.endDate,
-            },
-            TaskValidator,
-          );
-          return validated
-            .map((updatedTask) => {
-              const result = this.map.set(id, updatedTask);
-              this.emit("update", {
-                result,
-                args: [id, updateValue],
-                opsSpecific: found,
-              });
-              return result;
-            })
-            .flatten();
-        })
-        .ok(Symbol("Cannot find any task with this id"))
-        .flatten();
-    return resultAsync();
-  }
-
-  @emitEvent("remove")
-  remove(id: string): Promise<Result<Task, symbol>> {
-    const resultAsync = async () => this.map.remove(id);
-    return resultAsync();
-  }
-
-  @emitEvent("removeWithFilter")
-  removeWithFilter(predicate: (value: Task) => boolean): Promise<Task[]> {
-    const resultAsync = async () =>
-      this.map
-        .removeAll(predicate)
-        .unwrapOrElse(() => [])
-        .map(([, value]) => value);
-    return resultAsync();
-  }
-
-  @emitEvent("removeAll")
-  removeAll(list: string[]): Promise<[string, Task][]> {
-    const resultAsync = async () =>
-      list
-        .map((id) => {
-          return this.map.remove(id);
-        })
-        .reduce(
-          (acc, value) =>
-            value.mapOrElse(
-              () => acc,
-              (ok) => {
-                acc.push([ok.id, ok]);
-                return acc;
-              },
-            ),
-          [] as Array<[Task["id"], Task]>,
-        );
-    return resultAsync();
-  }
-
-  findById(id: string): Promise<Option<Task>> {
-    const resultAsync = async () => this.map.get(id);
-    return resultAsync();
-  }
-
-  find(searched: Partial<Task>): Promise<Task[]> {
-    return (async () => {
-      const keys = Object.keys(searched) as (keyof Task)[];
-      if (keys.length === 1 && keys[0] !== "id") {
-        const from = keys[0];
-        const valueFrom = searched[from];
-
-        if (valueFrom != null) {
-          const foundOnIndex = this.map.allWithIndex(from, "id", valueFrom);
-          if (foundOnIndex.isSome()) {
-            const valuesFromIndex = [];
-            for (const id of foundOnIndex.unwrap()) {
-              const value = this.map.get(id);
-              if (value.isSome()) valuesFromIndex.push(value.unwrap());
-            }
-
-            return valuesFromIndex;
-          }
-        }
-      }
-      const keysToLook = Object.keys(searched) as (keyof Task)[];
-      return this.filteredValues((searchee) => {
-        return !keysToLook.some((key) => searchee[key] !== searched[key]);
-      });
-    })();
-  }
-
-  filteredValues(predicate: (value: Task) => boolean): Promise<Task[]> {
-    const resultAsync = async () => this.map.filterValues(predicate);
-    return resultAsync();
-  }
-  all(): Promise<Task[]> {
-    const resultAsync = async () => this.map.values();
-    return resultAsync();
-  }
-}
 
 export class TaskStorageIndexedDb
   implements
@@ -395,5 +237,9 @@ export class TaskStorageIndexedDb
   all(): Promise<Task[]> {
     const resultAsync = async () => this.map.getAll();
     return resultAsync();
+  }
+
+  close() {
+    this.map.close();
   }
 }
