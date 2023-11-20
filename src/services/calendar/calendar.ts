@@ -348,12 +348,6 @@ export class CalendarStorageIndexedDb
   private constructor(map: IndexedDbStorage<"id", Calendar>) {
     this.map = map;
     this.eventEmitter = new MyEventEmitter();
-
-    const timezone = (-new Date().getTimezoneOffset() / 60) as Timezones;
-    this.map.find({}).then((found) => {
-      if (!found.isSome())
-        this.map.add({ name: "Default Calendar", timezone, default: true });
-    });
   }
 
   emit<
@@ -387,11 +381,29 @@ export class CalendarStorageIndexedDb
       this.indexedDbBuilder.upgradeVersionHandler(),
     ]);
 
-    return dbResult
+    const storage = dbResult
       .andThen((db) => {
         return this.indexedDbBuilder.build(db, forceUpdate);
       })
       .map((value) => new CalendarStorageIndexedDb(value));
+
+    const addDefault = storage.map(async (storage) => {
+      const foundDefault = await storage.find({ default: true });
+      if (foundDefault.length === 0) {
+        const timezone = (-new Date().getTimezoneOffset() / 60) as Timezones;
+        await storage.add({
+          name: "Default Calendar",
+          default: true,
+          timezone,
+        });
+      }
+    });
+
+    if (addDefault.isOk()) {
+      await addDefault.unwrap();
+    }
+
+    return storage;
   }
 
   @emitEvent("add")
