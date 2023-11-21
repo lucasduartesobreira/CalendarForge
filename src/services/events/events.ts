@@ -1,18 +1,19 @@
 import * as R from "@/utils/result";
 import * as O from "@/utils/option";
-import {
-  AddValue,
-  Index,
-  MapLocalStorage,
-  StorageActions,
-  UpdateValue,
-} from "@/utils/storage";
+import { AddValue, StorageActions, UpdateValue } from "@/utils/storage";
 import {
   BetterEventEmitter,
   EventArg,
   MyEventEmitter,
   emitEvent,
 } from "@/utils/eventEmitter";
+import {
+  IndexedDbStorage,
+  IndexedDbStorageBuilder,
+  NOT_FOUND,
+  StorageAPI,
+  openDb,
+} from "../indexedDb";
 
 type EventNotification = {
   id: string;
@@ -53,17 +54,36 @@ type CalendarEvent = {
 type CreateEvent = AddValue<CalendarEvent>;
 type UpdateEvent = UpdateValue<CalendarEvent>;
 
-class EventStorage
+export class EventStorageIndexedDb
   implements
     StorageActions<CalendarEvent["id"], CalendarEvent>,
     BetterEventEmitter<CalendarEvent["id"], CalendarEvent>
 {
-  private map: MapLocalStorage<CalendarEvent["id"], CalendarEvent>;
+  private map: StorageAPI<"id", CalendarEvent>;
   private eventEmitter: MyEventEmitter;
 
-  private constructor(
-    map: MapLocalStorage<CalendarEvent["id"], CalendarEvent>,
-  ) {
+  private static DB_NAME = "events";
+  private static DEFAULT_VALUE(): Omit<CalendarEvent, "id"> {
+    return {
+      title: "",
+      endDate: Date.now() + 60 * 60 * 1000,
+      startDate: Date.now(),
+      description: "",
+      calendar_id: "",
+      notifications: [],
+      color: "#7a5195",
+      task_id: O.None(),
+    };
+  }
+  private static indexedDbBuilder: IndexedDbStorageBuilder<
+    "id",
+    CalendarEvent
+  > = IndexedDbStorageBuilder.new(
+    EventStorageIndexedDb.DB_NAME,
+    EventStorageIndexedDb.DEFAULT_VALUE(),
+  );
+
+  private constructor(map: IndexedDbStorage<"id", CalendarEvent>) {
     this.map = map;
     this.eventEmitter = new MyEventEmitter();
   }
@@ -82,23 +102,24 @@ class EventStorage
   filteredValues(
     predicate: (value: CalendarEvent) => boolean,
   ): Promise<CalendarEvent[]> {
-    const resultAsync = async () => this.map.filterValues(predicate);
+    const resultAsync = async () => (await this.map.getAll()).filter(predicate);
     return resultAsync();
   }
   all(): Promise<CalendarEvent[]> {
-    const resultAsync = async () => this.map.values();
+    const resultAsync = async () => await this.map.getAll();
     return resultAsync();
   }
 
-  static new(forceUpdate: () => void) {
-    const localStorage = MapLocalStorage.new<
-      CalendarEvent["id"],
-      CalendarEvent
-    >("eventsMap", forceUpdate, new Map(), {
-      task_id: [new Index(new Map(), "task_id", "id")],
-    });
+  static async new(forceUpdate: () => void) {
+    const dbResult = await openDb(EventStorageIndexedDb.DB_NAME, [
+      this.indexedDbBuilder.upgradeVersionHandler(),
+    ]);
 
-    return localStorage.map((localStorage) => new EventStorage(localStorage));
+    return dbResult
+      .andThen((db) => {
+        return this.indexedDbBuilder.build(db, forceUpdate);
+      })
+      .map((value) => new EventStorageIndexedDb(value));
   }
 
   @emitEvent("add")
@@ -110,7 +131,7 @@ class EventStorage
       ...event,
     };
 
-    const resultAsync = async () => this.map.set(eventWithId.id, eventWithId);
+    const resultAsync = async () => this.map.add(eventWithId);
     return resultAsync();
   }
 
@@ -124,141 +145,88 @@ class EventStorage
   removeWithFilter(
     predicate: (event: CalendarEvent) => boolean,
   ): Promise<CalendarEvent[]> {
-    const result = this.map.removeAll(predicate);
-    const resultAsync = async () => result.unwrap().map(([, value]) => value);
+    const result = this.map.getAll();
+    const resultAsync = async () =>
+      (
+        await Promise.all(
+          (await result)
+            .filter(predicate)
+            .map(async ({ id }) => await this.map.remove(id)),
+        )
+      ).reduce(
+        (acc, current) => (current.isOk() ? [...acc, current.unwrap()] : acc),
+        [] as CalendarEvent[],
+      );
+
     return resultAsync();
   }
 
   @emitEvent("removeAll")
   removeAll(listOfIds: Array<CalendarEvent["id"]>) {
     const resultAsync = async () =>
-      listOfIds
-        .map((id) => {
-          return this.map.remove(id);
-        })
-        .reduce(
-          (acc, value) =>
-            value.mapOrElse(
-              () => acc,
-              (ok) => {
-                acc.push([ok.id, ok]);
-                return acc;
-              },
-            ),
-          [] as Array<[CalendarEvent["id"], CalendarEvent]>,
-        );
+      (
+        await Promise.all(
+          listOfIds.map(async (id) => {
+            return await this.map.remove(id);
+          }),
+        )
+      ).reduce(
+        (acc, value) =>
+          value.mapOrElse(
+            () => acc,
+            (ok) => {
+              acc.push([ok.id, ok]);
+              return acc;
+            },
+          ),
+        [] as Array<[CalendarEvent["id"], CalendarEvent]>,
+      );
     return resultAsync();
   }
 
   findById(eventId: string): Promise<O.Option<CalendarEvent>> {
-    const event = this.map.get(eventId);
+    const event = this.map.findById(eventId);
     const resultAsync = async () => event;
     return resultAsync();
   }
 
-  find(searched: Partial<CalendarEvent>): Promise<CalendarEvent[]> {
+  findAll(searched: Partial<CalendarEvent>): Promise<CalendarEvent[]> {
     return (async () => {
-      const keys = Object.keys(searched) as (keyof CalendarEvent)[];
-      if (keys.length === 1 && keys[0] !== "id") {
-        const from = keys[0];
-        const valueFrom = searched[from];
-
-        if (valueFrom != null) {
-          const foundOnIndex = this.map.allWithIndex(from, "id", valueFrom);
-          if (foundOnIndex.isSome()) {
-            const valuesFromIndex = [];
-            for (const id of foundOnIndex.unwrap()) {
-              const value = this.map.get(id);
-              if (value.isSome()) valuesFromIndex.push(value.unwrap());
-            }
-
-            return valuesFromIndex;
-          }
-        }
-      }
-      const keysToLook = Object.keys(searched) as (keyof CalendarEvent)[];
-      return this.filteredValues((searchee) => {
-        return !keysToLook.some((key) => {
-          const searchedValue = searched[key];
-          const searcheeValue = searchee[key];
-          if (searchedValue instanceof O.OptionClass) {
-            if (
-              searcheeValue instanceof O.OptionClass &&
-              searcheeValue.isSome() &&
-              searchedValue.isSome()
-            ) {
-              return searchedValue.unwrap() !== searcheeValue.unwrap();
-            }
-
-            if (
-              searcheeValue instanceof O.OptionClass &&
-              !searcheeValue.isSome() &&
-              !searchedValue.isSome()
-            ) {
-              return false;
-            }
-
-            return true;
-          }
-
-          return searchee[key] !== searched[key];
-        });
-      });
+      return this.map.findAll(searched);
     })();
   }
 
-  filter(predicate: (event: CalendarEvent) => boolean) {
-    const filtered = this.map.filterEntries(predicate);
+  find(
+    searched: Partial<CalendarEvent>,
+  ): Promise<O.OptionClass<CalendarEvent>> {
+    return this.map.find(searched);
+  }
 
-    const resultAsync = async () => filtered;
+  filter(predicate: (event: CalendarEvent) => boolean) {
+    const filtered = this.map.getAll();
+
+    const resultAsync = async () => (await filtered).filter(predicate);
     return resultAsync();
   }
 
   update(eventId: string, event: UpdateEvent) {
-    const eventFromGet = this.map.get(eventId);
     const resultAsync = async () =>
-      eventFromGet
-        .map((eventFound) => {
-          const newEvent: CalendarEvent = {
-            id: eventId,
-            title: event.title ?? eventFound.title,
-            endDate: event.endDate ?? eventFound.endDate,
-            startDate: event.startDate ?? eventFound.startDate,
-            calendar_id: event.calendar_id ?? eventFound.calendar_id,
-            description: event.description ?? eventFound.description,
-            notifications: event.notifications ?? eventFound.notifications,
-            task_id: event.task_id ?? eventFound.task_id,
-            color: event.color ?? eventFound.color,
-          };
-
-          const result = this.map.set(eventId, newEvent);
-          const inputEventHandler: [eventId: string, event: UpdateEvent] = [
-            eventId,
-            event,
-          ];
-
-          this.emit("update", {
-            args: inputEventHandler,
-            result,
-            opsSpecific: O.Some(eventFound),
-          });
-
-          return result.unwrap();
-        })
-        .ok(Symbol("Event not found"));
+      (await this.map.findAndUpdate({ id: eventId }, event))
+        .map((value) => value.at(0))
+        .andThen((value) => (value != null ? R.Ok(value) : R.Err(NOT_FOUND)));
 
     return resultAsync();
   }
 
   values() {
-    const resultAsync = async () => this.map.values();
+    const resultAsync = async () => this.map.getAll();
     return resultAsync();
   }
 
-  sync() {
-    this.map.syncLocalStorage();
+  close() {
+    this.map.close();
   }
 }
 
 export type { CalendarEvent, CreateEvent, UpdateEvent, EventNotification };
-export { EventStorage, COLORS as EventColors };
+export { COLORS as EventColors };

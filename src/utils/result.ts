@@ -92,6 +92,18 @@ class Result<O, E> {
   andThen<K>(f: (value: O) => Result<K, E>): Result<K, E> {
     return this.map(f).flatten();
   }
+
+  asyncFlatten<NO>(
+    this: Result<Promise<Result<NO, E>>, E>,
+  ): Promise<Result<NO, E>> {
+    if (this.result.kind === "ok") {
+      return this.result.value;
+    } else if (this.result.kind === "err") {
+      return (async () => Err(this.result.value) as Result<NO, E>)();
+    } else {
+      throw "unreachable";
+    }
+  }
 }
 
 class Okay<O> extends Result<O, never> {

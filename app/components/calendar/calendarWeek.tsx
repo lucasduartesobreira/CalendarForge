@@ -252,7 +252,7 @@ const CalendarWeek = ({
       );
       lastDayOfTheWeek.setHours(23, 59, 59, 999);
       eventsStorage
-        .filter(
+        .filteredValues(
           (event) =>
             (viewableCalendarsState.unwrap()[0].get(event.calendar_id) ??
               true) &&
@@ -262,7 +262,7 @@ const CalendarWeek = ({
             event.endDate <= lastDayOfTheWeek.getTime(),
         )
         .then((filteredValue) => {
-          setEvents(filteredValue.map(([, value]) => value));
+          setEvents(filteredValue);
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

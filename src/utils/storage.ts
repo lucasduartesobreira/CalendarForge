@@ -365,6 +365,7 @@ export interface StorageActions<K, V extends Record<string, any> & { id: K }> {
   removeAll(list: K[]): Promise<Array<[K, V]>>;
   findById(id: K): Promise<O.Option<V>>;
   filteredValues(predicate: (value: V) => boolean): Promise<V[]>;
-  find(value: Partial<V>): Promise<V[]>;
+  findAll(value: Partial<V>): Promise<V[]>;
+  find(searched: Partial<V>): Promise<O.Option<V>>;
   all(): Promise<V[]>;
 }
