@@ -15,6 +15,7 @@ import {
   StorageAPI,
   openDb,
 } from "../indexedDb";
+import { Bulk } from "@/utils/bulk";
 
 export type Task = {
   id: string;
@@ -249,5 +250,9 @@ export class TaskStorageIndexedDb
 
   close() {
     this.map.close();
+  }
+
+  bulk(initialValue?: Task[]): Bulk<Task> {
+    return new Bulk(initialValue ?? [], this.map);
   }
 }

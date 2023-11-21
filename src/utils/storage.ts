@@ -1,3 +1,4 @@
+import { Bulk } from "./bulk";
 import * as O from "./option";
 import * as R from "./result";
 
@@ -371,4 +372,5 @@ export interface StorageActions<
   findAll(value: Partial<V>): Promise<V[]>;
   find(searched: Partial<V>): Promise<O.Option<V>>;
   all(): Promise<V[]>;
+  bulk(intialValue?: V[]): Bulk<V>;
 }

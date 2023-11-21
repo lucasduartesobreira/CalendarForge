@@ -14,6 +14,7 @@ import {
   openDb,
   StorageAPI,
 } from "../indexedDb";
+import { Bulk } from "@/utils/bulk";
 
 type Timezones =
   | -12
@@ -304,6 +305,10 @@ export class CalendarStorageIndexedDb
 
   close() {
     this.map.close();
+  }
+
+  bulk(initialValue?: Calendar[]): Bulk<Calendar> {
+    return new Bulk(initialValue ?? [], this.map);
   }
 }
 

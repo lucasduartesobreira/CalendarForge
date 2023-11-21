@@ -15,6 +15,7 @@ import {
   StorageAPI,
   openDb,
 } from "../indexedDb";
+import { Bulk } from "@/utils/bulk";
 
 export const INITIAL_TEMPLATE: EventTemplate = {
   id: "",
@@ -230,5 +231,9 @@ export class EventTemplateStorageIndexedDb
 
   close() {
     this.eventTemplates.close();
+  }
+
+  bulk(initialValue?: EventTemplate[]): Bulk<EventTemplate> {
+    return new Bulk(initialValue ?? [], this.eventTemplates);
   }
 }

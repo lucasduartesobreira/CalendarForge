@@ -14,6 +14,7 @@ import {
   StorageAPI,
   openDb,
 } from "../indexedDb";
+import { Bulk } from "@/utils/bulk";
 
 type EventNotification = {
   id: string;
@@ -235,6 +236,10 @@ export class EventStorageIndexedDb
 
   close() {
     this.map.close();
+  }
+
+  bulk(initialValue?: CalendarEvent[]): Bulk<CalendarEvent> {
+    return new Bulk(initialValue ?? [], this.map);
   }
 }
 
