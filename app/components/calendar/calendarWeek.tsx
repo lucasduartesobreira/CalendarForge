@@ -266,7 +266,12 @@ const CalendarWeek = ({
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listeners.eventsStorageListener, startDate, viewableCalendarsState]);
+  }, [
+    storages,
+    listeners.eventsStorageListener,
+    startDate,
+    viewableCalendarsState,
+  ]);
 
   const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
 
