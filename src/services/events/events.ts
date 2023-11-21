@@ -56,8 +56,8 @@ type UpdateEvent = UpdateValue<CalendarEvent>;
 
 export class EventStorageIndexedDb
   implements
-    StorageActions<CalendarEvent["id"], CalendarEvent>,
-    BetterEventEmitter<CalendarEvent["id"], CalendarEvent>
+    StorageActions<"id", CalendarEvent>,
+    BetterEventEmitter<"id", CalendarEvent>
 {
   private map: StorageAPI<"id", CalendarEvent>;
   private eventEmitter: MyEventEmitter;
@@ -88,15 +88,18 @@ export class EventStorageIndexedDb
     this.eventEmitter = new MyEventEmitter();
   }
   emit<
-    This extends StorageActions<string, CalendarEvent>,
+    This extends StorageActions<"id", CalendarEvent>,
     Event extends keyof This & string,
-  >(event: Event, args: EventArg<Event, This>): void {
+  >(event: Event, args: EventArg<Event, This, "id", CalendarEvent>): void {
     this.eventEmitter.emit(event, args);
   }
   on<
-    This extends StorageActions<string, CalendarEvent>,
+    This extends StorageActions<"id", CalendarEvent>,
     Event extends keyof This & string,
-  >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
+  >(
+    event: Event,
+    handler: (args: EventArg<Event, This, "id", CalendarEvent>) => void,
+  ): void {
     this.eventEmitter.on(event, handler);
   }
   filteredValues(
@@ -122,7 +125,7 @@ export class EventStorageIndexedDb
       .map((value) => new EventStorageIndexedDb(value));
   }
 
-  @emitEvent("add")
+  @emitEvent
   add(
     event: AddValue<CalendarEvent>,
   ): Promise<R.Result<CalendarEvent, symbol>> {
@@ -135,13 +138,20 @@ export class EventStorageIndexedDb
     return resultAsync();
   }
 
-  @emitEvent("remove")
+  @emitEvent
   remove(eventId: string): Promise<R.Result<CalendarEvent, symbol>> {
     const resultAsync = async () => this.map.remove(eventId);
     return resultAsync();
   }
 
-  @emitEvent("removeWithFilter")
+  @(emitEvent<
+    "id",
+    CalendarEvent,
+    EventStorageIndexedDb,
+    "removeWithFilter",
+    [predicate: (value: CalendarEvent) => boolean],
+    Promise<CalendarEvent[]>
+  >)
   removeWithFilter(
     predicate: (event: CalendarEvent) => boolean,
   ): Promise<CalendarEvent[]> {
@@ -161,7 +171,7 @@ export class EventStorageIndexedDb
     return resultAsync();
   }
 
-  @emitEvent("removeAll")
+  @emitEvent
   removeAll(listOfIds: Array<CalendarEvent["id"]>) {
     const resultAsync = async () =>
       (
