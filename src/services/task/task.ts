@@ -15,6 +15,7 @@ import {
   StorageAPI,
   openDb,
 } from "../indexedDb";
+import { Bulk } from "@/utils/bulk";
 
 export type Task = {
   id: string;
@@ -57,9 +58,7 @@ const TaskValidator: ValidatorType<Task> = {
 };
 
 export class TaskStorageIndexedDb
-  implements
-    BetterEventEmitter<Task["id"], Task>,
-    StorageActions<Task["id"], Task>
+  implements BetterEventEmitter<"id", Task>, StorageActions<"id", Task>
 {
   private map: StorageAPI<"id", Task>;
   private eventEmitter: MyEventEmitter;
@@ -99,19 +98,22 @@ export class TaskStorageIndexedDb
   }
 
   emit<
-    This extends StorageActions<string, Task>,
+    This extends StorageActions<"id", Task>,
     Event extends keyof This & string,
-  >(event: Event, args: EventArg<Event, This>): void {
+  >(event: Event, args: EventArg<Event, This, "id", Task>): void {
     this.eventEmitter.emit(event, args);
   }
   on<
-    This extends StorageActions<string, Task>,
+    This extends StorageActions<"id", Task>,
     Event extends keyof This & string,
-  >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
+  >(
+    event: Event,
+    handler: (args: EventArg<Event, This, "id", Task>) => void,
+  ): void {
     this.eventEmitter.on(event, handler);
   }
 
-  @emitEvent("add")
+  @emitEvent
   add(value: AddValue<Task>): Promise<Result<Task, symbol>> {
     const id = idGenerator();
     const validated = validateTypes({ id, ...value }, TaskValidator);
@@ -162,13 +164,20 @@ export class TaskStorageIndexedDb
     return resultAsync();
   }
 
-  @emitEvent("remove")
+  @emitEvent
   remove(id: string): Promise<Result<Task, symbol>> {
     const resultAsync = async () => this.map.remove(id);
     return resultAsync();
   }
 
-  @emitEvent("removeWithFilter")
+  @(emitEvent<
+    "id",
+    Task,
+    TaskStorageIndexedDb,
+    "removeWithFilter",
+    [predicate: (value: Task) => boolean],
+    Promise<Task[]>
+  >)
   removeWithFilter(predicate: (value: Task) => boolean): Promise<Task[]> {
     const resultAsync = async () =>
       (
@@ -191,7 +200,7 @@ export class TaskStorageIndexedDb
     return resultAsync();
   }
 
-  @emitEvent("removeAll")
+  @emitEvent
   removeAll(list: string[]): Promise<[string, Task][]> {
     const resultAsync = async () =>
       (
@@ -241,5 +250,9 @@ export class TaskStorageIndexedDb
 
   close() {
     this.map.close();
+  }
+
+  bulk(initialValue?: Task[]): Bulk<Task> {
+    return new Bulk(initialValue ?? [], this.map);
   }
 }

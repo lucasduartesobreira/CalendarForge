@@ -21,10 +21,10 @@ import { Task, TaskStorageIndexedDb } from "@/services/task/task";
 import { StorageActions } from "@/utils/storage";
 
 type Storages = {
-  eventsStorage: StorageActions<string, CalendarEvent>;
-  calendarsStorage: StorageActions<string, Calendar>;
-  eventsTemplateStorage: StorageActions<string, EventTemplate>;
-  tasksStorage: StorageActions<string, Task>;
+  eventsStorage: StorageActions<"id", CalendarEvent>;
+  calendarsStorage: StorageActions<"id", Calendar>;
+  eventsTemplateStorage: StorageActions<"id", EventTemplate>;
+  tasksStorage: StorageActions<"id", Task>;
 };
 
 type StorageContext = {

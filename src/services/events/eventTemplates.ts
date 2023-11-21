@@ -15,6 +15,7 @@ import {
   StorageAPI,
   openDb,
 } from "../indexedDb";
+import { Bulk } from "@/utils/bulk";
 
 export const INITIAL_TEMPLATE: EventTemplate = {
   id: "",
@@ -35,8 +36,8 @@ export type UpdateTemplate = Partial<CreateTemplate>;
 
 export class EventTemplateStorageIndexedDb
   implements
-    StorageActions<EventTemplate["id"], EventTemplate>,
-    BetterEventEmitter<EventTemplate["id"], EventTemplate>
+    StorageActions<"id", EventTemplate>,
+    BetterEventEmitter<"id", EventTemplate>
 {
   private eventTemplates: StorageAPI<"id", EventTemplate>;
   private eventEmitter: MyEventEmitter;
@@ -76,25 +77,35 @@ export class EventTemplateStorageIndexedDb
   }
 
   emit<
-    This extends StorageActions<string, EventTemplate>,
+    This extends StorageActions<"id", EventTemplate>,
     Event extends keyof This & string,
-  >(event: Event, args: EventArg<Event, This>): void {
+  >(event: Event, args: EventArg<Event, This, "id", EventTemplate>): void {
     this.eventEmitter.emit(event, args);
   }
   on<
-    This extends StorageActions<string, EventTemplate>,
+    This extends StorageActions<"id", EventTemplate>,
     Event extends keyof This & string,
-  >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
+  >(
+    event: Event,
+    handler: (args: EventArg<Event, This, "id", EventTemplate>) => void,
+  ): void {
     this.eventEmitter.on(event, handler);
   }
 
-  @emitEvent("remove")
+  @emitEvent
   remove(id: string): Promise<R.Result<EventTemplate, symbol>> {
     const resultAsync = async () => this.eventTemplates.remove(id);
     return resultAsync();
   }
 
-  @emitEvent("removeWithFilter")
+  @(emitEvent<
+    "id",
+    EventTemplate,
+    EventTemplateStorageIndexedDb,
+    "removeWithFilter",
+    [predicate: (value: EventTemplate) => boolean],
+    Promise<EventTemplate[]>
+  >)
   removeWithFilter(
     predicate: (value: EventTemplate) => boolean,
   ): Promise<EventTemplate[]> {
@@ -120,7 +131,7 @@ export class EventTemplateStorageIndexedDb
     return resultAsync();
   }
 
-  @emitEvent("removeAll")
+  @emitEvent
   removeAll(listOfIds: Array<EventTemplate["id"]>) {
     const resultAsync = async () =>
       (
@@ -151,7 +162,7 @@ export class EventTemplateStorageIndexedDb
     return resultAsync();
   }
 
-  @emitEvent("add")
+  @emitEvent
   add(
     template: AddValue<EventTemplate>,
   ): Promise<R.Result<EventTemplate, symbol>> {
@@ -220,5 +231,9 @@ export class EventTemplateStorageIndexedDb
 
   close() {
     this.eventTemplates.close();
+  }
+
+  bulk(initialValue?: EventTemplate[]): Bulk<EventTemplate> {
+    return new Bulk(initialValue ?? [], this.eventTemplates);
   }
 }

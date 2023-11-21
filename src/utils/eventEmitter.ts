@@ -2,7 +2,9 @@ import { StorageActions } from "./storage";
 
 export type EventArg<
   Event extends keyof Prototype,
-  Prototype extends StorageActions<unknown, any>,
+  Prototype extends StorageActions<K, V>,
+  K extends keyof V & string,
+  V extends Record<string, any> & { id: string },
 > = {
   args: Parameters<Prototype[Event]>;
   opsSpecific?: any;
@@ -11,49 +13,56 @@ export type EventArg<
 
 type RemovePromise<Type> = Type extends Promise<infer V> ? V : Type;
 
-export const emitEvent = <
-  Event extends keyof Prototype,
-  Prototype extends StorageActions<any, any>,
->(
-  path: Event,
-) => {
-  return function <
-    This extends Prototype & {
-      emit(event: Event, args: EventArg<Event, Prototype>): void;
-    },
-    Args extends Parameters<Prototype[Event]>,
-    Method extends (this: This, ...args: Args) => Return,
-    Return extends ReturnType<Prototype[Event]>,
-  >(target: Method, context: ClassMethodDecoratorContext<This, Method>) {
-    if (path === context.name) {
-      return function (this: This, ...args: Args) {
-        const result = target.apply(this, args);
-        if (result instanceof Promise) {
-          result.then((result) => {
-            this.emit(path, { args, result });
-          });
-        } else {
-          const resultWithoutPromise = result as RemovePromise<Return>;
-          this.emit(path, { args, result: resultWithoutPromise });
-        }
-        return result;
-      };
-    }
-    return target;
-  };
+type PossibleEvents = {
+  [K in keyof StorageActions<
+    string,
+    Record<string, any> & { id: string }
+  > as `${K}`]: StorageActions<string, Record<string, any> & { id: string }>[K];
 };
 
+type RecordWithId = Record<string, any> & { id: string };
+
+interface MyClassDecoratedMethod<Event extends keyof This, This> {
+  readonly name: Event;
+}
+
+export function emitEvent<
+  K extends keyof V & string,
+  V extends RecordWithId,
+  TThis extends StorageActions<K, V> & BetterEventEmitter<K, V>,
+  Event extends keyof PossibleEvents,
+  TArgs extends Parameters<TThis[Event]>,
+  TReturn,
+>(
+  method: (this: TThis, ...args: TArgs) => TReturn,
+  context: MyClassDecoratedMethod<Event, TThis>,
+) {
+  return function (this: TThis, ...args: TArgs) {
+    const result = method.apply(this, args);
+    if (result instanceof Promise) {
+      result.then((result) => {
+        const fixThisLater = result as RemovePromise<ReturnType<TThis[Event]>>;
+        this.emit(context.name, { args, result: fixThisLater });
+      });
+    } else {
+      const fixThisLater = result as RemovePromise<ReturnType<TThis[Event]>>;
+      this.emit(context.name, { args, result: fixThisLater });
+    }
+    return result;
+  };
+}
+
 export interface BetterEventEmitter<
-  K,
-  V extends Record<string, any> & { id: K },
+  K extends keyof V & string,
+  V extends Record<string, any> & { id: string },
 > {
   emit<This extends StorageActions<K, V>, Event extends keyof This & string>(
     event: Event,
-    args: EventArg<Event, This>,
+    args: EventArg<Event, This, K, V>,
   ): void;
   on<This extends StorageActions<K, V>, Event extends keyof This & string>(
     event: Event,
-    handler: (args: EventArg<Event, This>) => void,
+    handler: (args: EventArg<Event, This, K, V>) => void,
   ): void;
 }
 

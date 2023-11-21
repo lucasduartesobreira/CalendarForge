@@ -14,6 +14,7 @@ import {
   openDb,
   StorageAPI,
 } from "../indexedDb";
+import { Bulk } from "@/utils/bulk";
 
 type Timezones =
   | -12
@@ -53,9 +54,7 @@ type CreateCalendar = AddValue<Calendar>;
 type UpdateCalendar = UpdateValue<Calendar>;
 
 export class CalendarStorageIndexedDb
-  implements
-    StorageActions<Calendar["id"], Calendar>,
-    BetterEventEmitter<Calendar["id"], Calendar>
+  implements StorageActions<"id", Calendar>, BetterEventEmitter<"id", Calendar>
 {
   private eventEmitter: MyEventEmitter;
   private static validator: ValidatorType<Calendar> = {
@@ -95,15 +94,18 @@ export class CalendarStorageIndexedDb
   }
 
   emit<
-    This extends StorageActions<string, Calendar>,
+    This extends StorageActions<"id", Calendar>,
     Event extends keyof This & string,
-  >(event: Event, args: EventArg<Event, This>): void {
+  >(event: Event, args: EventArg<Event, This, "id", Calendar>): void {
     this.eventEmitter.emit(event, args);
   }
   on<
-    This extends StorageActions<string, Calendar>,
+    This extends StorageActions<"id", Calendar>,
     Event extends keyof This & string,
-  >(event: Event, handler: (args: EventArg<Event, This>) => void): void {
+  >(
+    event: Event,
+    handler: (args: EventArg<Event, This, "id", Calendar>) => void,
+  ): void {
     this.eventEmitter.on(event, handler);
   }
 
@@ -148,7 +150,7 @@ export class CalendarStorageIndexedDb
     })();
   }
 
-  @emitEvent("add")
+  @emitEvent
   add(calendar: AddValue<Calendar>): Promise<R.Result<Calendar, symbol>> {
     const { id: _id, ...validator } = CalendarStorageIndexedDb.validator;
     const validated = validateTypes(calendar, validator);
@@ -172,14 +174,21 @@ export class CalendarStorageIndexedDb
     "Not allowed to delete the default calendar",
   );
 
-  @emitEvent("remove")
+  @emitEvent
   remove(id: string): Promise<R.Result<Calendar, symbol>> {
     const calendar = this.map.remove(id);
 
     return calendar;
   }
 
-  @emitEvent("removeWithFilter")
+  @(emitEvent<
+    "id",
+    Calendar,
+    CalendarStorageIndexedDb,
+    "removeWithFilter",
+    [predicate: (value: Calendar) => boolean],
+    Promise<Calendar[]>
+  >)
   removeWithFilter(
     predicate: (value: Calendar) => boolean,
   ): Promise<Calendar[]> {
@@ -203,7 +212,7 @@ export class CalendarStorageIndexedDb
     })();
   }
 
-  @emitEvent("removeAll")
+  @emitEvent
   removeAll(listOfIds: Array<Calendar["id"]>) {
     const resultAsync = async () =>
       (
@@ -296,6 +305,10 @@ export class CalendarStorageIndexedDb
 
   close() {
     this.map.close();
+  }
+
+  bulk(initialValue?: Calendar[]): Bulk<Calendar> {
+    return new Bulk(initialValue ?? [], this.map);
   }
 }
 
