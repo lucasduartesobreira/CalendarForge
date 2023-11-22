@@ -1,0 +1,38 @@
+name: Auto Close Issue
+
+on:
+  pull_request:
+     types: 
+       - closed
+     branches:
+       - stage
+
+  workflow_dispatch:
+
+jobs:
+  autocloseissue:
+    if:  github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Detect Issues
+        id: detect-issues
+        run: |
+          any_issues=($(echo "$PR_BODY" | grep -E -i -o '[cC]lose[s]? #[0-9]+' | sed -E 's/[cC]lose[s]? #([0-9]+)/\1/g'))
+          echo "closing_issues=$any_issues" >> $GITHUB_OUTPUT
+          echo "amount=${#any_issues[@]}" >> $GITHUB_OUTPUT
+
+          echo "Will close these issues: $(echo ${any_issues[@]} | sed -E 's/\s+/, /g' )"
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+      - name: Close Issues
+        if: ${{ steps.detect-issues.outputs.amount > 0 }}
+        run: |
+          for t in $ISSUES; do
+            gh issue close "$REPOSITORY/issues/$t"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUES: ${{ steps.detect-issues.outputs.closing_issues }}
+          REPOSITORY: ${{ github.event.repository.html_url }}
