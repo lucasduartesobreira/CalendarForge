@@ -14,7 +14,7 @@ import {
   CreateCalendar,
   Timezones,
 } from "@/services/calendar/calendar";
-import UpdateCalendarForm from "../calendar/updateCalendar/updateCalendar";
+import UpdateCalendarForm from "@/components/calendar-update-form/updateCalendar";
 import { Actions } from "@/hooks/mapHook";
 
 const initialCalendar: CreateCalendar = {
