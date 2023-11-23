@@ -3,7 +3,7 @@ import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
 import { ReactNode, useContext, useEffect, useMemo, useState } from "react";
-import UpdateEventForm from "../events/updateEvent/updateEvent";
+import UpdateEventForm from "@/components/event-update-form/updateEvent";
 import { Actions } from "@/hooks/mapHook";
 
 const range24 = Array.from(new Array(24));
