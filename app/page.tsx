@@ -5,7 +5,7 @@ import CreateEventButton from "@/components/event-create-form/createEvent";
 import SideBar from "@/components/sideBar/SideBar";
 import { StorageContext, useDataStorage } from "@/hooks/dataHook";
 import { useMap } from "@/hooks/mapHook";
-import { WeekNavigation } from "@/components/calendar/navBar";
+import { WeekNavigation } from "@/components/calendar-nav-bar/navBar";
 
 const NavBarContainer = ({ children }: { children: any }) => {
   return (
