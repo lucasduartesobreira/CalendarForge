@@ -1,7 +1,7 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
 import CalendarWeek from "@/components/calendar-week-view/calendarWeek";
-import CreateEventButton from "@/components/createEvent/createEvent";
+import CreateEventButton from "@/components/event-create-form/createEvent";
 import SideBar from "@/components/sideBar/SideBar";
 import { StorageContext, useDataStorage } from "@/hooks/dataHook";
 import { useMap } from "@/hooks/mapHook";
