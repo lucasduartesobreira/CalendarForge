@@ -1,39 +1,27 @@
-import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
-import { Calendar, Timezones } from "@/services/calendar/calendar";
-import { RefObject, useContext, useEffect, useState } from "react";
+import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
 import * as O from "@/utils/option";
-import { EventTemplate } from "@/services/events/eventTemplates";
-import { UpdateEventTemplateForm } from "@/components/templates/updateEventTemplate";
+import { RefObject, useContext, useState } from "react";
+import OutsideClick from "@/components/utils/outsideClick";
 
-const UpdateCalendarForm = ({
+const initialCalendar: CreateCalendar = {
+  name: "",
+  timezone: 0,
+  default: false,
+};
+
+export const CreateCalendarForm = ({
   refs,
   setOpen,
-  initialCalendar,
 }: {
   refs: O.Option<RefObject<any>[]>;
   setOpen: (open: boolean) => void;
-  initialCalendar: Calendar;
 }) => {
-  const { id, ...initialForm } = initialCalendar;
-  const [form, setForm] = useState(initialForm);
-  const { storages, listeners } = useContext(StorageContext);
-  const [selectedTemplate, setSelectedTemplate] = useState<
-    O.Option<EventTemplate>
-  >(O.None());
-  const [templates, setTemplates] = useState<EventTemplate[]>([]);
-
-  useEffect(() => {
-    storages.map(async ({ eventsTemplateStorage }) => {
-      const allTemplates = await eventsTemplateStorage.all();
-      setTemplates(() =>
-        allTemplates.filter((template) => template.calendar_id === id),
-      );
-    });
-  }, [listeners.eventsTemplateStorageListener]);
+  const [form, setForm] = useState(initialCalendar);
+  const { storages } = useContext(StorageContext);
 
   if (storages.isSome()) {
-    const { calendarsStorage, eventsStorage } = storages.unwrap();
+    const { calendarsStorage } = storages.unwrap();
     return (
       <OutsideClick
         doSomething={() => {
@@ -42,31 +30,17 @@ const UpdateCalendarForm = ({
         refs={refs}
         className="fixed z-[2000] top-1/2 left-1/2"
       >
-        {!selectedTemplate.isSome() && (
+        <div className="flex">
           <form
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              ev.stopPropagation();
-              calendarsStorage.update(id, form);
+            onSubmit={() => {
+              calendarsStorage.add(form);
               setOpen(false);
             }}
             className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden"
           >
-            <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center">
+            <div className="w-full absolute top-0 h-[16px] left-0 bg-neutral-300 flex">
               <button
-                className="ml-auto mr-2 text-red-500"
-                onClick={() => {
-                  setOpen(false);
-                  calendarsStorage.remove(id);
-                  eventsStorage.removeWithFilter(
-                    (event) => event.calendar_id === id,
-                  );
-                }}
-              >
-                Delete
-              </button>
-              <button
-                className=" mr-3 text-neutral-500 text-xs"
+                className="ml-auto mr-3 text-neutral-500 text-xs"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -85,7 +59,6 @@ const UpdateCalendarForm = ({
                 form.name = e.target.value;
                 setForm(form);
               }}
-              defaultValue={initialCalendar.name}
             />
             <label className="text-sm mx-1 mb-4">
               Timezone
@@ -98,7 +71,7 @@ const UpdateCalendarForm = ({
 
                   setForm(form);
                 }}
-                defaultValue={form.timezone}
+                defaultValue={-new Date().getTimezoneOffset() / 60}
               >
                 <option value={-12}>(GMT-12:00)</option>
                 <option value={-11}>(GMT-11:00)</option>
@@ -127,46 +100,16 @@ const UpdateCalendarForm = ({
                 <option value={12}>(GMT12:00)</option>
               </select>
             </label>
-            {templates.length > 0 && (
-              <label className="mx-1 mb-4">
-                Templates
-                <div className="text-black bg-neutral-200 rounded-md py-1 px-1">
-                  {templates.map((template) => (
-                    <div key={template.id} className="relative px-2 flex">
-                      {template.title}
-                      <button
-                        className="text-yellow-500 ml-auto"
-                        onClick={(ev) => {
-                          ev.preventDefault();
-                          ev.stopPropagation();
-                          setSelectedTemplate(O.Some(template));
-                        }}
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </label>
-            )}
             <input
               type="submit"
               className="absolute bottom-0 w-full left-0 text-white bg-primary-500 rounded-md"
               value={"Save"}
             />
           </form>
-        )}
-        {selectedTemplate.isSome() && (
-          <UpdateEventTemplateForm
-            setOpen={() => setSelectedTemplate(O.None())}
-            initialForm={selectedTemplate.unwrap()}
-          />
-        )}
+        </div>
       </OutsideClick>
     );
   }
 
   return null;
 };
-
-export default UpdateCalendarForm;

@@ -1,4 +1,4 @@
-import { NOT_FOUND, StorageAPI } from "@/services/indexedDb";
+import { NOT_FOUND, StorageAPI } from "./indexedDb";
 import { idGenerator } from "./idGenerator";
 import { Err, Ok, Result } from "./result";
 

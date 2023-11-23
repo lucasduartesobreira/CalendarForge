@@ -8,12 +8,12 @@ import { useContext, useEffect, useState } from "react";
 import OutsideClick from "../utils/outsideClick";
 import * as O from "@/utils/option";
 import {
-  NewEventNotificationForm,
   UpdateNotificationForm,
   initialNotification,
-} from "../events/notifications/eventNotificationsForm";
+} from "@/components/notifications-update-form/eventNotificationsForm";
 import { EventColors } from "@/services/events/events";
 import { Calendar } from "@/services/calendar/calendar";
+import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
 
 export const UpdateEventTemplateForm = ({
   setOpen,

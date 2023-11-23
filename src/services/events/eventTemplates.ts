@@ -14,7 +14,7 @@ import {
   NOT_FOUND,
   StorageAPI,
   openDb,
-} from "../indexedDb";
+} from "@/utils/indexedDb";
 import { Bulk } from "@/utils/bulk";
 
 export const INITIAL_TEMPLATE: EventTemplate = {

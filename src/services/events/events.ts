@@ -13,7 +13,7 @@ import {
   NOT_FOUND,
   StorageAPI,
   openDb,
-} from "../indexedDb";
+} from "@/utils/indexedDb";
 import { Bulk } from "@/utils/bulk";
 
 type EventNotification = {

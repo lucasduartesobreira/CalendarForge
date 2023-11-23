@@ -1,110 +1,40 @@
-"use client";
-import React, {
-  RefObject,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import {
   CalendarEvent,
   CreateEvent,
   EventColors,
 } from "@/services/events/events";
-import OutsideClick from "../utils/outsideClick";
 import { getHTMLDateTime } from "@/utils/date";
 import * as O from "@/utils/option";
+import { useContext, useEffect, useState } from "react";
 import {
-  NewEventNotificationForm,
   UpdateNotificationForm,
   initialNotification,
-} from "../events/notifications/eventNotificationsForm";
-import { EventTemplate } from "@/services/events/eventTemplates";
+} from "@/components/notifications-update-form/eventNotificationsForm";
 import { Calendar } from "@/services/calendar/calendar";
+import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
 
-const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
-
-const initialFormState: CreateEvent = {
-  title: "",
-  endDate: Date.now() + 60 * 60 * 1000,
-  startDate: Date.now(),
-  description: "",
-  calendar_id: OWN_CALENDAR_ID,
-  notifications: [],
-  color: "#7a5195",
-  task_id: O.None(),
-};
-
-const CreateEventForm = ({
+const UpdateEventForm = ({
   setOpen,
   initialForm,
-  blockdRefs,
 }: {
   setOpen: (open: boolean) => void;
-  initialForm: CreateEvent;
-  blockdRefs: O.Option<RefObject<any>[]>;
+  initialForm: CalendarEvent;
 }) => {
-  const initialStartDate = new Date(initialForm.startDate);
-  const initialEndDate = new Date(initialForm.endDate);
-  initialStartDate.setSeconds(0, 0);
-  initialEndDate.setSeconds(0, 0);
-
-  const [form, setForm] = useState({
-    ...initialForm,
-    notifications: [...initialForm.notifications],
-    startDate: initialStartDate.getTime(),
-    endDate: initialEndDate.getTime(),
-  });
-
-  const [selectedTemplate, setSelectedTemplate] = useState<string>();
-  const [templates, setTemplates] = useState<EventTemplate[]>([]);
-  const [calendars, setCalendars] = useState<Calendar[]>([]);
   const { storages } = useContext(StorageContext);
-
-  useEffect(() => {
-    if (storages.isSome()) {
-      (async () => {
-        const { calendarsStorage } = storages.unwrap();
-        const foundDefault = await calendarsStorage.find({ default: true });
-        foundDefault.map(({ id }) => {
-          form.calendar_id = id;
-          setForm({ ...form });
-        });
-      })();
-    }
-  }, []);
-
-  useEffect(() => {
-    storages.map(async ({ eventsTemplateStorage }) =>
-      setTemplates(await eventsTemplateStorage.all()),
-    );
-  }, []);
+  const { id, ...initialFormState } = initialForm;
+  const [form, setForm] = useState(initialFormState);
+  const [calendars, setCalendars] = useState<Calendar[]>([]);
 
   useEffect(() => {
     storages.map(async ({ calendarsStorage }) =>
       setCalendars(await calendarsStorage.all()),
     );
   }, []);
-
-  useEffect(() => {
-    if (selectedTemplate && selectedTemplate.length > 0) {
-      storages.map(async ({ eventsTemplateStorage }) =>
-        (await eventsTemplateStorage.findById(selectedTemplate)).map(
-          (template) =>
-            setForm({
-              ...template,
-              startDate: form.startDate,
-              endDate: form.endDate,
-              task_id: O.None(),
-            }),
-        ),
-      );
-    }
-  }, [selectedTemplate]);
-
   if (storages.isSome()) {
-    const { eventsStorage } = storages.unwrap();
+    const { eventsStorage, calendarsStorage, eventsTemplateStorage } =
+      storages.unwrap();
 
     const handleChangeText =
       <
@@ -117,7 +47,7 @@ const CreateEventForm = ({
       ) =>
       (event: React.ChangeEvent<HTMLInputElement>) => {
         form[prop] = event.target.value;
-        setForm({ ...form });
+        setForm(form);
       };
 
     const handleChangeDates =
@@ -125,58 +55,28 @@ const CreateEventForm = ({
       (event: React.ChangeEvent<HTMLInputElement>) => {
         const target = new Date(event.target.value);
         form[prop] = target.getTime();
-        setForm({ ...form });
+        setForm(form);
       };
 
     const handleSubmit = (submitEvent: any) => {
       submitEvent.preventDefault();
 
-      eventsStorage.add(form);
+      eventsStorage.update(id, form);
       setOpen(false);
     };
-    const startDate = new Date(initialForm.startDate);
-    startDate.setSeconds(0, 0);
-    const endDate = new Date(initialForm.endDate);
-    endDate.setSeconds(0, 0);
 
     return (
       <OutsideClick
-        doSomething={() => {
-          setOpen(false);
-        }}
-        refs={blockdRefs}
+        doSomething={() => setOpen(false)}
+        refs={O.None()}
         className="z-[1000] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
       >
         <form
           hidden={false}
           onSubmit={handleSubmit}
           className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
-          id="form1"
         >
           <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center justify-center">
-            <label className="ml-5 origin-center text-neutral-500">
-              {selectedTemplate != null && selectedTemplate.length > 0
-                ? "Template"
-                : ""}
-              <select
-                value={selectedTemplate}
-                className="bg-neutral-300"
-                onChange={(ev) => {
-                  ev.preventDefault();
-                  const selectedValue = ev.currentTarget.value;
-                  setSelectedTemplate(selectedValue);
-                }}
-              >
-                <option value={undefined}></option>
-                {templates.map((template, index) => {
-                  return (
-                    <option key={index} value={template.id}>
-                      {template.title}
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -187,17 +87,16 @@ const CreateEventForm = ({
               X
             </button>
           </div>
-
           <input
             placeholder="Title"
-            value={form.title}
+            defaultValue={initialForm.title}
             className="px-2 py-1 rounded-md mt-2 text-base bg-neutral-200"
             onChange={handleChangeText("title")}
             type="text"
           />
           <input
             placeholder="Description"
-            value={form.description}
+            defaultValue={initialForm.description}
             className="px-2 py-1 rounded-md  bg-neutral-200"
             onChange={handleChangeText("description")}
             type="text"
@@ -207,7 +106,7 @@ const CreateEventForm = ({
               Initial Date
               <input
                 placeholder=""
-                value={getHTMLDateTime(new Date(form.startDate))}
+                defaultValue={getHTMLDateTime(new Date(initialForm.startDate))}
                 className="bg-neutral-200"
                 onChange={handleChangeDates("startDate")}
                 type="datetime-local"
@@ -217,7 +116,7 @@ const CreateEventForm = ({
               End Date
               <input
                 placeholder=""
-                value={getHTMLDateTime(new Date(form.endDate))}
+                defaultValue={getHTMLDateTime(new Date(initialForm.endDate))}
                 className="bg-neutral-200"
                 onChange={handleChangeDates("endDate")}
                 type="datetime-local"
@@ -229,19 +128,17 @@ const CreateEventForm = ({
               form.calendar_id = event.target.value;
               setForm({ ...form });
             }}
-            className="px-2 py-1 rounded-md bg-neutral-200"
             value={form.calendar_id}
+            className="px-2 py-1 rounded-md bg-neutral-200"
           >
-            {calendars.map((value, index) => {
-              return (
-                <option key={index} value={value.id}>
-                  {value.name}
-                </option>
-              );
-            })}
+            {calendars.map((value, index) => (
+              <option key={index} value={value.id}>
+                {value.name}
+              </option>
+            ))}
           </select>
           <select
-            value={form.color}
+            defaultValue={form.color}
             onChange={(event) => {
               form.color = event.target.value as CalendarEvent["color"];
               setForm({ ...form });
@@ -255,7 +152,7 @@ const CreateEventForm = ({
               </option>
             ))}
           </select>
-          <div className="flex flex-col px-2 py-1 bg-neutral-200 min-h-[24px] items-start justify-start rounded-md mb-4">
+          <div className="flex flex-col px-2 py-1 bg-neutral-200 min-h-[24px] items-start justify-start rounded-md mb-12">
             {form.notifications.map((notification, index) => (
               <UpdateNotificationForm
                 notification={notification}
@@ -286,12 +183,34 @@ const CreateEventForm = ({
               resetNotification={initialNotification}
             ></NewEventNotificationForm>
           </div>
-          <input
-            type="submit"
-            className="absolute bottom-0 font-semibold w-full left-0 text-white bg-primary-500 rounded-md"
-            value={"Save"}
-            form="form1"
-          />
+          <div className="absolute w-full bottom-0 flex flex-col gap-[4px] left-0">
+            <div className="w-full flex items-center justify-center gap-2 px-4">
+              <button
+                className="bg-red-500 font-semibold w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
+                onClick={() => {
+                  setOpen(false);
+                  eventsStorage.remove(id);
+                }}
+              >
+                Delete
+              </button>
+              <button
+                className="bg-amber-500 font-semibold w-full rounded-xl text-text-inverse px-2 py-1 text-sm"
+                onClick={() => {
+                  setOpen(false);
+                  const { startDate: _sd, endDate: _ed, ...template } = form;
+                  eventsTemplateStorage.add(template);
+                }}
+              >
+                Make Template
+              </button>
+            </div>
+            <input
+              type="submit"
+              className="w-full left-0 font-semibold text-white bg-primary-500 rounded-md"
+              value={"Save"}
+            />
+          </div>
         </form>
       </OutsideClick>
     );
@@ -300,29 +219,4 @@ const CreateEventForm = ({
   return null;
 };
 
-const CreateEventButton = () => {
-  const [open, setOpen] = useState(false);
-  const buttonRef = useRef(null);
-  return (
-    <div className="">
-      <button
-        ref={buttonRef}
-        className="absolute bottom-8 right-8 w-24 h-24 z-[1000] rounded-s-full rounded-e-full bg-primary-500"
-        onClick={() => setOpen(!open)}
-      >
-        Create Event
-      </button>
-      {open && (
-        <CreateEventForm
-          setOpen={setOpen}
-          initialForm={initialFormState}
-          blockdRefs={O.Some([buttonRef])}
-        ></CreateEventForm>
-      )}
-    </div>
-  );
-};
-
-export default CreateEventButton;
-
-export { CreateEventForm };
+export default UpdateEventForm;
