@@ -13,7 +13,7 @@ import {
   IndexedDbStorageBuilder,
   openDb,
   StorageAPI,
-} from "../indexedDb";
+} from "@/utils/indexedDb";
 import { Bulk } from "@/utils/bulk";
 
 type Timezones =
