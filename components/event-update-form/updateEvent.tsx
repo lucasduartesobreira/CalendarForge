@@ -12,7 +12,7 @@ import {
   NewEventNotificationForm,
   UpdateNotificationForm,
   initialNotification,
-} from "@/components/events/notifications/eventNotificationsForm";
+} from "@/components/notifications-update-form/eventNotificationsForm";
 import { Calendar } from "@/services/calendar/calendar";
 
 const UpdateEventForm = ({

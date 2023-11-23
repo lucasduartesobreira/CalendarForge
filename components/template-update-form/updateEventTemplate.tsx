@@ -11,7 +11,7 @@ import {
   NewEventNotificationForm,
   UpdateNotificationForm,
   initialNotification,
-} from "../events/notifications/eventNotificationsForm";
+} from "@/components/notifications-update-form/eventNotificationsForm";
 import { EventColors } from "@/services/events/events";
 import { Calendar } from "@/services/calendar/calendar";
 

@@ -19,7 +19,7 @@ import {
   NewEventNotificationForm,
   UpdateNotificationForm,
   initialNotification,
-} from "../events/notifications/eventNotificationsForm";
+} from "@/components/notifications-update-form/eventNotificationsForm";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { Calendar } from "@/services/calendar/calendar";
 
