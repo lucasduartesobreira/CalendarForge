@@ -1,11 +1,11 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
-import CalendarWeek from "./components/calendar/calendarWeek";
-import CreateEventButton from "./components/createEvent/createEvent";
-import SideBar from "./components/sideBar/SideBar";
+import CalendarWeek from "@/components/calendar/calendarWeek";
+import CreateEventButton from "@/components/createEvent/createEvent";
+import SideBar from "@/components/sideBar/SideBar";
 import { StorageContext, useDataStorage } from "@/hooks/dataHook";
 import { useMap } from "@/hooks/mapHook";
-import { WeekNavigation } from "./components/calendar/navBar";
+import { WeekNavigation } from "@/components/calendar/navBar";
 
 const NavBarContainer = ({ children }: { children: any }) => {
   return (
