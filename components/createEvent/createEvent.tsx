@@ -16,12 +16,12 @@ import OutsideClick from "../utils/outsideClick";
 import { getHTMLDateTime } from "@/utils/date";
 import * as O from "@/utils/option";
 import {
-  NewEventNotificationForm,
   UpdateNotificationForm,
   initialNotification,
 } from "@/components/notifications-update-form/eventNotificationsForm";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { Calendar } from "@/services/calendar/calendar";
+import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 

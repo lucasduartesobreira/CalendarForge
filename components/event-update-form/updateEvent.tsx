@@ -9,11 +9,11 @@ import { getHTMLDateTime } from "@/utils/date";
 import * as O from "@/utils/option";
 import { useContext, useEffect, useState } from "react";
 import {
-  NewEventNotificationForm,
   UpdateNotificationForm,
   initialNotification,
 } from "@/components/notifications-update-form/eventNotificationsForm";
 import { Calendar } from "@/services/calendar/calendar";
+import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
 
 const UpdateEventForm = ({
   setOpen,
