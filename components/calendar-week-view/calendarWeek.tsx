@@ -59,7 +59,7 @@ const CalendarWeek = ({
   ]);
 
   const weekEventsByDay = useMemo(() => {
-    const initial: CalendarEvent[][] = [[], [], [], [], [], [], [], []];
+    const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
     return events.reduce((acc, event) => {
       const startDate = new Date(event.startDate);
       const endDate = new Date(event.endDate);
