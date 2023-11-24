@@ -47,6 +47,16 @@ const rowStartClass = [
   "row-start-[26]",
 ];
 
+const colStartClass = [
+  "col-start-[2]",
+  "col-start-[3]",
+  "col-start-[4]",
+  "col-start-[5]",
+  "col-start-[6]",
+  "col-start-[7]",
+  "col-start-[8]",
+];
+
 const DAY_HEADER_HEIGHT = 48;
 const HOUR_BLOCK_HEIGHT = 64;
 const HOUR_DIVISION = 4;
@@ -86,43 +96,17 @@ const startAndHeight = (startDate: Date, endDate: Date, day: number) => {
 const DayBackground = ({
   dayOfWeek,
   day,
-  events,
-  setSelectedEvent,
   isToday,
 }: {
   dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   day: number;
-  events: CalendarEvent[];
   isToday: boolean;
-  setSelectedEvent: (event: O.Option<CalendarEvent>) => void;
 }) => {
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const eventsMap = events.sort((a, b) => a.startDate - b.startDate);
-  const conflicts = events.reduce((acc, event, index, array) => {
-    const toSearch = array.slice(index + 1);
-    toSearch.forEach((possibleConflict) => {
-      if (possibleConflict.startDate < event.endDate) {
-        const zIndex = acc.get(possibleConflict.id);
-        if (!zIndex) {
-          acc.set(possibleConflict.id, 1);
-        } else {
-          acc.set(possibleConflict.id, zIndex + 1);
-        }
-      }
-    });
-
-    return acc;
-  }, new Map<string, number>());
-
   const color = isToday ? "bg-primary-50" : "bg-white";
 
   return (
     <div
-      className={`grid grid-rows-[auto,repeat(24,64px)] relative bg-white text-neutral-300`}
+      className={`grid grid-rows-[auto,repeat(24,64px)] absolute w-full bg-white text-neutral-300`}
     >
       <DayHeader day={day} color={color} dayOfWeek={dayOfWeek} />
       {range24.map((_value, index) => {
@@ -133,19 +117,6 @@ const DayBackground = ({
           />
         );
       })}
-      {isClient &&
-        eventsMap.map((event, index) => {
-          return (
-            <ShowCalendarEvent
-              event={event}
-              conflicts={conflicts}
-              day={day}
-              index={index}
-              setSelectedEvent={setSelectedEvent}
-              key={event.id}
-            />
-          );
-        })}
     </div>
   );
 };
@@ -174,6 +145,55 @@ const DayHeader = ({
   );
 };
 
+const DayEvents = ({
+  day,
+  events,
+  setSelectedEvent,
+}: {
+  day: number;
+  events: CalendarEvent[];
+  setSelectedEvent: (event: O.Option<CalendarEvent>) => void;
+}) => {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const eventsMap = events.sort((a, b) => a.startDate - b.startDate);
+  const conflicts = events.reduce((acc, event, index, array) => {
+    const toSearch = array.slice(index + 1);
+    toSearch.forEach((possibleConflict) => {
+      if (possibleConflict.startDate < event.endDate) {
+        const zIndex = acc.get(possibleConflict.id);
+        if (!zIndex) {
+          acc.set(possibleConflict.id, 1);
+        } else {
+          acc.set(possibleConflict.id, zIndex + 1);
+        }
+      }
+    });
+
+    return acc;
+  }, new Map<string, number>());
+
+  return (
+    <>
+      {isClient &&
+        eventsMap.map((event, index) => {
+          return (
+            <ShowCalendarEvent
+              event={event}
+              conflicts={conflicts}
+              day={day}
+              index={index}
+              setSelectedEvent={setSelectedEvent}
+              key={event.id}
+            />
+          );
+        })}
+    </>
+  );
+};
 const ShowCalendarEvent = ({
   event,
   conflicts,
@@ -238,7 +258,7 @@ const SquareBG = ({
 const HoursBackground = () => {
   return (
     <div
-      className={`grid grid-rows-[auto,repeat(24,64px)] bg-white text-neutral-300`}
+      className={`grid grid-rows-[auto,repeat(24,64px)] col-start-1 bg-white text-neutral-300`}
     >
       <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-700 justify-center items-center top-0 shadow-lg border-[1px] border-neutral-200 overflow-hidden"></div>
       {range24.map((_value, index) => {
@@ -352,19 +372,27 @@ const CalendarWeek = ({
 
   return (
     <div
-      className={`${style} grid grid-cols-[50px_repeat(7,minmax(128px,1fr))] grid-row-1 overflow-scroll`}
+      className={`${style} grid relative grid-cols-[50px_repeat(7,minmax(128px,1fr))] grid-row-1 overflow-scroll`}
       id="calendar-week-container"
     >
       <HoursBackground />
       {memoedRange.map(({ dayOfWeek, day, isToday }, index) => (
-        <DayBackground
-          key={index}
-          dayOfWeek={dayOfWeek}
-          day={day}
-          events={weekEventsByDay ? weekEventsByDay[index] : []}
-          setSelectedEvent={setSelectedEvent}
-          isToday={isToday}
-        />
+        <div
+          key={`${index}${dayOfWeek}${day}`}
+          className={`${colStartClass[index]} relative w-full`}
+        >
+          <DayBackground
+            key={index}
+            dayOfWeek={dayOfWeek}
+            day={day}
+            isToday={isToday}
+          />
+          <DayEvents
+            day={day}
+            setSelectedEvent={setSelectedEvent}
+            events={weekEventsByDay ? weekEventsByDay[index] : []}
+          ></DayEvents>
+        </div>
       ))}
       {selectedEvent.mapOrElse(
         () => null,
