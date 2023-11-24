@@ -288,6 +288,8 @@ const HoursBackground = () => {
   );
 };
 
+const CALENDAR_WEEK_CONTAINER_ID = "calendar-week-container";
+
 const CalendarWeek = ({
   style,
   startDate,
@@ -339,7 +341,7 @@ const CalendarWeek = ({
 
   const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
 
-  let weekEventsByDay = events.reduce((acc, event) => {
+  const weekEventsByDay = events.reduce((acc, event) => {
     const startDate = new Date(event.startDate);
     const endDate = new Date(event.endDate);
 
@@ -352,15 +354,6 @@ const CalendarWeek = ({
     acc.at(startDate.getDay())?.push(event);
     return acc;
   }, initial);
-
-  useEffect(() => {
-    const calendarWeekContainer = document.getElementById(
-      "calendar-week-container",
-    );
-    if (calendarWeekContainer) {
-      calendarWeekContainer.scrollTop = 512;
-    }
-  }, []);
 
   const memoedRange = useMemo(
     () =>
@@ -387,6 +380,7 @@ const CalendarWeek = ({
           dayOfWeek,
           events: weekEventsByDay ? weekEventsByDay[dayOfWeek - 1] : [],
         }))}
+        id={CALENDAR_WEEK_CONTAINER_ID}
       />
       {selectedEvent.mapOrElse(
         () => null,
@@ -419,6 +413,7 @@ const FlexibleWeekContainer = <T extends number>({
   days,
   selectEvent: setSelectedEvent,
   style,
+  id,
 }: {
   style: string;
   days: {
@@ -428,13 +423,21 @@ const FlexibleWeekContainer = <T extends number>({
     isToday: boolean;
   }[];
   selectEvent: (value: O.Option<CalendarEvent>) => void;
+  id: string;
 }) => {
+  useEffect(() => {
+    const calendarWeekContainer = document.getElementById(id);
+    if (calendarWeekContainer) {
+      calendarWeekContainer.scrollTop = 512;
+    }
+  }, [id]);
+
   return (
     <div
       className={`${style} grid ${
         weekGridClasses[days.length - 1]
       } grid-row-1 overflow-scroll`}
-      id="calendar-week-container"
+      id={id}
     >
       <HoursBackground />
       {days.map(({ dayOfWeek, day, isToday, events }, index) => (
