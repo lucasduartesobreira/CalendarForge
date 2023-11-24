@@ -124,18 +124,7 @@ const DayBackground = ({
     <div
       className={`grid grid-rows-[auto,repeat(24,64px)] relative bg-white text-neutral-300`}
     >
-      <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-600 justify-center items-center top-0 rounded-lg shadow-lg border-[1px] border-neutral-200 overflow-hidden">
-        <div className="text-center relative px-8 py-4">
-          <div
-            className={`${color} flex justify-center items-center font-mono text-4x1 font-bold px-4 py-2 rounded-[1rem] border-[1px] border-primary-500 text-primary-500 shadow-md w-10 h-10`}
-          >
-            <span className="text-center">{day}</span>
-          </div>
-          <div className="absolute bottom-2 right-2">
-            <a className="text-xs font-mono">{dayToString[dayOfWeek]}</a>
-          </div>
-        </div>
-      </div>
+      <DayHeader day={day} color={color} dayOfWeek={dayOfWeek} />
       {range24.map((_value, index) => {
         return (
           <SquareBG
@@ -146,38 +135,86 @@ const DayBackground = ({
       })}
       {isClient &&
         eventsMap.map((event, index) => {
-          const conflictNumber = conflicts.get(event.id);
-          const left = 10 * (conflictNumber ?? 0);
-          const width = 100 / (conflictNumber ?? 1) - left;
           return (
-            <div
-              key={`day${dayOfWeek}${index}`}
-              className={`absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
-              style={{
-                ...startAndHeight(
-                  new Date(event.startDate),
-                  new Date(event.endDate),
-                  day,
-                ),
-                width: `${width}%`,
-                left: `${left}%`,
-                zIndex: `${index}`,
-                backgroundColor: event.color ?? "#7a5195",
-                borderWidth: conflictNumber ? 1 : 0,
-              }}
-            >
-              <button
-                key={event.id}
-                onClick={() => {
-                  setSelectedEvent(O.Some(event));
-                }}
-                className="text-xs"
-              >
-                {event.title}
-              </button>
-            </div>
+            <ShowCalendarEvent
+              event={event}
+              conflicts={conflicts}
+              day={day}
+              index={index}
+              setSelectedEvent={setSelectedEvent}
+              key={event.id}
+            />
           );
         })}
+    </div>
+  );
+};
+const DayHeader = ({
+  color,
+  day,
+  dayOfWeek,
+}: {
+  color: string;
+  day: number;
+  dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+}) => {
+  return (
+    <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-600 justify-center items-center top-0 rounded-lg shadow-lg border-[1px] border-neutral-200 overflow-hidden">
+      <div className="text-center relative px-8 py-4">
+        <div
+          className={`${color} flex justify-center items-center font-mono text-4x1 font-bold px-4 py-2 rounded-[1rem] border-[1px] border-primary-500 text-primary-500 shadow-md w-10 h-10`}
+        >
+          <span className="text-center">{day}</span>
+        </div>
+        <div className="absolute bottom-2 right-2">
+          <a className="text-xs font-mono">{dayToString[dayOfWeek]}</a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ShowCalendarEvent = ({
+  event,
+  conflicts,
+  day,
+  index,
+  setSelectedEvent,
+}: {
+  event: CalendarEvent;
+  conflicts: Map<string, number>;
+  day: number;
+  index: number;
+  setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
+}) => {
+  const conflictNumber = conflicts.get(event.id);
+  const left = 10 * (conflictNumber ?? 0);
+  const width = 100 / (conflictNumber ?? 1) - left;
+  return (
+    <div
+      className={`absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
+      style={{
+        ...startAndHeight(
+          new Date(event.startDate),
+          new Date(event.endDate),
+          day,
+        ),
+        width: `${width}%`,
+        left: `${left}%`,
+        zIndex: `${index}`,
+        backgroundColor: event.color ?? "#7a5195",
+        borderWidth: conflictNumber ? 1 : 0,
+      }}
+    >
+      <button
+        key={event.id}
+        onClick={() => {
+          setSelectedEvent(O.Some(event));
+        }}
+        className="text-xs"
+      >
+        {event.title}
+      </button>
     </div>
   );
 };
