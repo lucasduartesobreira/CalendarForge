@@ -137,7 +137,7 @@ const DayHeader = ({
   dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7;
 }) => {
   return (
-    <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-600 justify-center items-center top-0 rounded-lg shadow-lg border-[1px] border-neutral-200 overflow-hidden">
+    <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-600 justify-center items-center top-0 rounded-lg shadow-lg border-[1px] border-neutral-200 overflow-hidden z-[10000]">
       <div className="text-center relative px-8 py-4">
         <div
           className={`${color} flex justify-center items-center font-mono text-4x1 font-bold px-4 py-2 rounded-[1rem] border-[1px] border-primary-500 text-primary-500 shadow-md w-10 h-10`}
