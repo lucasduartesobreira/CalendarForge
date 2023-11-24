@@ -59,7 +59,7 @@ const CalendarWeek = ({
   ]);
 
   const weekEventsByDay = useMemo(() => {
-    const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
+    const initial: CalendarEvent[][] = [[], [], [], [], [], [], [], []];
     return events.reduce((acc, event) => {
       const startDate = new Date(event.startDate);
       const endDate = new Date(event.endDate);
@@ -98,7 +98,9 @@ const CalendarWeek = ({
         days={memoedRange.map(({ dayOfWeek, ...rest }) => ({
           ...rest,
           dayOfWeek,
-          events: weekEventsByDay ? weekEventsByDay[dayOfWeek - 1] : [],
+          events: weekEventsByDay
+            ? weekEventsByDay.at(dayOfWeek - 1) ?? []
+            : [],
         }))}
         id={CALENDAR_WEEK_CONTAINER_ID}
       />

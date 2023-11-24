@@ -16,8 +16,6 @@ const weekGridClasses = [
   "grid-cols-[50px_repeat(5,minmax(128px,1fr))]",
   "grid-cols-[50px_repeat(6,minmax(128px,1fr))]",
   "grid-cols-[50px_repeat(7,minmax(128px,1fr))]",
-  "grid-cols-[50px_repeat(8,minmax(128px,1fr))]",
-  "grid-cols-[50px_repeat(9,minmax(128px,1fr))]",
 ] as const;
 
 export const FlexibleView = ({
@@ -50,11 +48,15 @@ export const FlexibleView = ({
     return () => setClientSide(false);
   }, []);
 
+  if (!weekGridClasses.at(days.length - 1)) {
+    days.splice(weekGridClasses.length, days.length - weekGridClasses.length);
+  }
+
+  const weekGridClass = weekGridClasses.at(days.length - 1);
+
   return (
     <div
-      className={`${style} grid ${
-        weekGridClasses[days.length - 1]
-      } grid-row-1 overflow-scroll`}
+      className={`${style} grid ${weekGridClass} grid-row-1 overflow-scroll`}
       id={id}
     >
       <HoursBackground />
