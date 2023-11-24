@@ -52,7 +52,7 @@ const rowStartClass = [
   "row-start-[24]",
   "row-start-[25]",
   "row-start-[26]",
-];
+] as const;
 
 const colStartClass = [
   "col-start-[2]",
@@ -62,7 +62,7 @@ const colStartClass = [
   "col-start-[6]",
   "col-start-[7]",
   "col-start-[8]",
-];
+] as const;
 
 const DAY_HEADER_HEIGHT = 48;
 const HOUR_BLOCK_HEIGHT = 64;
@@ -105,7 +105,7 @@ const DayBackground = ({
   day,
   isToday,
 }: {
-  dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  dayOfWeek: ViewSize;
   day: number;
   isToday: boolean;
 }) => {
@@ -362,7 +362,7 @@ const CalendarWeek = ({
         const dateNow = new Date(Date.now());
         dateNow.setHours(0, 0, 0, 0);
         return {
-          dayOfWeek: (date.getDay() + 1) as (typeof AcceptedDaysValue)[number],
+          dayOfWeek: (date.getDay() + 1) as ViewSize,
           day: date.getDate(),
           isToday: date.getTime() === dateNow.getTime(),
         };
@@ -396,8 +396,8 @@ const CalendarWeek = ({
 };
 
 const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
-type BetweenOneAndSeven<T extends number> =
-  T extends (typeof AcceptedDaysValue)[number] ? T : never;
+type ViewSize = (typeof AcceptedDaysValue)[number];
+type BetweenOneAndSeven<T extends number> = T extends ViewSize ? T : never;
 
 const weekGridClasses = [
   "grid-cols-[50px_repeat(1,minmax(128px,1fr))]",
@@ -407,7 +407,9 @@ const weekGridClasses = [
   "grid-cols-[50px_repeat(5,minmax(128px,1fr))]",
   "grid-cols-[50px_repeat(6,minmax(128px,1fr))]",
   "grid-cols-[50px_repeat(7,minmax(128px,1fr))]",
-];
+  "grid-cols-[50px_repeat(8,minmax(128px,1fr))]",
+  "grid-cols-[50px_repeat(9,minmax(128px,1fr))]",
+] as const;
 
 const FlexibleWeekContainer = <T extends number>({
   days,
