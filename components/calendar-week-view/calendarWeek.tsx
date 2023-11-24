@@ -369,7 +369,7 @@ const CalendarWeek = ({
         const dateNow = new Date(Date.now());
         dateNow.setHours(0, 0, 0, 0);
         return {
-          dayOfWeek: (date.getDay() + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7,
+          dayOfWeek: (date.getDay() + 1) as (typeof AcceptedDaysValue)[number],
           day: date.getDate(),
           isToday: date.getTime() === dateNow.getTime(),
         };
@@ -378,12 +378,66 @@ const CalendarWeek = ({
   );
 
   return (
+    <>
+      <FlexibleWeekContainer
+        selectEvent={setSelectedEvent}
+        style={style}
+        days={memoedRange.map(({ dayOfWeek, ...rest }) => ({
+          ...rest,
+          dayOfWeek,
+          events: weekEventsByDay ? weekEventsByDay[dayOfWeek - 1] : [],
+        }))}
+      />
+      {selectedEvent.mapOrElse(
+        () => null,
+        (selectedEvent) => (
+          <UpdateEventForm
+            setOpen={() => setSelectedEvent(O.None())}
+            initialForm={selectedEvent}
+          ></UpdateEventForm>
+        ),
+      )}
+    </>
+  );
+};
+
+const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
+type BetweenOneAndSeven<T extends number> =
+  T extends (typeof AcceptedDaysValue)[number] ? T : never;
+
+const weekGridClasses = [
+  "grid-cols-[50px_repeat(1,minmax(128px,1fr))]",
+  "grid-cols-[50px_repeat(2,minmax(128px,1fr))]",
+  "grid-cols-[50px_repeat(3,minmax(128px,1fr))]",
+  "grid-cols-[50px_repeat(4,minmax(128px,1fr))]",
+  "grid-cols-[50px_repeat(5,minmax(128px,1fr))]",
+  "grid-cols-[50px_repeat(6,minmax(128px,1fr))]",
+  "grid-cols-[50px_repeat(7,minmax(128px,1fr))]",
+];
+
+const FlexibleWeekContainer = <T extends number>({
+  days,
+  selectEvent: setSelectedEvent,
+  style,
+}: {
+  style: string;
+  days: {
+    events: CalendarEvent[];
+    dayOfWeek: BetweenOneAndSeven<T>;
+    day: number;
+    isToday: boolean;
+  }[];
+  selectEvent: (value: O.Option<CalendarEvent>) => void;
+}) => {
+  return (
     <div
-      className={`${style} grid grid-cols-[50px_repeat(7,minmax(128px,1fr))] grid-row-1 overflow-scroll`}
+      className={`${style} grid ${
+        weekGridClasses[days.length - 1]
+      } grid-row-1 overflow-scroll`}
       id="calendar-week-container"
     >
       <HoursBackground />
-      {memoedRange.map(({ dayOfWeek, day, isToday }, index) => (
+      {days.map(({ dayOfWeek, day, isToday, events }, index) => (
         <DayContainer column={index} key={`${index}${dayOfWeek}${day}`}>
           <DayBackground
             key={index}
@@ -394,19 +448,10 @@ const CalendarWeek = ({
           <DayEvents
             day={day}
             setSelectedEvent={setSelectedEvent}
-            events={weekEventsByDay ? weekEventsByDay[index] : []}
+            events={events}
           ></DayEvents>
         </DayContainer>
       ))}
-      {selectedEvent.mapOrElse(
-        () => null,
-        (selectedEvent) => (
-          <UpdateEventForm
-            setOpen={() => setSelectedEvent(O.None())}
-            initialForm={selectedEvent}
-          ></UpdateEventForm>
-        ),
-      )}
     </div>
   );
 };
