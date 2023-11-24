@@ -333,21 +333,22 @@ const CalendarWeek = ({
     viewableCalendarsState,
   ]);
 
-  const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
+  const weekEventsByDay = useMemo(() => {
+    const initial: CalendarEvent[][] = [[], [], [], [], [], [], []];
+    return events.reduce((acc, event) => {
+      const startDate = new Date(event.startDate);
+      const endDate = new Date(event.endDate);
 
-  const weekEventsByDay = events.reduce((acc, event) => {
-    const startDate = new Date(event.startDate);
-    const endDate = new Date(event.endDate);
+      if (startDate.getDay() != endDate.getDay()) {
+        acc.at(startDate.getDay())?.push(event);
+        acc.at(endDate.getDay())?.push(event);
+        return acc;
+      }
 
-    if (startDate.getDay() != endDate.getDay()) {
       acc.at(startDate.getDay())?.push(event);
-      acc.at(endDate.getDay())?.push(event);
       return acc;
-    }
-
-    acc.at(startDate.getDay())?.push(event);
-    return acc;
-  }, initial);
+    }, initial);
+  }, [events]);
 
   const memoedRange = useMemo(
     () =>
