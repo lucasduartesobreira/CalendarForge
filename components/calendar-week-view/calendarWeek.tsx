@@ -161,11 +161,6 @@ const DayEvents = ({
   events: CalendarEvent[];
   setSelectedEvent: (event: O.Option<CalendarEvent>) => void;
 }) => {
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   const eventsMap = events.sort((a, b) => a.startDate - b.startDate);
   const conflicts = events.reduce((acc, event, index, array) => {
     const toSearch = array.slice(index + 1);
@@ -185,19 +180,18 @@ const DayEvents = ({
 
   return (
     <>
-      {isClient &&
-        eventsMap.map((event, index) => {
-          return (
-            <ShowCalendarEvent
-              event={event}
-              conflicts={conflicts}
-              day={day}
-              index={index}
-              setSelectedEvent={setSelectedEvent}
-              key={event.id}
-            />
-          );
-        })}
+      {eventsMap.map((event, index) => {
+        return (
+          <ShowCalendarEvent
+            event={event}
+            conflicts={conflicts}
+            day={day}
+            index={index}
+            setSelectedEvent={setSelectedEvent}
+            key={event.id}
+          />
+        );
+      })}
     </>
   );
 };
@@ -434,6 +428,13 @@ const FlexibleWeekContainer = <T extends number>({
     }
   }, [id]);
 
+  const [clientSide, setClientSide] = useState(false);
+
+  useEffect(() => {
+    setClientSide(true);
+    return () => setClientSide(false);
+  }, []);
+
   return (
     <div
       className={`${style} grid ${
@@ -450,11 +451,13 @@ const FlexibleWeekContainer = <T extends number>({
             day={day}
             isToday={isToday}
           />
-          <DayEvents
-            day={day}
-            setSelectedEvent={setSelectedEvent}
-            events={events}
-          ></DayEvents>
+          {clientSide && (
+            <DayEvents
+              day={day}
+              setSelectedEvent={setSelectedEvent}
+              events={events}
+            ></DayEvents>
+          )}
         </DayContainer>
       ))}
     </div>
