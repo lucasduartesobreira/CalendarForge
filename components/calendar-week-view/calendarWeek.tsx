@@ -2,7 +2,14 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
-import { ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import {
+  PropsWithChildren,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import UpdateEventForm from "@/components/event-update-form/updateEvent";
 import { Actions } from "@/hooks/mapHook";
 
@@ -377,10 +384,7 @@ const CalendarWeek = ({
     >
       <HoursBackground />
       {memoedRange.map(({ dayOfWeek, day, isToday }, index) => (
-        <div
-          key={`${index}${dayOfWeek}${day}`}
-          className={`${colStartClass[index]} relative w-full`}
-        >
+        <DayContainer column={index} key={`${index}${dayOfWeek}${day}`}>
           <DayBackground
             key={index}
             dayOfWeek={dayOfWeek}
@@ -392,7 +396,7 @@ const CalendarWeek = ({
             setSelectedEvent={setSelectedEvent}
             events={weekEventsByDay ? weekEventsByDay[index] : []}
           ></DayEvents>
-        </div>
+        </DayContainer>
       ))}
       {selectedEvent.mapOrElse(
         () => null,
@@ -405,6 +409,17 @@ const CalendarWeek = ({
       )}
     </div>
   );
+};
+
+const DayContainer = ({
+  children,
+  column,
+}: PropsWithChildren<{ column: number }>) => {
+  const columnTailWind = colStartClass.at(column);
+  if (columnTailWind)
+    return (
+      <div className={`${columnTailWind} relative w-full`}>{children}</div>
+    );
 };
 
 export default CalendarWeek;
