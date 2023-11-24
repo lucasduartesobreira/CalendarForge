@@ -1,4 +1,6 @@
 import { PropsWithChildren } from "react";
+import { DayBackground, HoursBackground } from "./dayBackground";
+import { DayEvents } from "./dayEventsContent";
 
 const colStartClass = [
   "col-start-[2]",
@@ -10,7 +12,7 @@ const colStartClass = [
   "col-start-[8]",
 ] as const;
 
-export const DayContainer = ({
+const DayContainer = ({
   children,
   column,
 }: PropsWithChildren<{ column: number }>) => {
@@ -19,4 +21,11 @@ export const DayContainer = ({
     return (
       <div className={`${columnTailWind} relative w-full`}>{children}</div>
     );
+};
+
+export const DayViewContent = {
+  HoursBackground: HoursBackground,
+  DayBackground: DayBackground,
+  DayEvents: DayEvents,
+  DayContainer,
 };

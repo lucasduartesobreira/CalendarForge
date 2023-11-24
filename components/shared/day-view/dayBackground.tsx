@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { ViewSize } from "./flexibleView";
+import { ViewSize } from "../flexible-view/flexibleView";
 
 const dayToString = {
   1: "sun",

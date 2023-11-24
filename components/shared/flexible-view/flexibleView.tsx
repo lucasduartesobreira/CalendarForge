@@ -1,9 +1,7 @@
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
 import { useEffect, useState } from "react";
-import { DayBackground, HoursBackground } from "./dayBackground";
-import { DayContainer } from "./dayContainer";
-import { DayEvents } from "./dayEventsContent";
+import { DayViewContent } from "../day-view/dayContent";
 
 export const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
 export type ViewSize = (typeof AcceptedDaysValue)[number];
@@ -59,23 +57,26 @@ export const FlexibleView = ({
       className={`${style} grid ${weekGridClass} grid-row-1 overflow-scroll`}
       id={id}
     >
-      <HoursBackground />
+      <DayViewContent.HoursBackground />
       {days.map(({ dayOfWeek, day, isToday, events }, index) => (
-        <DayContainer column={index} key={`${index}${dayOfWeek}${day}`}>
-          <DayBackground
+        <DayViewContent.DayContainer
+          column={index}
+          key={`${index}${dayOfWeek}${day}`}
+        >
+          <DayViewContent.DayBackground
             key={index}
             dayOfWeek={dayOfWeek}
             day={day}
             isToday={isToday}
           />
           {clientSide && (
-            <DayEvents
+            <DayViewContent.DayEvents
               day={day}
               setSelectedEvent={setSelectedEvent}
               events={events}
-            ></DayEvents>
+            ></DayViewContent.DayEvents>
           )}
-        </DayContainer>
+        </DayViewContent.DayContainer>
       ))}
     </div>
   );
