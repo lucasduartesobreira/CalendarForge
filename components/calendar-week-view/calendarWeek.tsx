@@ -372,7 +372,7 @@ const CalendarWeek = ({
 
   return (
     <div
-      className={`${style} grid relative grid-cols-[50px_repeat(7,minmax(128px,1fr))] grid-row-1 overflow-scroll`}
+      className={`${style} grid grid-cols-[50px_repeat(7,minmax(128px,1fr))] grid-row-1 overflow-scroll`}
       id="calendar-week-container"
     >
       <HoursBackground />
