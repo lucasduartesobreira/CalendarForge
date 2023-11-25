@@ -73,35 +73,19 @@ const SideBar = (
           }
           className="p-1"
         >
-          {calendarsFound.map((calendar, index) => {
+          {calendarsFound.map((calendar) => {
             const viewableCalendars = calendars.unwrap();
 
             const defaultChecked = viewableCalendars.get(calendar.id) ?? true;
+
             return (
-              <li
-                key={index}
-                className="flex items-center gap-2 w-full relative"
-              >
-                <input
-                  type="checkbox"
-                  onChange={(event) => {
-                    actions.unwrap().set(calendar.id, event.target.checked);
-                  }}
-                  defaultChecked={defaultChecked}
-                  className="px-[2px]"
-                ></input>
-                <div className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
-                  {calendar.name}
-                </div>
-                <button
-                  className="flex-none ml-auto text-yellow-500 p-1"
-                  onClick={() => {
-                    setSelectedCalendar(O.Some(calendar));
-                  }}
-                >
-                  Edit
-                </button>
-              </li>
+              <CalendarSidebarView
+                key={calendar.id}
+                actions={actions}
+                calendar={calendar}
+                defaultChecked={defaultChecked}
+                selectCalendar={setSelectedCalendar}
+              />
             );
           })}
         </ListContainer>
@@ -117,6 +101,42 @@ const SideBar = (
         />
       )}
     </div>
+  );
+};
+
+const CalendarSidebarView = ({
+  actions,
+  calendar,
+  defaultChecked,
+  selectCalendar: setSelectedCalendar,
+}: {
+  actions: O.Option<Actions<string, boolean>>;
+  calendar: Calendar;
+  defaultChecked: boolean;
+  selectCalendar: (value: O.Option<Calendar>) => void;
+}) => {
+  return (
+    <li className="flex items-center gap-2 w-full relative">
+      <input
+        type="checkbox"
+        onChange={(event) => {
+          actions.unwrap().set(calendar.id, event.target.checked);
+        }}
+        defaultChecked={defaultChecked}
+        className="px-[2px]"
+      ></input>
+      <div className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
+        {calendar.name}
+      </div>
+      <button
+        className="flex-none ml-auto text-yellow-500 p-1"
+        onClick={() => {
+          setSelectedCalendar(O.Some(calendar));
+        }}
+      >
+        Edit
+      </button>
+    </li>
   );
 };
 
