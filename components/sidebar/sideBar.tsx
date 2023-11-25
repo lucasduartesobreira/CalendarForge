@@ -13,6 +13,8 @@ import { Calendar } from "@/services/calendar/calendar";
 import UpdateCalendarForm from "@/components/calendar-update-form/updateCalendar";
 import { Actions } from "@/hooks/mapHook";
 import { CreateCalendarForm } from "@/components/calendar-create-form/createCalendar";
+import { HTMLExtended } from "@/utils/types";
+import { ListContainer } from "../shared/list-view/list";
 
 const SideBar = (
   args: HTMLExtended<
@@ -119,41 +121,6 @@ const SideBar = (
           initialCalendar={selectedCalendar.unwrap()}
         />
       )}
-    </div>
-  );
-};
-
-type Customization<TitleSection extends ReactNode, Button extends ReactNode> = {
-  titleSection: TitleSection | undefined;
-  buttonSection: Button | undefined;
-};
-
-type RequiredPropsWithChildren<V> = V & { children: ReactNode };
-type HTMLExtended<Attribute, V = unknown> = DetailedHTMLProps<
-  HTMLAttributes<Attribute>,
-  Attribute
-> &
-  V;
-
-const ListContainer = <
-  TitleSection extends ReactNode,
-  Button extends ReactNode,
->({
-  children,
-  titleSection,
-  buttonSection,
-  ...args
-}: RequiredPropsWithChildren<
-  HTMLExtended<HTMLDivElement, Customization<TitleSection, Button>>
->) => {
-  return (
-    <div
-      {...args}
-      className={`${args.className} bg-white rounded-xl shadow-lg border-[1px] border-neutral-200 overflow-hidden`}
-    >
-      {titleSection}
-      <ul className="text-sm bg-white p-2 flex flex-col">{children}</ul>
-      {buttonSection}
     </div>
   );
 };
