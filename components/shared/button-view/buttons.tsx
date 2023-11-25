@@ -1,10 +1,25 @@
 import { HTMLExtended } from "@/utils/types";
 
+const ButtonSecondary = ({
+  value,
+  sizeType,
+  ...props
+}: HTMLExtended<HTMLButtonElement, { value: string; sizeType: "ml" }>) => {
+  return (
+    <button
+      {...props}
+      className={`${props.className} flex-none ml-auto text-yellow-500 p-1`}
+    >
+      {value}
+    </button>
+  );
+};
+
 const ButtonPrimary = ({
   value,
-  type,
+  sizeType,
   ...props
-}: HTMLExtended<HTMLButtonElement> & { value: string; type: "xl" }) => {
+}: HTMLExtended<HTMLButtonElement> & { value: string; sizeType: "xl" }) => {
   return (
     <button
       {...props}
@@ -17,4 +32,5 @@ const ButtonPrimary = ({
 
 export const Button = {
   Primary: ButtonPrimary,
+  Secondary: ButtonSecondary,
 };

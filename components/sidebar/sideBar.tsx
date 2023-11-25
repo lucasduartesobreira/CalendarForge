@@ -68,7 +68,7 @@ const SideBar = (
               ref={refButton}
               onClick={() => setOpen(!open)}
               value="New"
-              type="xl"
+              sizeType="xl"
             ></Button.Primary>
           }
           className="p-1"
@@ -128,14 +128,13 @@ const CalendarSidebarView = ({
       <div className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
         {calendar.name}
       </div>
-      <button
-        className="flex-none ml-auto text-yellow-500 p-1"
+      <Button.Secondary
         onClick={() => {
           setSelectedCalendar(O.Some(calendar));
         }}
-      >
-        Edit
-      </button>
+        value="Edit"
+        sizeType="ml"
+      />
     </li>
   );
 };
