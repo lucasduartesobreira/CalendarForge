@@ -8,6 +8,7 @@ import { CreateCalendarForm } from "@/components/calendar-create-form/createCale
 import { HTMLExtended } from "@/utils/types";
 import { ListContainer } from "../shared/list-view/list";
 import { Button } from "../shared/button-view/buttons";
+import { Titles } from "../shared/title-view/titles";
 
 const SideBar = (
   args: HTMLExtended<
@@ -60,7 +61,7 @@ const SideBar = (
     <div {...arg} className={`${arg.className}`}>
       {storages.isSome() && calendars.isSome() && actions.isSome() && (
         <ListContainer
-          titleSection={<TitleSection name="Calendars"></TitleSection>}
+          titleSection={<Titles.Normal name="Calendars"></Titles.Normal>}
           buttonSection={
             <Button.Primary
               className="w-full bg-primary-500 text-white rounded-xl shadow-xl p-1 sticky bottom-0"
@@ -117,10 +118,6 @@ const SideBar = (
       )}
     </div>
   );
-};
-
-const TitleSection = ({ name }: { name: string }) => {
-  return <span className="m-2 text-neutral-600 bg-white text-lg ">{name}</span>;
 };
 
 export default SideBar;
