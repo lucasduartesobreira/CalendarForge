@@ -1,13 +1,5 @@
 import { StorageContext } from "@/hooks/dataHook";
-import {
-  DetailedHTMLProps,
-  HTMLAttributes,
-  ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import * as O from "@/utils/option";
 import { Calendar } from "@/services/calendar/calendar";
 import UpdateCalendarForm from "@/components/calendar-update-form/updateCalendar";
@@ -15,6 +7,7 @@ import { Actions } from "@/hooks/mapHook";
 import { CreateCalendarForm } from "@/components/calendar-create-form/createCalendar";
 import { HTMLExtended } from "@/utils/types";
 import { ListContainer } from "../shared/list-view/list";
+import { Button } from "../shared/button-view/buttons";
 
 const SideBar = (
   args: HTMLExtended<
@@ -69,12 +62,13 @@ const SideBar = (
         <ListContainer
           titleSection={<TitleSection name="Calendars"></TitleSection>}
           buttonSection={
-            <ButtonPrimary
+            <Button.Primary
               className="w-full bg-primary-500 text-white rounded-xl shadow-xl p-1 sticky bottom-0"
               ref={refButton}
               onClick={() => setOpen(!open)}
               value="New"
-            ></ButtonPrimary>
+              type="xl"
+            ></Button.Primary>
           }
           className="p-1"
         >
@@ -127,20 +121,6 @@ const SideBar = (
 
 const TitleSection = ({ name }: { name: string }) => {
   return <span className="m-2 text-neutral-600 bg-white text-lg ">{name}</span>;
-};
-
-const ButtonPrimary = ({
-  value,
-  ...props
-}: HTMLExtended<HTMLButtonElement> & { value: string }) => {
-  return (
-    <button
-      {...props}
-      className={`${props.className} bg-primary-500 text-white rounded-xl shadow-xl p-1 sticky bottom-0`}
-    >
-      {value}
-    </button>
-  );
 };
 
 export default SideBar;

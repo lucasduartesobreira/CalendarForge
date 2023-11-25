@@ -1,9 +1,10 @@
 import { HTMLExtended } from "@/utils/types";
 
-export const ButtonPrimary = ({
+const ButtonPrimary = ({
   value,
+  type,
   ...props
-}: HTMLExtended<HTMLButtonElement> & { value: string }) => {
+}: HTMLExtended<HTMLButtonElement> & { value: string; type: "xl" }) => {
   return (
     <button
       {...props}
@@ -12,4 +13,8 @@ export const ButtonPrimary = ({
       {value}
     </button>
   );
+};
+
+export const Button = {
+  Primary: ButtonPrimary,
 };
