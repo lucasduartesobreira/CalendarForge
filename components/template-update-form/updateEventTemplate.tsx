@@ -134,7 +134,7 @@ export const UpdateEventTemplateForm = ({
                 setForm({ ...form });
               }}
               resetNotification={initialNotification}
-            ></NewEventNotificationForm>
+             />
           </div>
           <input
             type="submit"

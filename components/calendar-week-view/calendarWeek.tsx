@@ -110,7 +110,7 @@ const CalendarWeek = ({
           <UpdateEventForm
             setOpen={() => setSelectedEvent(O.None())}
             initialForm={selectedEvent}
-          ></UpdateEventForm>
+           />
         ),
       )}
     </>

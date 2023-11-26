@@ -74,7 +74,7 @@ export const FlexibleView = ({
               day={day}
               setSelectedEvent={setSelectedEvent}
               events={events}
-            ></DayViewContent.DayEvents>
+             />
           )}
         </DayViewContent.DayContainer>
       ))}

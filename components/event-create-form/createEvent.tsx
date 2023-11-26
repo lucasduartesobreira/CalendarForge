@@ -167,7 +167,7 @@ const CreateEventForm = ({
                   setSelectedTemplate(selectedValue);
                 }}
               >
-                <option value={undefined}></option>
+                <option value={undefined} />
                 {templates.map((template, index) => {
                   return (
                     <option key={index} value={template.id}>
@@ -284,7 +284,7 @@ const CreateEventForm = ({
                 setForm({ ...form });
               }}
               resetNotification={initialNotification}
-            ></NewEventNotificationForm>
+             />
           </div>
           <input
             type="submit"
@@ -317,7 +317,7 @@ const CreateEventButton = () => {
           setOpen={setOpen}
           initialForm={initialFormState}
           blockdRefs={O.Some([buttonRef])}
-        ></CreateEventForm>
+         />
       )}
     </div>
   );
