@@ -5,6 +5,7 @@ import { RefObject, useContext, useEffect, useState } from "react";
 import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { UpdateEventTemplateForm } from "@/components/template-update-form/updateEventTemplate";
+import { Button } from "../shared/button-view/buttons";
 
 const UpdateCalendarForm = ({
   refs,
@@ -134,16 +135,15 @@ const UpdateCalendarForm = ({
                   {templates.map((template) => (
                     <div key={template.id} className="relative px-2 flex">
                       {template.title}
-                      <button
-                        className="text-yellow-500 ml-auto"
+                      <Button.Secondary
                         onClick={(ev) => {
                           ev.preventDefault();
                           ev.stopPropagation();
                           setSelectedTemplate(O.Some(template));
                         }}
-                      >
-                        Edit
-                      </button>
+                        value="Edit"
+                        sizeType="ml"
+                      ></Button.Secondary>
                     </div>
                   ))}
                 </div>
