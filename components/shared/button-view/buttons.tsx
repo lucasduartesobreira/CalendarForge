@@ -6,10 +6,7 @@ const ButtonSecondary = ({
   ...props
 }: HTMLExtended<HTMLButtonElement, { value: string; sizeType: "ml" }>) => {
   return (
-    <button
-      {...props}
-      className={`${props.className} flex-none ml-auto text-yellow-500 p-1`}
-    >
+    <button {...props} className={`${props.className} ml-auto text-yellow-500`}>
       {value}
     </button>
   );

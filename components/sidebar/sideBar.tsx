@@ -132,6 +132,7 @@ const CalendarSidebarView = ({
         onClick={() => {
           setSelectedCalendar(O.Some(calendar));
         }}
+        className="p-1 flex-none"
         value="Edit"
         sizeType="ml"
       />
