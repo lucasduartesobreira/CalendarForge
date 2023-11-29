@@ -12,7 +12,6 @@ import {
   CreateEvent,
   EventColors,
 } from "@/services/events/events";
-import OutsideClick from "../utils/outsideClick";
 import { getHTMLDateTime } from "@/utils/date";
 import * as O from "@/utils/option";
 import {
@@ -28,6 +27,7 @@ import {
   InputText,
   PopupForm,
 } from "../shared/forms/forms";
+import { Button } from "../shared/button-view/buttons";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
@@ -287,13 +287,13 @@ const CreateEventButton = () => {
   const buttonRef = useRef(null);
   return (
     <div className="">
-      <button
+      <Button.Primary
         ref={buttonRef}
+        sizeType="xl"
         className="absolute bottom-8 right-8 w-24 h-24 z-[1000] rounded-s-full rounded-e-full bg-primary-500"
         onClick={() => setOpen(!open)}
-      >
-        Create Event
-      </button>
+        value="Create Event"
+      />
       {open && (
         <CreateEventForm
           setOpen={setOpen}
