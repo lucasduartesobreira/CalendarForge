@@ -26,7 +26,9 @@ export const PopupForm = ({
     >
       <div className="flex">
         <form
-          onSubmit={() => {
+          onSubmit={(ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
             onSubmit();
             setOpen(false);
           }}
