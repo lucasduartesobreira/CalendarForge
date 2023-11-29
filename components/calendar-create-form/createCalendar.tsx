@@ -2,7 +2,12 @@ import { StorageContext } from "@/hooks/dataHook";
 import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
 import * as O from "@/utils/option";
 import { RefObject, useContext, useState } from "react";
-import { FormHeader, PopupForm } from "../shared/forms/forms";
+import {
+  FormHeader,
+  InputButtons,
+  InputText,
+  PopupForm,
+} from "../shared/forms/forms";
 
 const initialCalendar: CreateCalendar = {
   name: "",
@@ -29,11 +34,10 @@ export const CreateCalendarForm = ({
         setOpen={setOpen}
       >
         <FormHeader setOpen={setOpen} />
-        <input
+        <InputText
           title="name"
           type="text"
           placeholder="Name"
-          className="text-black px-2 py-1 mt-2 bg-neutral-200 text-base rounded-md"
           onChange={(e) => {
             form.name = e.target.value;
             setForm(form);
@@ -79,9 +83,9 @@ export const CreateCalendarForm = ({
             <option value={12}>(GMT12:00)</option>
           </select>
         </label>
-        <input
+        <InputButtons.Primary
           type="submit"
-          className="absolute bottom-0 w-full left-0 text-white bg-primary-500 rounded-md"
+          className="absolute bottom-0 w-full left-0"
           value={"Save"}
         />
       </PopupForm>
