@@ -1,11 +1,11 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { Calendar, Timezones } from "@/services/calendar/calendar";
-import { RefObject, useContext, useEffect, useState } from "react";
+import { ChangeEvent, RefObject, useContext, useEffect, useState } from "react";
 import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { UpdateEventTemplateForm } from "@/components/template-update-form/updateEventTemplate";
 import { Button } from "../shared/button-view/buttons";
-import { PopupForm } from "../shared/forms/forms";
+import { InputButtons, InputText, PopupForm } from "../shared/forms/forms";
 
 const UpdateCalendarForm = ({
   refs,
@@ -70,7 +70,7 @@ const UpdateCalendarForm = ({
                 X
               </button>
             </div>
-            <input
+            <InputText
               title="name"
               type="text"
               placeholder="Name"
@@ -79,7 +79,7 @@ const UpdateCalendarForm = ({
                 form.name = e.target.value;
                 setForm(form);
               }}
-              defaultValue={initialCalendar.name}
+              value={form.name}
             />
             <label className="text-sm mx-1 mb-4">
               Timezone
@@ -142,9 +142,9 @@ const UpdateCalendarForm = ({
                 </div>
               </label>
             )}
-            <input
+            <InputButtons.Primary
               type="submit"
-              className="absolute bottom-0 w-full left-0 text-white bg-primary-500 rounded-md"
+              className="absolute bottom-0 w-full left-0"
               value={"Save"}
             />
           </PopupForm>

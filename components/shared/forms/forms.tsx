@@ -1,6 +1,6 @@
 import OutsideClick from "@/components/utils/outsideClick";
 import { HTMLExtended, RequiredPropsWithChildren } from "@/utils/types";
-import { RefObject } from "react";
+import { ChangeEvent, ChangeEventHandler, RefObject } from "react";
 import { Option } from "@/utils/option";
 
 export const PopupForm = ({
@@ -40,3 +40,36 @@ export const PopupForm = ({
     </OutsideClick>
   );
 };
+
+export const InputText = ({
+  ...props
+}: React.DetailedHTMLProps<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  HTMLInputElement
+>) => {
+  return (
+    <input
+      {...props}
+      className={`${props.className} text-black px-2 py-1 mt-2 bg-neutral-200 text-base rounded-md`}
+    />
+  );
+};
+
+const InputButton = ({
+  ...props
+}: React.DetailedHTMLProps<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  HTMLInputElement
+>) => {
+  return (
+    <input
+      {...props}
+      className={`${props.className} text-white bg-primary-500 rounded-md`}
+    />
+  );
+};
+
+export const InputButtons = {
+  Primary: InputButton,
+};
+
