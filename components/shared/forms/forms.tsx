@@ -1,6 +1,10 @@
 import OutsideClick from "@/components/utils/outsideClick";
-import { HTMLDivExtended, RequiredPropsWithChildren } from "@/utils/types";
-import { ChangeEvent, ChangeEventHandler, RefObject } from "react";
+import {
+  HTMLDivExtended,
+  HTMLFormExtended,
+  RequiredPropsWithChildren,
+} from "@/utils/types";
+import { RefObject } from "react";
 import { Option } from "@/utils/option";
 
 export const PopupForm = ({
@@ -9,12 +13,15 @@ export const PopupForm = ({
   children,
   onSubmit,
   backgroundDiv,
-}: RequiredPropsWithChildren<{
-  setOpen: (value: boolean) => void;
-  refs: Option<RefObject<any>[]>;
-  onSubmit: () => void;
-  backgroundDiv?: HTMLDivExtended<HTMLDivElement>;
-}>) => {
+  ...props
+}: RequiredPropsWithChildren<
+  HTMLFormExtended<{
+    setOpen: (value: boolean) => void;
+    refs: Option<RefObject<any>[]>;
+    onSubmit: () => void;
+    backgroundDiv?: HTMLDivExtended<HTMLDivElement>;
+  }>
+>) => {
   return (
     <OutsideClick
       {...backgroundDiv}
@@ -26,13 +33,14 @@ export const PopupForm = ({
     >
       <div className="flex">
         <form
+          {...props}
           onSubmit={(ev) => {
             ev.preventDefault();
             ev.stopPropagation();
             onSubmit();
             setOpen(false);
           }}
-          className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden"
+          className={`${props.className} text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden`}
         >
           {children}
         </form>
