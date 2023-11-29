@@ -1,6 +1,6 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { Calendar, Timezones } from "@/services/calendar/calendar";
-import { ChangeEvent, RefObject, useContext, useEffect, useState } from "react";
+import { RefObject, useContext, useEffect, useState } from "react";
 import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { UpdateEventTemplateForm } from "@/components/template-update-form/updateEventTemplate";

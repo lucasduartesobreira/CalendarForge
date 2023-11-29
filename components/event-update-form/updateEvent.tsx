@@ -1,4 +1,3 @@
-import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import {
   CalendarEvent,
@@ -39,8 +38,7 @@ const UpdateEventForm = ({
     );
   }, []);
   if (storages.isSome()) {
-    const { eventsStorage, calendarsStorage, eventsTemplateStorage } =
-      storages.unwrap();
+    const { eventsStorage, eventsTemplateStorage } = storages.unwrap();
 
     const handleChangeText =
       <
