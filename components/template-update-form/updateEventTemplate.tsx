@@ -14,7 +14,12 @@ import {
 import { EventColors } from "@/services/events/events";
 import { Calendar } from "@/services/calendar/calendar";
 import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
-import { PopupForm } from "../shared/forms/forms";
+import {
+  FormHeader,
+  InputButtons,
+  InputText,
+  PopupForm,
+} from "../shared/forms/forms";
 
 export const UpdateEventTemplateForm = ({
   setOpen,
@@ -56,27 +61,30 @@ export const UpdateEventTemplateForm = ({
       };
 
       return (
-        <PopupForm setOpen={setOpen} refs={O.None()} onSubmit={handleSubmit}>
-          <label>
-            <input
-              placeholder="Title"
-              value={form.title}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeText("title")}
-              type="text"
-            />
-            <input
-              placeholder="Description"
-              value={form.description}
-              className="text-black m-2 bg-neutral-200"
-              onChange={handleChangeText("description")}
-              type="text"
-            />
-          </label>
+        <PopupForm
+          setOpen={setOpen}
+          refs={O.None()}
+          onSubmit={handleSubmit}
+          className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
+        >
+          <FormHeader setOpen={setOpen} />
+          <InputText
+            placeholder="Title"
+            value={form.title}
+            className="mt-2"
+            onChange={handleChangeText("title")}
+            type="text"
+          />
+          <InputText
+            placeholder="Description"
+            value={form.description}
+            onChange={handleChangeText("description")}
+            type="text"
+          />
           <select
             onChange={() => {}}
             value={form.calendar_id}
-            className="text-black m-2 bg-neutral-200"
+            className="px-2 py-1 rounded-md bg-neutral-200"
           >
             {calendars.map((value, index) => (
               <option key={index} value={value.id}>
@@ -91,6 +99,7 @@ export const UpdateEventTemplateForm = ({
               setForm({ ...form });
             }}
             style={{ color: form.color }}
+            className="px-2 py-1 bg-neutral-200 rounded-md"
           >
             {EventColors.map((color, index) => (
               <option key={index} value={color} style={{ color }}>
@@ -98,7 +107,7 @@ export const UpdateEventTemplateForm = ({
               </option>
             ))}
           </select>
-          <div className="relative flex flex-col m-2 bg-neutral-100 min-h-[24px]">
+          <div className="flex flex-col px-2 py-1 bg-neutral-200 min-h-[24px] items-start justify-start rounded-md mb-12">
             {form.notifications.map((notification, index) => (
               <UpdateNotificationForm
                 notification={notification}
@@ -129,21 +138,22 @@ export const UpdateEventTemplateForm = ({
               resetNotification={initialNotification}
             />
           </div>
-          <input
-            type="submit"
-            className="flex-auto relative r-4 text-white bg-primary-500 rounded-md"
-            value={"Save"}
-          />
-          <div className="absolute flex flex-row-reverse gap-[4px] right-0">
-            <button
-              className="text-red-500"
-              onClick={() => {
-                setOpen(false);
-                eventsTemplateStorage.remove(id);
-              }}
-            >
-              Delete
-            </button>
+          <div className="absolute w-full bottom-0 flex flex-col gap-[4px] left-0">
+            <div className="w-full flex items-center justify-center gap-2 px-4">
+              <InputButtons.Delete
+                className="bg-red-500 font-semibold w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
+                setOpen={setOpen}
+                onDelete={() => {
+                  eventsTemplateStorage.remove(id);
+                }}
+                text="Delete"
+              />
+            </div>
+            <InputButtons.Primary
+              type="submit"
+              className="w-full left-0 font-semibold"
+              value={"Save"}
+            />
           </div>
         </PopupForm>
       );
