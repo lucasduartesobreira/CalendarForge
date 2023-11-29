@@ -14,6 +14,7 @@ import {
 import { EventColors } from "@/services/events/events";
 import { Calendar } from "@/services/calendar/calendar";
 import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
+import { PopupForm } from "../shared/forms/forms";
 
 export const UpdateEventTemplateForm = ({
   setOpen,
@@ -33,37 +34,29 @@ export const UpdateEventTemplateForm = ({
     );
   }, [storages, listeners.calendarsStorageListener]);
 
-  if (storages.isSome()) {
-    const { calendarsStorage, eventsTemplateStorage } = storages.unwrap();
-
-    const handleChangeText =
-      <
-        A extends keyof Omit<
-          UpdateTemplate,
-          "notifications" | "color" | "task_id"
-        >,
-      >(
-        prop: A,
-      ) =>
-      (event: React.ChangeEvent<HTMLInputElement>) => {
-        form[prop] = event.target.value;
-        setForm({ ...form });
-      };
-
-    const handleSubmit = (submitEvent: any) => {
-      submitEvent.preventDefault();
-
-      eventsTemplateStorage.update(id, form);
-      setOpen(false);
+  const handleChangeText =
+    <
+      A extends keyof Omit<
+        UpdateTemplate,
+        "notifications" | "color" | "task_id"
+      >,
+    >(
+      prop: A,
+    ) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      form[prop] = event.target.value;
+      setForm({ ...form });
     };
 
-    return (
-      <OutsideClick doSomething={() => setOpen(false)} refs={O.None()}>
-        <form
-          hidden={false}
-          onSubmit={handleSubmit}
-          className="z-[2100] text-neutral-500 fixed border-2 p-[8px] rounded-md top-1/2 left-1/2 bg-white flex flex-col"
-        >
+  return storages.mapOrElse(
+    () => null,
+    ({ eventsTemplateStorage }) => {
+      const handleSubmit = () => {
+        eventsTemplateStorage.update(id, form);
+      };
+
+      return (
+        <PopupForm setOpen={setOpen} refs={O.None()} onSubmit={handleSubmit}>
           <label>
             <input
               placeholder="Title"
@@ -134,7 +127,7 @@ export const UpdateEventTemplateForm = ({
                 setForm({ ...form });
               }}
               resetNotification={initialNotification}
-             />
+            />
           </div>
           <input
             type="submit"
@@ -152,10 +145,8 @@ export const UpdateEventTemplateForm = ({
               Delete
             </button>
           </div>
-        </form>
-      </OutsideClick>
-    );
-  }
-
-  return null;
+        </PopupForm>
+      );
+    },
+  );
 };
