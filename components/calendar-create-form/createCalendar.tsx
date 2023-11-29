@@ -2,7 +2,7 @@ import { StorageContext } from "@/hooks/dataHook";
 import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
 import * as O from "@/utils/option";
 import { RefObject, useContext, useState } from "react";
-import { PopupForm } from "../shared/forms/forms";
+import { FormHeader, PopupForm } from "../shared/forms/forms";
 
 const initialCalendar: CreateCalendar = {
   name: "",
@@ -28,18 +28,7 @@ export const CreateCalendarForm = ({
         refs={refs}
         setOpen={setOpen}
       >
-        <div className="w-full absolute top-0 h-[16px] left-0 bg-neutral-300 flex">
-          <button
-            className="ml-auto mr-3 text-neutral-500 text-xs"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpen(false);
-            }}
-          >
-            X
-          </button>
-        </div>
+        <FormHeader setOpen={setOpen} />
         <input
           title="name"
           type="text"
