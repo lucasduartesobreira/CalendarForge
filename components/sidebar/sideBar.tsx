@@ -64,7 +64,7 @@ const SideBar = (
           titleSection={<Titles.Normal name="Calendars" />}
           buttonSection={
             <Button.Primary
-              className="w-full bg-primary-500 text-white rounded-xl shadow-xl p-1 sticky bottom-0"
+              className="w-full p-1 sticky bottom-0"
               ref={refButton}
               onClick={() => setOpen(!open)}
               value="New"

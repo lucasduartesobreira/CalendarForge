@@ -20,7 +20,7 @@ const ButtonPrimary = ({
   return (
     <button
       {...props}
-      className={`${props.className} bg-primary-500 text-white rounded-xl shadow-xl p-1 sticky bottom-0`}
+      className={`${props.className} bg-primary-500 text-white rounded-xl shadow-xl`}
     >
       {value}
     </button>
