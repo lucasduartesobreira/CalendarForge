@@ -20,9 +20,9 @@ export const CreateCalendarForm = ({
   const [form, setForm] = useState(initialCalendar);
   const { storages } = useContext(StorageContext);
 
-  if (storages.isSome()) {
-    const { calendarsStorage } = storages.unwrap();
-    return (
+  return storages.mapOrElse(
+    () => null,
+    ({ calendarsStorage }) => (
       <OutsideClick
         doSomething={() => {
           setOpen(false);
@@ -108,8 +108,6 @@ export const CreateCalendarForm = ({
           </form>
         </div>
       </OutsideClick>
-    );
-  }
-
-  return null;
+    ),
+  );
 };
