@@ -1,5 +1,6 @@
 import OutsideClick from "@/components/utils/outsideClick";
 import {
+  HTMLButtonExtended,
   HTMLDivExtended,
   HTMLFormExtended,
   RequiredPropsWithChildren,
@@ -114,6 +115,30 @@ export const FormHeader = ({
   );
 };
 
+const DeleteButton = ({
+  setOpen,
+  className,
+  onDelete,
+  ...props
+}: HTMLButtonExtended<{
+  setOpen: (value: boolean) => void;
+  onDelete: () => void;
+}>) => {
+  return (
+    <button
+      {...props}
+      className={`${className} bg-red-500 font-semibold text-sm text-text-inverse rounded-xl px-2 py-1`}
+      onClick={() => {
+        onDelete();
+        setOpen(false);
+      }}
+    >
+      Delete
+    </button>
+  );
+};
+
 export const InputButtons = {
   Primary: InputButton,
+  Delete: DeleteButton,
 };
