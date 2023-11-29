@@ -22,6 +22,7 @@ import {
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { Calendar } from "@/services/calendar/calendar";
 import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
+import { PopupForm } from "../shared/forms/forms";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
@@ -128,11 +129,8 @@ const CreateEventForm = ({
         setForm({ ...form });
       };
 
-    const handleSubmit = (submitEvent: any) => {
-      submitEvent.preventDefault();
-
+    const handleSubmit = () => {
       eventsStorage.add(form);
-      setOpen(false);
     };
     const startDate = new Date(initialForm.startDate);
     startDate.setSeconds(0, 0);
@@ -140,160 +138,152 @@ const CreateEventForm = ({
     endDate.setSeconds(0, 0);
 
     return (
-      <OutsideClick
-        doSomething={() => {
-          setOpen(false);
-        }}
+      <PopupForm
+        setOpen={setOpen}
         refs={blockdRefs}
-        className="z-[1000] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        onSubmit={handleSubmit}
+        id="form1"
       >
-        <form
-          hidden={false}
-          onSubmit={handleSubmit}
-          className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
-          id="form1"
-        >
-          <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center justify-center">
-            <label className="ml-5 origin-center text-neutral-500">
-              {selectedTemplate != null && selectedTemplate.length > 0
-                ? "Template"
-                : ""}
-              <select
-                value={selectedTemplate}
-                className="bg-neutral-300"
-                onChange={(ev) => {
-                  ev.preventDefault();
-                  const selectedValue = ev.currentTarget.value;
-                  setSelectedTemplate(selectedValue);
-                }}
-              >
-                <option value={undefined} />
-                {templates.map((template, index) => {
-                  return (
-                    <option key={index} value={template.id}>
-                      {template.title}
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                setOpen(false);
+        <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center justify-center">
+          <label className="ml-5 origin-center text-neutral-500">
+            {selectedTemplate != null && selectedTemplate.length > 0
+              ? "Template"
+              : ""}
+            <select
+              value={selectedTemplate}
+              className="bg-neutral-300"
+              onChange={(ev) => {
+                ev.preventDefault();
+                const selectedValue = ev.currentTarget.value;
+                setSelectedTemplate(selectedValue);
               }}
-              className="ml-auto mr-3 text-neutral-500 text-xs"
             >
-              X
-            </button>
-          </div>
+              <option value={undefined} />
+              {templates.map((template, index) => {
+                return (
+                  <option key={index} value={template.id}>
+                    {template.title}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              setOpen(false);
+            }}
+            className="ml-auto mr-3 text-neutral-500 text-xs"
+          >
+            X
+          </button>
+        </div>
 
-          <input
-            placeholder="Title"
-            value={form.title}
-            className="px-2 py-1 rounded-md mt-2 text-base bg-neutral-200"
-            onChange={handleChangeText("title")}
-            type="text"
-          />
-          <input
-            placeholder="Description"
-            value={form.description}
-            className="px-2 py-1 rounded-md  bg-neutral-200"
-            onChange={handleChangeText("description")}
-            type="text"
-          />
-          <div className="gap-1 flex">
-            <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200">
-              Initial Date
-              <input
-                placeholder=""
-                value={getHTMLDateTime(new Date(form.startDate))}
-                className="bg-neutral-200"
-                onChange={handleChangeDates("startDate")}
-                type="datetime-local"
-              />
-            </label>
-            <label className="px-2 py-1 text-sm flex flex-col justify-center rounded-md bg-neutral-200">
-              End Date
-              <input
-                placeholder=""
-                value={getHTMLDateTime(new Date(form.endDate))}
-                className="bg-neutral-200"
-                onChange={handleChangeDates("endDate")}
-                type="datetime-local"
-              />
-            </label>
-          </div>
-          <select
-            onChange={(event) => {
-              form.calendar_id = event.target.value;
-              setForm({ ...form });
-            }}
-            className="px-2 py-1 rounded-md bg-neutral-200"
-            value={form.calendar_id}
-          >
-            {calendars.map((value, index) => {
-              return (
-                <option key={index} value={value.id}>
-                  {value.name}
-                </option>
-              );
-            })}
-          </select>
-          <select
-            value={form.color}
-            onChange={(event) => {
-              form.color = event.target.value as CalendarEvent["color"];
-              setForm({ ...form });
-            }}
-            className="px-2 py-1 bg-neutral-200 rounded-md"
-            style={{ color: form.color }}
-          >
-            {EventColors.map((color, index) => (
-              <option key={index} value={color} style={{ color }}>
-                Event Color
+        <input
+          placeholder="Title"
+          value={form.title}
+          className="px-2 py-1 rounded-md mt-2 text-base bg-neutral-200"
+          onChange={handleChangeText("title")}
+          type="text"
+        />
+        <input
+          placeholder="Description"
+          value={form.description}
+          className="px-2 py-1 rounded-md  bg-neutral-200"
+          onChange={handleChangeText("description")}
+          type="text"
+        />
+        <div className="gap-1 flex">
+          <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200">
+            Initial Date
+            <input
+              placeholder=""
+              value={getHTMLDateTime(new Date(form.startDate))}
+              className="bg-neutral-200"
+              onChange={handleChangeDates("startDate")}
+              type="datetime-local"
+            />
+          </label>
+          <label className="px-2 py-1 text-sm flex flex-col justify-center rounded-md bg-neutral-200">
+            End Date
+            <input
+              placeholder=""
+              value={getHTMLDateTime(new Date(form.endDate))}
+              className="bg-neutral-200"
+              onChange={handleChangeDates("endDate")}
+              type="datetime-local"
+            />
+          </label>
+        </div>
+        <select
+          onChange={(event) => {
+            form.calendar_id = event.target.value;
+            setForm({ ...form });
+          }}
+          className="px-2 py-1 rounded-md bg-neutral-200"
+          value={form.calendar_id}
+        >
+          {calendars.map((value, index) => {
+            return (
+              <option key={index} value={value.id}>
+                {value.name}
               </option>
-            ))}
-          </select>
-          <div className="flex flex-col px-2 py-1 bg-neutral-200 min-h-[24px] items-start justify-start rounded-md mb-4">
-            {form.notifications.map((notification, index) => (
-              <UpdateNotificationForm
-                notification={notification}
-                key={index}
-                onChangeTime={(time) => {
-                  form.notifications[index].time = time;
-                  setForm({ ...form });
-                }}
-                onChangeTimescale={(timescale) => {
-                  form.notifications[index].timescale = timescale;
-                  setForm({ ...form });
-                }}
-                onChangeFrom={(from) => {
-                  form.notifications[index].from = from;
-                  setForm({ ...form });
-                }}
-                onDelete={() => {
-                  form.notifications.splice(index, 1);
-                  setForm({ ...form });
-                }}
-              />
-            ))}
-            <NewEventNotificationForm
-              onSubmit={(notification) => {
-                form.notifications.push(notification);
+            );
+          })}
+        </select>
+        <select
+          value={form.color}
+          onChange={(event) => {
+            form.color = event.target.value as CalendarEvent["color"];
+            setForm({ ...form });
+          }}
+          className="px-2 py-1 bg-neutral-200 rounded-md"
+          style={{ color: form.color }}
+        >
+          {EventColors.map((color, index) => (
+            <option key={index} value={color} style={{ color }}>
+              Event Color
+            </option>
+          ))}
+        </select>
+        <div className="flex flex-col px-2 py-1 bg-neutral-200 min-h-[24px] items-start justify-start rounded-md mb-4">
+          {form.notifications.map((notification, index) => (
+            <UpdateNotificationForm
+              notification={notification}
+              key={index}
+              onChangeTime={(time) => {
+                form.notifications[index].time = time;
                 setForm({ ...form });
               }}
-              resetNotification={initialNotification}
-             />
-          </div>
-          <input
-            type="submit"
-            className="absolute bottom-0 font-semibold w-full left-0 text-white bg-primary-500 rounded-md"
-            value={"Save"}
-            form="form1"
+              onChangeTimescale={(timescale) => {
+                form.notifications[index].timescale = timescale;
+                setForm({ ...form });
+              }}
+              onChangeFrom={(from) => {
+                form.notifications[index].from = from;
+                setForm({ ...form });
+              }}
+              onDelete={() => {
+                form.notifications.splice(index, 1);
+                setForm({ ...form });
+              }}
+            />
+          ))}
+          <NewEventNotificationForm
+            onSubmit={(notification) => {
+              form.notifications.push(notification);
+              setForm({ ...form });
+            }}
+            resetNotification={initialNotification}
           />
-        </form>
-      </OutsideClick>
+        </div>
+        <input
+          type="submit"
+          className="absolute bottom-0 font-semibold w-full left-0 text-white bg-primary-500 rounded-md"
+          value={"Save"}
+          form="form1"
+        />
+      </PopupForm>
     );
   }
 
@@ -317,7 +307,7 @@ const CreateEventButton = () => {
           setOpen={setOpen}
           initialForm={initialFormState}
           blockdRefs={O.Some([buttonRef])}
-         />
+        />
       )}
     </div>
   );
