@@ -5,7 +5,7 @@ import {
   HTMLFormExtended,
   RequiredPropsWithChildren,
 } from "@/utils/types";
-import { RefObject } from "react";
+import { PropsWithChildren, RefObject } from "react";
 import { Option } from "@/utils/option";
 
 export const PopupForm = ({
@@ -81,12 +81,14 @@ const InputButton = ({
 export const FormHeader = ({
   onDelete,
   setOpen,
-}: {
+  children,
+}: PropsWithChildren<{
   onDelete?: () => void;
   setOpen: (value: boolean) => void;
-}) => {
+}>) => {
   return (
     <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center">
+      {children}
       {onDelete != null && (
         <button
           className="ml-auto mr-2 text-red-500"
