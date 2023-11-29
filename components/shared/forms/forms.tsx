@@ -138,7 +138,33 @@ const DeleteButton = ({
   );
 };
 
+const WarningButton = ({
+  setOpen,
+  className,
+  onWarning: onWarning,
+  ...props
+}: HTMLButtonExtended<{
+  setOpen: (value: boolean) => void;
+  onWarning: () => void;
+}>) => {
+  return (
+    <button
+      {...props}
+      className={`${className} bg-amber-500 font-semibold rounded-xl text-text-inverse px-2 py-1 text-sm`}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onWarning();
+        setOpen(false);
+      }}
+    >
+      Delete
+    </button>
+  );
+};
+
 export const InputButtons = {
   Primary: InputButton,
   Delete: DeleteButton,
+  Warning: WarningButton,
 };
