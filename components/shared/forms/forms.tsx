@@ -58,7 +58,7 @@ export const InputText = ({
   return (
     <input
       {...props}
-      className={`${props.className} text-black px-2 py-1 mt-2 bg-neutral-200 text-base rounded-md`}
+      className={`${props.className} text-black px-2 py-1 bg-neutral-200 rounded-md`}
     />
   );
 };

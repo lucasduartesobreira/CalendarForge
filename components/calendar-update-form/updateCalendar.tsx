@@ -70,6 +70,7 @@ const UpdateCalendarForm = ({
                 setForm(form);
               }}
               value={form.name}
+              className="mt-2"
             />
             <label className="text-sm mx-1 mb-4">
               Timezone

@@ -42,6 +42,7 @@ export const CreateCalendarForm = ({
             form.name = e.target.value;
             setForm(form);
           }}
+          className="mt-2"
         />
         <label className="text-sm mx-1 mb-4">
           Timezone
