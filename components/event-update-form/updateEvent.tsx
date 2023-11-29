@@ -78,14 +78,13 @@ const UpdateEventForm = ({
           <InputText
             placeholder="Title"
             defaultValue={initialForm.title}
-            className="px-2 py-1 rounded-md mt-2 text-base bg-neutral-200"
+            className="mt-2"
             onChange={handleChangeText("title")}
             type="text"
           />
           <InputText
             placeholder="Description"
             defaultValue={initialForm.description}
-            className="px-2 py-1 rounded-md  bg-neutral-200"
             onChange={handleChangeText("description")}
             type="text"
           />
