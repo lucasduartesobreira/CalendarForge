@@ -51,16 +51,7 @@ const UpdateCalendarForm = ({
               setOpen(false);
             }}
           >
-            <FormHeader
-              onDelete={() => {
-                setOpen(false);
-                calendarsStorage.remove(id);
-                eventsStorage.removeWithFilter(
-                  (event) => event.calendar_id === id,
-                );
-              }}
-              setOpen={setOpen}
-            />
+            <FormHeader setOpen={setOpen} />
             <InputText
               title="name"
               type="text"
@@ -72,7 +63,11 @@ const UpdateCalendarForm = ({
               value={form.name}
               className="mt-2"
             />
-            <label className="text-sm mx-1 mb-4">
+            <label
+              className={`text-sm mx-1 ${
+                templates.length === 0 ? "mb-12" : "mb-4"
+              } `}
+            >
               Timezone
               <select
                 className="text-text-primary mx-2 bg-neutral-200 rounded-md"
@@ -113,7 +108,7 @@ const UpdateCalendarForm = ({
               </select>
             </label>
             {templates.length > 0 && (
-              <label className="mx-1 mb-4">
+              <label className="mx-1 mb-12">
                 Templates
                 <div className="text-black bg-neutral-200 rounded-md py-1 px-1">
                   {templates.map((template) => (
@@ -133,11 +128,23 @@ const UpdateCalendarForm = ({
                 </div>
               </label>
             )}
-            <InputButtons.Primary
-              type="submit"
-              className="absolute bottom-0 w-full left-0"
-              value={"Save"}
-            />
+            <div className="absolute w-full bottom-0 flex flex-col gap-[4px] left-0">
+              <div className="w-full flex items-center justify-center gap-2 px-4">
+                <InputButtons.Delete
+                  className="bg-red-500 font-semibold w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
+                  setOpen={setOpen}
+                  onDelete={() => {
+                    calendarsStorage.remove(id);
+                  }}
+                  text="Delete"
+                />
+              </div>
+              <InputButtons.Primary
+                type="submit"
+                className="w-full left-0 font-semibold"
+                value={"Save"}
+              />
+            </div>
           </PopupForm>
         ),
         (selectedTemplate) => (
