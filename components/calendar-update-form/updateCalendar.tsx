@@ -1,4 +1,3 @@
-import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { Calendar, Timezones } from "@/services/calendar/calendar";
 import { RefObject, useContext, useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { UpdateEventTemplateForm } from "@/components/template-update-form/updateEventTemplate";
 import { Button } from "../shared/button-view/buttons";
+import { PopupForm } from "../shared/forms/forms";
 
 const UpdateCalendarForm = ({
   refs,
@@ -31,27 +31,20 @@ const UpdateCalendarForm = ({
         allTemplates.filter((template) => template.calendar_id === id),
       );
     });
-  }, [listeners.eventsTemplateStorageListener]);
+  }, [id, listeners.eventsTemplateStorageListener, storages]);
 
-  if (storages.isSome()) {
-    const { calendarsStorage, eventsStorage } = storages.unwrap();
-    return (
-      <OutsideClick
-        doSomething={() => {
-          setOpen(false);
-        }}
-        refs={refs}
-        className="fixed z-[2000] top-1/2 left-1/2"
-      >
-        {!selectedTemplate.isSome() && (
-          <form
-            onSubmit={(ev) => {
-              ev.preventDefault();
-              ev.stopPropagation();
+  return storages.mapOrElse(
+    () => null,
+    ({ calendarsStorage, eventsStorage }) =>
+      selectedTemplate.mapOrElse(
+        () => (
+          <PopupForm
+            refs={refs}
+            setOpen={setOpen}
+            onSubmit={() => {
               calendarsStorage.update(id, form);
               setOpen(false);
             }}
-            className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden"
           >
             <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center">
               <button
@@ -143,7 +136,7 @@ const UpdateCalendarForm = ({
                         }}
                         value="Edit"
                         sizeType="ml"
-                      ></Button.Secondary>
+                      />
                     </div>
                   ))}
                 </div>
@@ -154,19 +147,16 @@ const UpdateCalendarForm = ({
               className="absolute bottom-0 w-full left-0 text-white bg-primary-500 rounded-md"
               value={"Save"}
             />
-          </form>
-        )}
-        {selectedTemplate.isSome() && (
+          </PopupForm>
+        ),
+        (selectedTemplate) => (
           <UpdateEventTemplateForm
             setOpen={() => setSelectedTemplate(O.None())}
-            initialForm={selectedTemplate.unwrap()}
+            initialForm={selectedTemplate}
           />
-        )}
-      </OutsideClick>
-    );
-  }
-
-  return null;
+        ),
+      ),
+  );
 };
 
 export default UpdateCalendarForm;
