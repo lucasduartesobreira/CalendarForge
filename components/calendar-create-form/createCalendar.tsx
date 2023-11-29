@@ -2,8 +2,7 @@ import { StorageContext } from "@/hooks/dataHook";
 import { CreateCalendar, Timezones } from "@/services/calendar/calendar";
 import * as O from "@/utils/option";
 import { RefObject, useContext, useState } from "react";
-import OutsideClick from "@/components/utils/outsideClick";
-import { HTMLExtended, RequiredPropsWithChildren } from "@/utils/types";
+import { PopupForm } from "../shared/forms/forms";
 
 const initialCalendar: CreateCalendar = {
   name: "",
@@ -98,41 +97,5 @@ export const CreateCalendarForm = ({
         />
       </PopupForm>
     ),
-  );
-};
-
-const PopupForm = ({
-  setOpen,
-  refs,
-  children,
-  onSubmit,
-  backgroundDiv,
-}: RequiredPropsWithChildren<{
-  setOpen: (value: boolean) => void;
-  refs: O.Option<RefObject<any>[]>;
-  onSubmit: () => void;
-  backgroundDiv?: HTMLExtended<HTMLDivElement>;
-}>) => {
-  return (
-    <OutsideClick
-      {...backgroundDiv}
-      doSomething={() => {
-        setOpen(false);
-      }}
-      refs={refs}
-      className={`${backgroundDiv?.className} z-[10000] fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`}
-    >
-      <div className="flex">
-        <form
-          onSubmit={() => {
-            onSubmit();
-            setOpen(false);
-          }}
-          className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden"
-        >
-          {children}
-        </form>
-      </div>
-    </OutsideClick>
   );
 };
