@@ -1,5 +1,6 @@
 import { EventNotification } from "@/services/events/events";
 import React from "react";
+import { InputButtons, InputText } from "../shared/forms/forms";
 
 const initialNotification: EventNotification = {
   from: "start",
@@ -25,7 +26,7 @@ const UpdateNotificationForm = ({
     <div className="px-2 w-full flex flex-nowrap gap-1 justify-start text-black text-sm">
       <label className="flex flex-nowrap whitespace-nowrap items-center">
         Notify
-        <input
+        <InputText
           value={notification.time}
           type="number"
           min="1"

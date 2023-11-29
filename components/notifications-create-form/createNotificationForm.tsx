@@ -1,5 +1,6 @@
 import { EventNotification } from "@/services/events/events";
 import { useState } from "react";
+import { InputText } from "../shared/forms/forms";
 
 export const NewEventNotificationForm = ({
   onSubmit,
@@ -15,12 +16,12 @@ export const NewEventNotificationForm = ({
     <div className="px-2 w-full flex flex-nowrap gap-1 justify-start text-text-primary text-sm">
       <label className="flex flex-nowrap whitespace-nowrap items-center">
         Notify
-        <input
+        <InputText
           value={newNotification.time}
           type="number"
           min="1"
           max="60"
-          className="text-right bg-neutral-200"
+          className="text-right"
           onChange={(e) => {
             newNotification.time = Number(e.currentTarget.value);
             setNewNotification({ ...newNotification });
@@ -33,7 +34,7 @@ export const NewEventNotificationForm = ({
           newNotification.timescale = e.currentTarget.value as any;
           setNewNotification({ ...newNotification });
         }}
-        className="text-center bg-neutral-200"
+        className="text-center bg-neutral-200 items-center"
       >
         <option value={"minutes"}>minutes</option>
         <option value={"hours"}>hours</option>

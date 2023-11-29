@@ -136,9 +136,7 @@ const DeleteButton = ({
         onDelete();
         setOpen(false);
       }}
-    >
-      Delete
-    </button>
+    />
   );
 };
 
