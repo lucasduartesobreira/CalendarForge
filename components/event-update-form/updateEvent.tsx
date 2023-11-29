@@ -179,7 +179,7 @@ const UpdateEventForm = ({
                 onDelete={() => {
                   eventsStorage.remove(id);
                 }}
-                value="Delete"
+                text="Delete"
               />
               <InputButtons.Warning
                 setOpen={setOpen}
@@ -188,7 +188,7 @@ const UpdateEventForm = ({
                   const { startDate: _sd, endDate: _ed, ...template } = form;
                   eventsTemplateStorage.add(template);
                 }}
-                value="Make Template"
+                text="Make Template"
               />
             </div>
             <InputButtons.Primary

@@ -121,10 +121,12 @@ const DeleteButton = ({
   setOpen,
   className,
   onDelete,
+  text,
   ...props
 }: HTMLButtonExtended<{
   setOpen: (value: boolean) => void;
   onDelete: () => void;
+  text: string;
 }>) => {
   return (
     <button
@@ -136,7 +138,9 @@ const DeleteButton = ({
         onDelete();
         setOpen(false);
       }}
-    />
+    >
+      {text}
+    </button>
   );
 };
 
@@ -144,10 +148,12 @@ const WarningButton = ({
   setOpen,
   className,
   onWarning: onWarning,
+  text,
   ...props
 }: HTMLButtonExtended<{
   setOpen: (value: boolean) => void;
   onWarning: () => void;
+  text: string;
 }>) => {
   return (
     <button
@@ -160,7 +166,7 @@ const WarningButton = ({
         setOpen(false);
       }}
     >
-      Delete
+      {text}
     </button>
   );
 };
