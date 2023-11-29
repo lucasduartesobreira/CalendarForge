@@ -69,7 +69,41 @@ const InputButton = ({
   );
 };
 
+export const FormHeader = ({
+  onDelete,
+  setOpen,
+}: {
+  onDelete?: () => void;
+  setOpen: (value: boolean) => void;
+}) => {
+  return (
+    <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center">
+      {onDelete != null && (
+        <button
+          className="ml-auto mr-2 text-red-500"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete();
+          }}
+        >
+          Delete
+        </button>
+      )}
+      <button
+        className=" mr-3 text-neutral-500 text-xs"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(false);
+        }}
+      >
+        X
+      </button>
+    </div>
+  );
+};
+
 export const InputButtons = {
   Primary: InputButton,
 };
-

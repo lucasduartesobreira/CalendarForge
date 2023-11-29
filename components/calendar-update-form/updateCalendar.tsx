@@ -5,7 +5,12 @@ import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { UpdateEventTemplateForm } from "@/components/template-update-form/updateEventTemplate";
 import { Button } from "../shared/button-view/buttons";
-import { InputButtons, InputText, PopupForm } from "../shared/forms/forms";
+import {
+  FormHeader,
+  InputButtons,
+  InputText,
+  PopupForm,
+} from "../shared/forms/forms";
 
 const UpdateCalendarForm = ({
   refs,
@@ -46,30 +51,16 @@ const UpdateCalendarForm = ({
               setOpen(false);
             }}
           >
-            <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center">
-              <button
-                className="ml-auto mr-2 text-red-500"
-                onClick={() => {
-                  setOpen(false);
-                  calendarsStorage.remove(id);
-                  eventsStorage.removeWithFilter(
-                    (event) => event.calendar_id === id,
-                  );
-                }}
-              >
-                Delete
-              </button>
-              <button
-                className=" mr-3 text-neutral-500 text-xs"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setOpen(false);
-                }}
-              >
-                X
-              </button>
-            </div>
+            <FormHeader
+              onDelete={() => {
+                setOpen(false);
+                calendarsStorage.remove(id);
+                eventsStorage.removeWithFilter(
+                  (event) => event.calendar_id === id,
+                );
+              }}
+              setOpen={setOpen}
+            />
             <InputText
               title="name"
               type="text"
