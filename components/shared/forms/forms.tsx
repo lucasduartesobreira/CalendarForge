@@ -128,7 +128,9 @@ const DeleteButton = ({
     <button
       {...props}
       className={`${className} bg-red-500 font-semibold text-sm text-text-inverse rounded-xl px-2 py-1`}
-      onClick={() => {
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
         onDelete();
         setOpen(false);
       }}
