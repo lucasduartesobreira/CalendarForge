@@ -22,7 +22,12 @@ import {
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { Calendar } from "@/services/calendar/calendar";
 import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
-import { PopupForm } from "../shared/forms/forms";
+import {
+  FormHeader,
+  InputButtons,
+  InputText,
+  PopupForm,
+} from "../shared/forms/forms";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
@@ -144,7 +149,7 @@ const CreateEventForm = ({
         onSubmit={handleSubmit}
         id="form1"
       >
-        <div className="w-full absolute top-0 h-[16px] text-xs left-0 bg-neutral-300 flex items-center justify-center">
+        <FormHeader setOpen={setOpen}>
           <label className="ml-5 origin-center text-neutral-500">
             {selectedTemplate != null && selectedTemplate.length > 0
               ? "Template"
@@ -168,48 +173,35 @@ const CreateEventForm = ({
               })}
             </select>
           </label>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              setOpen(false);
-            }}
-            className="ml-auto mr-3 text-neutral-500 text-xs"
-          >
-            X
-          </button>
-        </div>
-
-        <input
+        </FormHeader>
+        <InputText
           placeholder="Title"
           value={form.title}
-          className="px-2 py-1 rounded-md mt-2 text-base bg-neutral-200"
+          className="mt-2"
           onChange={handleChangeText("title")}
           type="text"
         />
-        <input
+        <InputText
           placeholder="Description"
           value={form.description}
-          className="px-2 py-1 rounded-md  bg-neutral-200"
           onChange={handleChangeText("description")}
           type="text"
         />
         <div className="gap-1 flex">
           <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200">
             Initial Date
-            <input
+            <InputText
               placeholder=""
               value={getHTMLDateTime(new Date(form.startDate))}
-              className="bg-neutral-200"
               onChange={handleChangeDates("startDate")}
               type="datetime-local"
             />
           </label>
           <label className="px-2 py-1 text-sm flex flex-col justify-center rounded-md bg-neutral-200">
             End Date
-            <input
+            <InputText
               placeholder=""
               value={getHTMLDateTime(new Date(form.endDate))}
-              className="bg-neutral-200"
               onChange={handleChangeDates("endDate")}
               type="datetime-local"
             />
@@ -277,9 +269,9 @@ const CreateEventForm = ({
             resetNotification={initialNotification}
           />
         </div>
-        <input
+        <InputButtons.Primary
           type="submit"
-          className="absolute bottom-0 font-semibold w-full left-0 text-white bg-primary-500 rounded-md"
+          className="absolute bottom-0 font-semibold w-full left-0"
           value={"Save"}
           form="form1"
         />
