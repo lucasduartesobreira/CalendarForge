@@ -1,5 +1,5 @@
 import OutsideClick from "@/components/utils/outsideClick";
-import { HTMLExtended, RequiredPropsWithChildren } from "@/utils/types";
+import { HTMLDivExtended, RequiredPropsWithChildren } from "@/utils/types";
 import { ChangeEvent, ChangeEventHandler, RefObject } from "react";
 import { Option } from "@/utils/option";
 
@@ -13,7 +13,7 @@ export const PopupForm = ({
   setOpen: (value: boolean) => void;
   refs: Option<RefObject<any>[]>;
   onSubmit: () => void;
-  backgroundDiv?: HTMLExtended<HTMLDivElement>;
+  backgroundDiv?: HTMLDivExtended<HTMLDivElement>;
 }>) => {
   return (
     <OutsideClick
@@ -74,6 +74,7 @@ export const FormHeader = ({
   setOpen,
 }: {
   onDelete?: () => void;
+  deleteDisabled?: boolean;
   setOpen: (value: boolean) => void;
 }) => {
   return (

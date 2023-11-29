@@ -65,7 +65,6 @@ const UpdateCalendarForm = ({
               title="name"
               type="text"
               placeholder="Name"
-              className="text-black px-2 py-1 mt-2 bg-neutral-200 text-base rounded-md"
               onChange={(e) => {
                 form.name = e.target.value;
                 setForm(form);

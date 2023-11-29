@@ -1,6 +1,6 @@
 import { DetailedHTMLProps, HTMLAttributes, ReactNode } from "react";
 
-export type HTMLExtended<Attribute, V = unknown> = DetailedHTMLProps<
+export type HTMLDivExtended<Attribute, V = unknown> = DetailedHTMLProps<
   HTMLAttributes<Attribute>,
   Attribute
 > &

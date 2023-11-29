@@ -5,13 +5,13 @@ import { Calendar } from "@/services/calendar/calendar";
 import UpdateCalendarForm from "@/components/calendar-update-form/updateCalendar";
 import { Actions } from "@/hooks/mapHook";
 import { CreateCalendarForm } from "@/components/calendar-create-form/createCalendar";
-import { HTMLExtended } from "@/utils/types";
+import { HTMLDivExtended } from "@/utils/types";
 import { ListContainer } from "../shared/list-view/list";
 import { Button } from "../shared/button-view/buttons";
 import { Titles } from "../shared/title-view/titles";
 
 const SideBar = (
-  args: HTMLExtended<
+  args: HTMLDivExtended<
     HTMLDivElement,
     {
       viewableCalendarsState: O.Option<
@@ -61,7 +61,7 @@ const SideBar = (
     <div {...arg} className={`${arg.className}`}>
       {storages.isSome() && calendars.isSome() && actions.isSome() && (
         <ListContainer
-          titleSection={<Titles.Normal name="Calendars"></Titles.Normal>}
+          titleSection={<Titles.Normal name="Calendars" />}
           buttonSection={
             <Button.Primary
               className="w-full bg-primary-500 text-white rounded-xl shadow-xl p-1 sticky bottom-0"
@@ -69,7 +69,7 @@ const SideBar = (
               onClick={() => setOpen(!open)}
               value="New"
               sizeType="xl"
-            ></Button.Primary>
+            />
           }
           className="p-1"
         >
@@ -124,7 +124,7 @@ const CalendarSidebarView = ({
         }}
         defaultChecked={defaultChecked}
         className="px-[2px]"
-      ></input>
+      />
       <div className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
         {calendar.name}
       </div>

@@ -1,4 +1,4 @@
-import { HTMLExtended, RequiredPropsWithChildren } from "@/utils/types";
+import { HTMLDivExtended, RequiredPropsWithChildren } from "@/utils/types";
 import { ReactNode } from "react";
 
 type Customization<TitleSection extends ReactNode, Button extends ReactNode> = {
@@ -15,7 +15,7 @@ export const ListContainer = <
   buttonSection,
   ...args
 }: RequiredPropsWithChildren<
-  HTMLExtended<HTMLDivElement, Customization<TitleSection, Button>>
+  HTMLDivExtended<HTMLDivElement, Customization<TitleSection, Button>>
 >) => {
   return (
     <div
