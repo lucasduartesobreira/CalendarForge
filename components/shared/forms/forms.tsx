@@ -40,7 +40,7 @@ export const PopupForm = ({
             onSubmit();
             setOpen(false);
           }}
-          className={`${props.className} text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden`}
+          className={`text-neutral-500 bg-white rounded-xl shadow-lg overflow-hidden relative flex flex-col gap-2 p-4 justify-center ${props.className} `}
         >
           {children}
         </form>
@@ -82,7 +82,6 @@ export const FormHeader = ({
   setOpen,
 }: {
   onDelete?: () => void;
-  deleteDisabled?: boolean;
   setOpen: (value: boolean) => void;
 }) => {
   return (
@@ -100,7 +99,9 @@ export const FormHeader = ({
         </button>
       )}
       <button
-        className=" mr-3 text-neutral-500 text-xs"
+        className={`${
+          onDelete == null ? "ml-auto" : ""
+        } mr-3 text-neutral-500 text-xs`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
