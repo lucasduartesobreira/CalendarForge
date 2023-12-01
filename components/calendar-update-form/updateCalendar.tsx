@@ -51,7 +51,7 @@ const UpdateCalendarForm = ({
   );
 };
 
-const CalendarForm = <T extends CreateCalendar | Calendar>({
+export const CalendarForm = <T extends CreateCalendar | Calendar>({
   refs,
   setOpen,
   onSubmit,
