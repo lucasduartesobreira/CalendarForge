@@ -2,7 +2,7 @@ import { StorageContext } from "@/hooks/dataHook";
 import { CreateCalendar } from "@/services/calendar/calendar";
 import * as O from "@/utils/option";
 import { RefObject, useContext } from "react";
-import { CalendarForm } from "../calendar-update-form/updateCalendar";
+import { CalendarForm } from "../shared/calendar-forms/calendarForm";
 
 const initialCalendar: CreateCalendar = {
   name: "",
