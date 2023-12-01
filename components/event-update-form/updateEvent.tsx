@@ -6,7 +6,13 @@ import {
 } from "@/services/events/events";
 import { getHTMLDateTime } from "@/utils/date";
 import * as O from "@/utils/option";
-import { useContext, useEffect, useState } from "react";
+import {
+  JSXElementConstructor,
+  RefObject,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import {
   UpdateNotificationForm,
   initialNotification,
@@ -40,34 +46,53 @@ const UpdateEventForm = ({
           onDelete={({ id }) => {
             eventsStorage.remove(id);
           }}
-          onTemplate={(form) => {
+          onCreateTemplate={(form) => {
             const { startDate: _sd, endDate: _ed, ...template } = form;
             eventsTemplateStorage.add(template);
           }}
           setOpen={setOpen}
           initialFormState={initialForm}
+          blockedRefs={O.None()}
         />
       );
     },
   );
 };
 
-const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
+export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   initialFormState,
   setOpen,
   onSubmit,
   onDelete,
-  onTemplate,
+  onCreateTemplate: onTemplate,
+  templateSelector: TemplateSelector,
+  blockedRefs,
 }: {
   initialFormState: T;
   setOpen: (value: boolean) => void;
   onSubmit: (form: T) => void;
   onDelete?: (form: T) => void;
-  onTemplate?: (form: T) => void;
+  onCreateTemplate?: (form: T) => void;
+  templateSelector?: JSXElementConstructor<{
+    updateForm: (value: Partial<T>) => void;
+  }>;
+  blockedRefs: O.Option<RefObject<any>[]>;
 }) => {
   const { storages } = useContext(StorageContext);
   const [form, setForm] = useState<T>(initialFormState);
   const [calendars, setCalendars] = useState<Calendar[]>([]);
+
+  useEffect(() => {
+    storages.map(async ({ calendarsStorage }) => {
+      const foundDefault = await calendarsStorage.find({ default: true });
+      if (form.calendar_id == "") {
+        foundDefault.map(({ id }) => {
+          form.calendar_id = id;
+          setForm({ ...form });
+        });
+      }
+    });
+  }, []);
 
   useEffect(() => {
     storages.map(async ({ calendarsStorage }) =>
@@ -102,10 +127,16 @@ const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         onSubmit(form);
       }}
       setOpen={setOpen}
-      refs={O.None()}
+      refs={blockedRefs}
       className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
     >
-      <FormHeader setOpen={setOpen} />
+      <FormHeader setOpen={setOpen}>
+        {TemplateSelector && (
+          <TemplateSelector
+            updateForm={(templateForm) => setForm({ ...form, ...templateForm })}
+          />
+        )}
+      </FormHeader>
       <InputText
         placeholder="Title"
         value={form.title}
@@ -170,7 +201,11 @@ const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
           </option>
         ))}
       </select>
-      <div className="flex flex-col px-2 py-1 bg-neutral-200 min-h-[24px] items-start justify-start rounded-md mb-12">
+      <div
+        className={`flex flex-col px-2 py-1 bg-neutral-200 min-h-[24px] items-start justify-start rounded-md ${
+          onDelete || onTemplate ? "mb-12" : "mb-4"
+        }`}
+      >
         {form.notifications.map((notification, index) => (
           <UpdateNotificationForm
             notification={notification}
