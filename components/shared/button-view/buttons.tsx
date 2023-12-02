@@ -1,10 +1,10 @@
-import { HTMLExtended } from "@/utils/types";
+import { HTMLDivExtended } from "@/utils/types";
 
 const ButtonSecondary = ({
   value,
   sizeType,
   ...props
-}: HTMLExtended<HTMLButtonElement, { value: string; sizeType: "ml" }>) => {
+}: HTMLDivExtended<HTMLButtonElement, { value: string; sizeType: "ml" }>) => {
   return (
     <button {...props} className={`${props.className} ml-auto text-yellow-500`}>
       {value}
@@ -16,11 +16,11 @@ const ButtonPrimary = ({
   value,
   sizeType,
   ...props
-}: HTMLExtended<HTMLButtonElement> & { value: string; sizeType: "xl" }) => {
+}: HTMLDivExtended<HTMLButtonElement> & { value: string; sizeType: "xl" }) => {
   return (
     <button
       {...props}
-      className={`${props.className} bg-primary-500 text-white rounded-xl shadow-xl p-1 sticky bottom-0`}
+      className={`${props.className} bg-primary-500 text-white rounded-xl shadow-xl`}
     >
       {value}
     </button>

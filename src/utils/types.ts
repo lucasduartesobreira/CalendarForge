@@ -1,7 +1,34 @@
-import { DetailedHTMLProps, HTMLAttributes } from "react";
+import {
+  ButtonHTMLAttributes,
+  DetailedHTMLProps,
+  FormHTMLAttributes,
+  HTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+} from "react";
 
-export type HTMLExtended<Attribute, V = unknown> = DetailedHTMLProps<
+export type HTMLDivExtended<Attribute, V = unknown> = DetailedHTMLProps<
   HTMLAttributes<Attribute>,
   Attribute
 > &
   V;
+
+export type HTMLFormExtended<V = unknown> = DetailedHTMLProps<
+  FormHTMLAttributes<HTMLFormElement>,
+  HTMLFormElement
+> &
+  V;
+
+export type HTMLInputExtended<Attribute, V = unknown> = DetailedHTMLProps<
+  InputHTMLAttributes<HTMLInputElement>,
+  HTMLInputElement
+> &
+  V;
+
+export type HTMLButtonExtended<V = unknown> = DetailedHTMLProps<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  HTMLButtonElement
+> &
+  V;
+
+export type RequiredPropsWithChildren<V> = V & { children: ReactNode };
