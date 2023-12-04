@@ -20,6 +20,7 @@ import {
   initialNotification,
 } from "@/components/notifications-update-form/eventNotificationsForm";
 import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
+import Markdown from "react-markdown";
 
 export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   initialFormState,
@@ -73,7 +74,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
     ) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
       form[prop] = event.target.value;
-      setForm(form);
+      setForm({ ...form });
     };
 
   const handleChangeDates =
@@ -106,12 +107,24 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         onChange={handleChangeText("title")}
         type="text"
       />
-      <InputText
-        placeholder="Description"
-        defaultValue={form.description}
-        onChange={handleChangeText("description")}
-        type="text"
-      />
+      <label className="text-sm text-neutral-500 w-full">
+        Description
+        <br />
+        <Markdown className={"w-full max-w-fit"}>{form.description}</Markdown>
+        <div className="">
+          <textarea
+            placeholder="Description"
+            defaultValue={form.description}
+            onChange={(e) => {
+              e.stopPropagation();
+              e.stopPropagation();
+              const value = e.target.value;
+              setForm({ ...form, description: value });
+            }}
+            className={`w-full max-w-full whitespace-pre-wrap text-black px-2 py-1 bg-neutral-200 rounded-md`}
+          />
+        </div>
+      </label>
       <div className="gap-1 flex">
         <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200">
           Initial Date
