@@ -28,7 +28,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
   safelist: [
     {
       pattern: /col-start-(2|3|4|5|6|7|8)/,
