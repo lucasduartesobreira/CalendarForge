@@ -90,7 +90,9 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
       setForm(form);
     };
 
-  const [markdownPreview, setMarkdownPreview] = useState(false);
+  const [markdownPreview, setMarkdownPreview] = useState(
+    form.description.length !== 0,
+  );
   return (
     <PopupForm
       onSubmit={() => {
