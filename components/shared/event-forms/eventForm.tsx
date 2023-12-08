@@ -8,6 +8,7 @@ import {
 import { Option } from "@/utils/option";
 import {
   JSXElementConstructor,
+  PropsWithChildren,
   RefObject,
   useContext,
   useEffect,
@@ -21,6 +22,10 @@ import {
 } from "@/components/notifications-update-form/eventNotificationsForm";
 import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBehead from "remark-behead";
+import remarkBreaks from "remark-breaks";
+import remarkHeadingGap from "remark-heading-gap";
 
 export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   initialFormState,
@@ -84,6 +89,8 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
       form[prop] = target.getTime();
       setForm(form);
     };
+
+  const [markdownPreview, setMarkdownPreview] = useState(false);
   return (
     <PopupForm
       onSubmit={() => {
@@ -107,22 +114,41 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         onChange={handleChangeText("title")}
         type="text"
       />
-      <label className="text-sm text-neutral-500 w-full">
+      <label className="text-sm text-neutral-500 flex-initial w-full">
         Description
-        <br />
-        <Markdown className={"w-full max-w-fit"}>{form.description}</Markdown>
-        <div className="">
-          <textarea
-            placeholder="Description"
-            defaultValue={form.description}
-            onChange={(e) => {
-              e.stopPropagation();
-              e.stopPropagation();
-              const value = e.target.value;
-              setForm({ ...form, description: value });
-            }}
-            className={`w-full max-w-full whitespace-pre-wrap text-black px-2 py-1 bg-neutral-200 rounded-md`}
-          />
+        <div
+          className="w-full"
+          onClick={() => setMarkdownPreview(false)}
+          onBlur={() => setMarkdownPreview(true)}
+        >
+          {(!markdownPreview || form.description.length == 0) && (
+            <textarea
+              placeholder="Description"
+              defaultValue={form.description}
+              onChange={(e) => {
+                e.stopPropagation();
+                e.stopPropagation();
+                const value = e.target.value;
+                setForm({ ...form, description: value });
+              }}
+              className={`w-full whitespace-pre-wrap text-black px-2 py-1 bg-neutral-200 rounded-md`}
+              style={{ resize: "vertical" }}
+            />
+          )}
+          {markdownPreview && form.description.length != 0 && (
+            <Markdown
+              className={
+                "prose w-full max-w-full min-h-[8px] text-text-primary px-2 py-1 bg-neutral-200 rounded-md"
+              }
+              remarkPlugins={[remarkGfm, remarkBreaks, remarkHeadingGap]}
+              components={{
+                h1: BoldHeadingsRenderer(1),
+                h2: BoldHeadingsRenderer(2),
+              }}
+            >
+              {form.description}
+            </Markdown>
+          )}
         </div>
       </label>
       <div className="gap-1 flex">
@@ -244,4 +270,23 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
       </div>
     </PopupForm>
   );
+};
+
+const BoldHeadingsRenderer = (level: 1 | 2) => {
+  const boldStyle = {
+    1: "font-bold prose-2xl",
+    2: "font-semibold prose-xl",
+  } as const;
+  const Component = ({ children }: PropsWithChildren) => {
+    if (level === 1) {
+      return <h1 className={boldStyle[level]}>{children}</h1>;
+    } else if (level === 2) {
+      const a = boldStyle[level];
+      return <h2 className={a}>{children}</h2>;
+    } else {
+      return null;
+    }
+  };
+
+  return Component;
 };
