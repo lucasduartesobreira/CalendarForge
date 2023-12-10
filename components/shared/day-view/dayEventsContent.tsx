@@ -1,5 +1,6 @@
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
+import { createContext, useContext } from "react";
 
 const DAY_HEADER_HEIGHT = 48;
 const HOUR_BLOCK_HEIGHT = 64;
@@ -37,6 +38,10 @@ const startAndHeight = (startDate: Date, endDate: Date, day: number) => {
 
   return { top: startPosition, height };
 };
+
+export const DraggedEvent = createContext<
+  [O.Option<CalendarEvent>, (value: O.Option<CalendarEvent>) => void]
+>([O.None(), () => {}]);
 
 export const DayEvents = ({
   day,
@@ -98,6 +103,9 @@ const ShowCalendarEvent = ({
   const conflictNumber = conflicts.get(event.id);
   const left = 10 * (conflictNumber ?? 0);
   const width = 100 / (conflictNumber ?? 1) - left;
+
+  const [_, setDragged] = useContext(DraggedEvent);
+
   return (
     <div
       className={`absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
@@ -112,6 +120,10 @@ const ShowCalendarEvent = ({
         zIndex: `${index}`,
         backgroundColor: event.color ?? "#7a5195",
         borderWidth: conflictNumber ? 1 : 0,
+      }}
+      onDrag={(e) => {
+        e.preventDefault();
+        setDragged(O.Some(event));
       }}
       draggable
     >
