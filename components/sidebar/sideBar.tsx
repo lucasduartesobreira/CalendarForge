@@ -65,7 +65,7 @@ const SideBar = (
           buttonSection={
             <Button.Primary
               className="w-full p-1 sticky bottom-0"
-              ref={refButton}
+              innerRef={refButton}
               onClick={() => setOpen(!open)}
               value="New"
               sizeType="xl"
