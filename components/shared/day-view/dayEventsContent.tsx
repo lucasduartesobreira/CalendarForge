@@ -113,6 +113,7 @@ const ShowCalendarEvent = ({
         backgroundColor: event.color ?? "#7a5195",
         borderWidth: conflictNumber ? 1 : 0,
       }}
+      draggable
     >
       <button
         key={event.id}
