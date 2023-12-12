@@ -1,7 +1,15 @@
+import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
 import { HTMLDivExtended } from "@/utils/types";
-import { createContext, useContext, useState } from "react";
+import {
+  JSXElementConstructor,
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 const DAY_HEADER_HEIGHT = 48;
 const HOUR_BLOCK_HEIGHT = 64;
@@ -151,6 +159,16 @@ const useDragAndDrop = ({
   };
 };
 
+const computeMousePosition = (
+  y: number,
+  container?: HTMLElement | null,
+  offset: number = -DAY_HEADER_HEIGHT,
+) => {
+  const scrolled = container?.scrollTop ?? 0;
+  const toTop = container?.getBoundingClientRect().top ?? 0;
+  return y + scrolled - toTop + offset;
+};
+
 const DraggableCalendarEvent = ({
   event,
   conflicts,
@@ -174,6 +192,73 @@ const DraggableCalendarEvent = ({
     },
   });
 
+  const startDate = useMemo(() => new Date(event.startDate), [event]);
+
+  const endDate = useMemo(() => new Date(event.endDate), [event]);
+  const { top } = useMemo(
+    () => startAndHeight(startDate, endDate, day),
+    [startDate, endDate, day],
+  );
+
+  const [isResizing, setResizing] = useState(false);
+  const [bottom, setBottom] = useState(
+    calcOffset(endDate.getHours(), endDate.getMinutes(), Math.ceil),
+  );
+
+  const onMouseMove = useMemo(
+    () => (e: { clientY: number }) => {
+      if (isResizing) {
+        const container = document.getElementById("calendar-week-container");
+        const pointerPosition = computeMousePosition(e.clientY, container, 0);
+        const minBottom = Math.max(
+          top + HOUR_BLOCK_HEIGHT / HOUR_DIVISION,
+          pointerPosition,
+        );
+        const hoursAndMinutes =
+          (minBottom - DAY_HEADER_HEIGHT) / HOUR_BLOCK_HEIGHT;
+        const hours = Math.floor(hoursAndMinutes);
+        const minutes = (hoursAndMinutes - hours) * 60;
+
+        const newBottom = calcOffset(hours, minutes, Math.ceil);
+        setBottom(newBottom);
+      }
+    },
+    [isResizing, top],
+  );
+
+  const { storages } = useContext(StorageContext);
+
+  const onMouseUp = useMemo(
+    () => () => {
+      storages.map(({ eventsStorage }) => {
+        const hoursAndMinutes =
+          (bottom - DAY_HEADER_HEIGHT) / HOUR_BLOCK_HEIGHT;
+        const hours = Math.floor(hoursAndMinutes);
+        const minutes = (hoursAndMinutes - hours) * 60;
+
+        const newEndDate = new Date(endDate);
+        newEndDate.setHours(hours);
+        newEndDate.setMinutes(minutes);
+        eventsStorage.update(event.id, { endDate: newEndDate.getTime() });
+      });
+      setResizing(false);
+      window.removeEventListener("mousemove", onMouseMove);
+    },
+    [onMouseMove, bottom, endDate, event.id, storages],
+  );
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener("mouseup", onMouseUp, { once: true });
+      window.addEventListener("mousemove", onMouseMove);
+    }
+
+    return () => {
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("mousemove", onMouseMove);
+    };
+  }, [onMouseUp, onMouseMove, isResizing]);
+
   return (
     <ShowCalendarEvent
       event={event}
@@ -182,7 +267,23 @@ const DraggableCalendarEvent = ({
       index={index}
       setSelectedEvent={setSelectedEvent}
       key={event.id}
-      style={{ opacity: isDragging ? 0.3 : 1 }}
+      style={{
+        opacity: isDragging ? 0.3 : 1,
+        ...(isResizing ? { height: Math.abs(top - bottom) } : {}),
+      }}
+      ResizeDiv={
+        startDate.getDay() - endDate.getDay() === 0
+          ? () => (
+              <div
+                className="absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2"
+                onMouseDown={() => {
+                  console.log("mousedown");
+                  setResizing(true);
+                }}
+              />
+            )
+          : () => null
+      }
       {...dragAndDropHandlers}
     />
   );
@@ -196,6 +297,10 @@ export const ShowCalendarEvent = ({
   setSelectedEvent,
   className,
   style,
+  ResizeDiv,
+  onMouseDown,
+  onMouseLeave,
+  onMouseUp,
   ...props
 }: HTMLDivExtended<
   HTMLDivElement,
@@ -205,6 +310,7 @@ export const ShowCalendarEvent = ({
     day: number;
     index: number;
     setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
+    ResizeDiv?: JSXElementConstructor<{}>;
   }
 >) => {
   const conflictNumber = conflicts.get(event.id);
@@ -216,7 +322,6 @@ export const ShowCalendarEvent = ({
       {...props}
       className={`${className} absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
       style={{
-        ...style,
         ...startAndHeight(
           new Date(event.startDate),
           new Date(event.endDate),
@@ -227,17 +332,26 @@ export const ShowCalendarEvent = ({
         zIndex: `${index}`,
         backgroundColor: event.color ?? "#7a5195",
         borderWidth: conflictNumber ? 1 : 0,
+        ...style,
       }}
     >
-      <button
-        key={event.id}
-        onClick={() => {
-          setSelectedEvent(O.Some(event));
-        }}
-        className="text-xs"
+      <div
+        onMouseDown={onMouseDown}
+        onMouseLeave={onMouseLeave}
+        onMouseUp={onMouseUp}
+        className="w-full h-full"
       >
-        {event.title}
-      </button>
+        <button
+          key={event.id}
+          onClick={() => {
+            setSelectedEvent(O.Some(event));
+          }}
+          className="text-xs align-top select-none"
+        >
+          {event.title}
+        </button>
+      </div>
+      {ResizeDiv && <ResizeDiv />}
     </div>
   );
 };
