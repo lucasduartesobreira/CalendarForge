@@ -85,6 +85,7 @@ const CalendarWeek = ({
           dayOfWeek: (date.getDay() + 1) as ViewSize,
           day: date.getDate(),
           isToday: date.getTime() === dateNow.getTime(),
+          dateAtMidNight: date,
         };
       }),
     [startDate],
@@ -110,7 +111,7 @@ const CalendarWeek = ({
           <UpdateEventForm
             setOpen={() => setSelectedEvent(O.None())}
             initialForm={selectedEvent}
-           />
+          />
         ),
       )}
     </>

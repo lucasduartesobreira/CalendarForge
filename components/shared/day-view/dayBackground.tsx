@@ -1,5 +1,9 @@
-import { ReactNode } from "react";
+import { PropsWithChildren, useContext, useState } from "react";
 import { ViewSize } from "../flexible-view/flexibleView";
+import { HTMLDivExtended } from "@/utils/types";
+import { DraggedEvent, ShowCalendarEvent } from "./dayEventsContent";
+import { None, Option, Some } from "@/utils/option";
+import { StorageContext } from "@/hooks/dataHook";
 
 const dayToString = {
   1: "sun",
@@ -38,9 +42,80 @@ const rowStartClass = [
   "row-start-[24]",
   "row-start-[25]",
   "row-start-[26]",
+  "row-start-[27]",
+  "row-start-[28]",
+  "row-start-[29]",
+  "row-start-[30]",
+  "row-start-[31]",
+  "row-start-[32]",
+  "row-start-[33]",
+  "row-start-[34]",
+  "row-start-[35]",
+  "row-start-[36]",
+  "row-start-[37]",
+  "row-start-[38]",
+  "row-start-[39]",
+  "row-start-[40]",
+  "row-start-[41]",
+  "row-start-[42]",
+  "row-start-[43]",
+  "row-start-[44]",
+  "row-start-[45]",
+  "row-start-[46]",
+  "row-start-[47]",
+  "row-start-[48]",
+  "row-start-[49]",
+  "row-start-[50]",
+  "row-start-[51]",
+  "row-start-[52]",
+  "row-start-[53]",
+  "row-start-[54]",
+  "row-start-[55]",
+  "row-start-[56]",
+  "row-start-[57]",
+  "row-start-[58]",
+  "row-start-[59]",
+  "row-start-[60]",
+  "row-start-[61]",
+  "row-start-[62]",
+  "row-start-[63]",
+  "row-start-[64]",
+  "row-start-[65]",
+  "row-start-[66]",
+  "row-start-[67]",
+  "row-start-[68]",
+  "row-start-[69]",
+  "row-start-[70]",
+  "row-start-[71]",
+  "row-start-[72]",
+  "row-start-[73]",
+  "row-start-[74]",
+  "row-start-[75]",
+  "row-start-[76]",
+  "row-start-[77]",
+  "row-start-[78]",
+  "row-start-[79]",
+  "row-start-[80]",
+  "row-start-[81]",
+  "row-start-[82]",
+  "row-start-[83]",
+  "row-start-[84]",
+  "row-start-[85]",
+  "row-start-[86]",
+  "row-start-[87]",
+  "row-start-[88]",
+  "row-start-[89]",
+  "row-start-[90]",
+  "row-start-[91]",
+  "row-start-[92]",
+  "row-start-[93]",
+  "row-start-[94]",
+  "row-start-[95]",
+  "row-start-[96]",
 ] as const;
 
 const range24 = Array.from(new Array(24));
+const range96 = Array.from(new Array(96));
 
 export const DayBackground = ({
   dayOfWeek,
@@ -62,10 +137,97 @@ export const DayBackground = ({
         return (
           <SquareBG
             key={index}
-            style={`${rowStartClass[index + 1]} col-start-[1] row-span-1`}
+            className={`${rowStartClass[index + 1]} col-start-[1] row-span-1`}
           />
         );
       })}
+    </div>
+  );
+};
+
+export const DayDropZone = ({
+  dayOfWeek,
+  day,
+  date,
+}: {
+  dayOfWeek: ViewSize;
+  day: number;
+  date: Date;
+}) => {
+  const [dragged, setDragged] = useContext(DraggedEvent);
+  const id = `day${day}${dayOfWeek}`;
+  const [overDate, setOverDate] = useState<Option<number>>(None());
+  const { storages } = useContext(StorageContext);
+  return (
+    <div
+      className={`grid grid-rows-[48,repeat(96,16px)] absolute w-full`}
+      id={id}
+      onMouseLeave={() => {
+        if (dragged.isSome()) setOverDate(None());
+      }}
+    >
+      <div
+        className={`${rowStartClass[0]} col-start-[1] row-span-1 h-[48px]`}
+      />
+      {range96.map((_value, index) => {
+        return (
+          <div
+            key={index}
+            className={`${
+              rowStartClass[index + 1]
+            } col-start-[1] row-span-1 h-[16px] z-[2]`}
+            style={{ opacity: 0 }}
+            onMouseEnter={(e) => {
+              e.preventDefault();
+              if (dragged.isSome()) {
+                setOverDate(Some(date.getTime() + 15 * 60 * 1000 * index));
+              }
+            }}
+            onMouseLeave={() => {
+              if (dragged.isSome()) setOverDate(None());
+            }}
+            onMouseUp={(e) => {
+              e.preventDefault();
+
+              overDate.map((startDate) => {
+                dragged.map((event) => {
+                  storages.map(({ eventsStorage }) =>
+                    eventsStorage.update(event.id, {
+                      startDate: startDate,
+                      endDate: startDate + event.endDate - event.startDate,
+                    }),
+                  );
+
+                  setDragged(None());
+                });
+              });
+            }}
+          />
+        );
+      })}
+      {overDate.mapOrElse(
+        () => null,
+        (startDate) =>
+          dragged.mapOrElse(
+            () => null,
+            (event) => {
+              return (
+                <ShowCalendarEvent
+                  conflicts={new Map()}
+                  event={{
+                    ...event,
+                    startDate: startDate,
+                    endDate: startDate + (event.endDate - event.startDate),
+                  }}
+                  day={day}
+                  index={0}
+                  setSelectedEvent={() => {}}
+                  className="z-[100]"
+                />
+              );
+            },
+          ),
+      )}
     </div>
   );
 };
@@ -104,17 +266,16 @@ export const HoursBackground = () => {
       {range24.map((_value, index) => {
         return (
           <SquareBG
-            style={`${
+            className={`${
               rowStartClass[index + 1]
-            } col-start-[1] flex flex-wrap justify-end items-start`}
-            childrens={
-              <p
-                key={index}
-                className="text-neutral-600 mr-auto ml-auto mt-1 text-sm "
-              >{`${index < 10 ? `0${index}` : index}:00`}</p>
-            }
+            } col-start-[1] flex flex-wrap justify-end items-start h-[64px]`}
             key={index}
-          />
+          >
+            <p
+              key={index}
+              className="text-neutral-600 mr-auto ml-auto mt-1 text-sm "
+            >{`${index < 10 ? `0${index}` : index}:00`}</p>
+          </SquareBG>
         );
       })}
     </div>
@@ -122,15 +283,12 @@ export const HoursBackground = () => {
 };
 
 const SquareBG = ({
-  childrens,
-  style,
-}: {
-  childrens?: ReactNode;
-  style?: string;
-}) => {
+  children: childrens,
+  className,
+}: HTMLDivExtended<HTMLDivElement, PropsWithChildren>) => {
   return (
     <div
-      className={`${style} border-[1px] border-t-0 border-l-0 border-neutral-300 h-[64px]`}
+      className={`${className} border-[1px] border-t-0 border-l-0 border-neutral-300 `}
     >
       {childrens}
     </div>

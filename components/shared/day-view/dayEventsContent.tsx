@@ -1,6 +1,7 @@
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
-import { createContext, useContext } from "react";
+import { HTMLDivExtended } from "@/utils/types";
+import { createContext, useContext, useState } from "react";
 
 const DAY_HEADER_HEIGHT = 48;
 const HOUR_BLOCK_HEIGHT = 64;
@@ -73,7 +74,7 @@ export const DayEvents = ({
     <>
       {eventsMap.map((event, index) => {
         return (
-          <ShowCalendarEvent
+          <DraggableCalendarEvent
             event={event}
             conflicts={conflicts}
             day={day}
@@ -87,7 +88,70 @@ export const DayEvents = ({
   );
 };
 
-const ShowCalendarEvent = ({
+type DivType = HTMLDivExtended<HTMLDivElement>;
+const useDragAndDrop = ({
+  onDrag,
+  onDragEnd,
+}: {
+  onDrag: () => void;
+  onDragEnd: () => void;
+}) => {
+  const [timeout, setTout] = useState<O.Option<number>>(O.None());
+  const [isDragging, setIsDragging] = useState(false);
+
+  const onMouseDown: DivType["onMouseDown"] = () => {
+    window.addEventListener(
+      "mouseup",
+      () => {
+        timeout.map((id) => {
+          window.clearTimeout(id);
+        });
+        if (isDragging) onDragEnd();
+        setTout(O.None());
+        setIsDragging(false);
+        onDragEnd();
+      },
+      { once: true },
+    );
+    setTout(
+      O.Some(
+        window.setTimeout(() => {
+          console.log("automatic dragging");
+          setTout(O.None());
+          setIsDragging(true);
+          onDrag();
+        }, 400),
+      ),
+    );
+  };
+
+  const _onMouseLeave: DivType["onMouseLeave"] = () => {
+    timeout.map((id) => {
+      window.clearTimeout(id);
+      setTout(O.None());
+      setIsDragging(true);
+      onDrag();
+    });
+  };
+
+  const onMouseUp: DivType["onMouseUp"] = () => {
+    timeout.map((id) => {
+      window.clearTimeout(id);
+      if (isDragging) onDragEnd();
+      setTout(O.None());
+      setIsDragging(false);
+    });
+  };
+
+  return {
+    onMouseDown,
+    onMouseLeave: _onMouseLeave,
+    onMouseUp,
+    isDragging,
+  };
+};
+
+const DraggableCalendarEvent = ({
   event,
   conflicts,
   day,
@@ -100,16 +164,59 @@ const ShowCalendarEvent = ({
   index: number;
   setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
 }) => {
+  const [, setDragged] = useContext(DraggedEvent);
+  const { isDragging, ...dragAndDropHandlers } = useDragAndDrop({
+    onDrag: () => {
+      setDragged(O.Some(event));
+    },
+    onDragEnd: () => {
+      setDragged(O.None());
+    },
+  });
+
+  return (
+    <ShowCalendarEvent
+      event={event}
+      conflicts={conflicts}
+      day={day}
+      index={index}
+      setSelectedEvent={setSelectedEvent}
+      key={event.id}
+      style={{ opacity: isDragging ? 0.3 : 1 }}
+      {...dragAndDropHandlers}
+    />
+  );
+};
+
+export const ShowCalendarEvent = ({
+  event,
+  conflicts,
+  day,
+  index,
+  setSelectedEvent,
+  className,
+  style,
+  ...props
+}: HTMLDivExtended<
+  HTMLDivElement,
+  {
+    event: CalendarEvent;
+    conflicts: Map<string, number>;
+    day: number;
+    index: number;
+    setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
+  }
+>) => {
   const conflictNumber = conflicts.get(event.id);
   const left = 10 * (conflictNumber ?? 0);
   const width = 100 / (conflictNumber ?? 1) - left;
 
-  const [_, setDragged] = useContext(DraggedEvent);
-
   return (
     <div
-      className={`absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
+      {...props}
+      className={`${className} absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
       style={{
+        ...style,
         ...startAndHeight(
           new Date(event.startDate),
           new Date(event.endDate),
@@ -121,11 +228,6 @@ const ShowCalendarEvent = ({
         backgroundColor: event.color ?? "#7a5195",
         borderWidth: conflictNumber ? 1 : 0,
       }}
-      onDrag={(e) => {
-        e.preventDefault();
-        setDragged(O.Some(event));
-      }}
-      draggable
     >
       <button
         key={event.id}
