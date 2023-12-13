@@ -5,7 +5,6 @@ import {
   UpdateTemplate,
 } from "@/services/events/eventTemplates";
 import { useContext, useEffect, useState } from "react";
-import OutsideClick from "../utils/outsideClick";
 import * as O from "@/utils/option";
 import {
   UpdateNotificationForm,
