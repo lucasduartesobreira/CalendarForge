@@ -50,7 +50,31 @@ type CalendarEvent = {
   notifications: EventNotification[];
   color: FromTupleToUnion<typeof COLORS>;
   task_id: O.Option<string>;
+  recurring?: RecurringSettings;
 };
+
+const RecurringFrequencyType = [
+  "daily",
+  "weekly",
+  "monthly",
+  "yearly",
+] as const;
+type RecurringFrequencyType = (typeof RecurringFrequencyType)[number];
+
+type DaysOfWeek = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+type RecurringSettings = {
+  days: DaysOfWeek[];
+  frequencyType: RecurringFrequencyType;
+  frequency: number;
+  stop?: StopConfig;
+};
+
+type StopConfig =
+  | {
+      afterFrequency: number;
+    }
+  | { afterDay: number };
 
 type CreateEvent = AddValue<CalendarEvent>;
 type UpdateEvent = UpdateValue<CalendarEvent>;

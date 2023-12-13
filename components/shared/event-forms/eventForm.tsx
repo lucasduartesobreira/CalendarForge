@@ -72,7 +72,12 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
     <
       A extends keyof Omit<
         CreateEvent,
-        "endDate" | "startDate" | "notifications" | "color" | "task_id"
+        | "endDate"
+        | "startDate"
+        | "notifications"
+        | "color"
+        | "task_id"
+        | "recurring"
       >,
     >(
       prop: A,
