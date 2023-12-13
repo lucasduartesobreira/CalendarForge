@@ -43,7 +43,11 @@ export const UpdateEventTemplateForm = ({
     <
       A extends keyof Omit<
         UpdateTemplate,
-        "notifications" | "color" | "task_id" | "recurring"
+        | "notifications"
+        | "color"
+        | "task_id"
+        | "recurring_id"
+        | "recurring_settings"
       >,
     >(
       prop: A,

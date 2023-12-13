@@ -23,7 +23,6 @@ import {
 import { NewEventNotificationForm } from "@/components/notifications-create-form/createNotificationForm";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import remarkBehead from "remark-behead";
 import remarkBreaks from "remark-breaks";
 import remarkHeadingGap from "remark-heading-gap";
 
@@ -77,7 +76,8 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         | "notifications"
         | "color"
         | "task_id"
-        | "recurring"
+        | "recurring_id"
+        | "recurring_settings"
       >,
     >(
       prop: A,

@@ -50,34 +50,156 @@ type CalendarEvent = {
   notifications: EventNotification[];
   color: FromTupleToUnion<typeof COLORS>;
   task_id?: string;
-  recurring?: RecurringSettings;
+  recurring_settings?: RecurringSettings;
+  recurring_id?: string;
 };
 
-const RecurringFrequencyType = [
-  "daily",
-  "weekly",
-  "monthly",
-  "yearly",
-] as const;
-type RecurringFrequencyType = (typeof RecurringFrequencyType)[number];
+type DaysOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-type DaysOfWeek = 1 | 2 | 3 | 4 | 5 | 6 | 7;
-
-type RecurringSettings = {
-  days: DaysOfWeek[];
-  frequencyType: RecurringFrequencyType;
-  frequency: number;
-  stop?: StopConfig;
-};
+type RecurringSettings = (
+  | {
+      frequencyType: "daily";
+      frequency: number;
+    }
+  | { frequencyType: "weekly"; days: DaysOfWeek[] }
+) & { stop: StopConfig };
 
 type StopConfig =
   | {
       afterFrequency: number;
     }
-  | { afterDay: number };
+  | { afterDay: Date };
 
 type CreateEvent = AddValue<CalendarEvent>;
 type UpdateEvent = UpdateValue<CalendarEvent>;
+
+export const GetEventDays = (
+  startDate: Date,
+  recurringSettings: RecurringSettings,
+): Date[] => {
+  const { frequencyType, stop } = recurringSettings;
+  if (frequencyType === "daily") {
+    const { frequency } = recurringSettings;
+    if (frequency <= 0) return [];
+
+    if ("afterFrequency" in stop) {
+      let { afterFrequency } = stop;
+      let dates = new Array();
+      dates.push(startDate);
+      while (afterFrequency > 0) {
+        dates.push(
+          new Date(
+            startDate.getTime() + 24 * 3600 * 1000 * dates.length * frequency,
+          ),
+        );
+        afterFrequency--;
+      }
+
+      return dates;
+    } else {
+      let { afterDay } = stop;
+
+      if (afterDay.getTime() <= startDate.getTime()) return [];
+
+      afterDay.setHours(0, 0, 0, 0);
+      let actualDay = startDate;
+      const actualDayOnMidnight = actualDay.setHours(0, 0, 0, 0);
+
+      const hoursAndMinutesInMiliseconds =
+        startDate.getTime() - actualDayOnMidnight;
+
+      let dates = new Array();
+      dates.push(actualDay);
+      while (actualDay.getTime() < afterDay.getTime()) {
+        actualDay = new Date(
+          actualDay.getTime() +
+            24 * 3600 * 1000 * frequency +
+            hoursAndMinutesInMiliseconds,
+        );
+
+        dates.push(actualDay);
+      }
+
+      return dates;
+    }
+  } else if (frequencyType === "weekly") {
+    const { days } = recurringSettings;
+
+    if (days.length === 0) return [];
+
+    const daysSet = new Set(days.sort());
+
+    if ("afterFrequency" in stop) {
+      let { afterFrequency } = stop;
+
+      let dates = new Array();
+      dates.push(startDate);
+      let firstDayOfWeek = new Date(
+        startDate.getTime() - startDate.getDay() * 24 * 3600 * 1000,
+      );
+      while (afterFrequency > 0) {
+        daysSet.forEach((dayOfWeek) => {
+          const newDay = new Date(
+            firstDayOfWeek.getTime() + dayOfWeek * 24 * 3600 * 1000,
+          );
+          if (newDay.getTime() > startDate.getTime()) {
+            dates.push(newDay);
+          }
+        });
+
+        firstDayOfWeek = new Date(
+          firstDayOfWeek.getTime() + 7 * 24 * 3600 * 1000,
+        );
+        afterFrequency--;
+      }
+
+      return dates;
+    } else {
+      let { afterDay } = stop;
+      afterDay.setHours(0, 0, 0, 0);
+
+      let lastDayPushed = startDate;
+      lastDayPushed.setHours(0, 0, 0, 0);
+
+      if (afterDay.getTime() <= startDate.getTime()) return [];
+
+      let dates = new Array();
+
+      dates.push(startDate);
+
+      let firstDayOfWeek = new Date(
+        startDate.getTime() - startDate.getDay() * 24 * 3600 * 1000,
+      );
+
+      while (lastDayPushed.getTime() <= afterDay.getTime()) {
+        daysSet.forEach((dayOfWeek) => {
+          const newDay = new Date(
+            firstDayOfWeek.getTime() + dayOfWeek * 24 * 3600 * 1000,
+          );
+
+          if (newDay.getTime() > startDate.getTime()) {
+            if (
+              new Date(newDay.getTime()).setHours(0, 0, 0, 0) <=
+              afterDay.getTime()
+            )
+              dates.push(newDay);
+
+            newDay.setHours(0, 0, 0, 0);
+            lastDayPushed = newDay;
+          }
+        });
+
+        firstDayOfWeek = new Date(
+          firstDayOfWeek.getTime() + 7 * 24 * 3600 * 1000,
+        );
+      }
+
+      return dates;
+    }
+  }
+
+  return [];
+};
 
 export class EventStorageIndexedDb
   implements
@@ -150,16 +272,46 @@ export class EventStorageIndexedDb
   }
 
   @emitEvent
-  add(
+  async add(
     event: AddValue<CalendarEvent>,
   ): Promise<R.Result<CalendarEvent, symbol>> {
-    const eventWithId = {
-      id: Buffer.from(Date.now().toString()).toString("base64"),
-      ...event,
-    };
+    const created = await this.map.add(event);
 
-    const resultAsync = async () => this.map.add(eventWithId);
-    return resultAsync();
+    const bulkResult = created.map(({ id, ...event }) => {
+      if (event.recurring_settings != null) {
+        const dates = GetEventDays(
+          new Date(event.startDate),
+          event.recurring_settings,
+        ).slice(1);
+
+        const bulk = dates.reduce((bulk, date) => {
+          bulk.insert({
+            ...event,
+            recurring_id: id,
+            recurring_settings: event.recurring_settings,
+            startDate: date.getTime(),
+            endDate: new Date(
+              date.getTime() + event.endDate - event.startDate,
+            ).getTime(),
+          });
+          return bulk;
+        }, this.bulk());
+
+        return bulk;
+      }
+    });
+
+    if (bulkResult.isOk()) {
+      const bulk = bulkResult.unwrap();
+      if (bulk) {
+        let response = await bulk.commit();
+        if (!response.isOk()) {
+          await bulk.retry();
+        }
+      }
+    }
+
+    return created;
   }
 
   @emitEvent
