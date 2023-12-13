@@ -49,7 +49,7 @@ type CalendarEvent = {
   todo_id?: string;
   notifications: EventNotification[];
   color: FromTupleToUnion<typeof COLORS>;
-  task_id: O.Option<string>;
+  task_id?: string;
   recurring?: RecurringSettings;
 };
 
@@ -97,7 +97,6 @@ export class EventStorageIndexedDb
       calendar_id: "",
       notifications: [],
       color: "#7a5195",
-      task_id: O.None(),
     };
   }
   private static indexedDbBuilder: IndexedDbStorageBuilder<

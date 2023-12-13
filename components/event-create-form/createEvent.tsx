@@ -23,7 +23,6 @@ const initialFormState: CreateEvent = {
   calendar_id: OWN_CALENDAR_ID,
   notifications: [],
   color: "#7a5195",
-  task_id: O.None(),
 };
 
 const CreateEventForm = ({
