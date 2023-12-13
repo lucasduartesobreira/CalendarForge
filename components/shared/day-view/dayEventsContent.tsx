@@ -169,32 +169,22 @@ const computeMousePosition = (
   return y + scrolled - toTop + offset;
 };
 
-const DraggableCalendarEvent = ({
-  event,
-  conflicts,
-  day,
-  index,
-  setSelectedEvent,
-}: {
-  event: CalendarEvent;
-  conflicts: Map<string, number>;
-  day: number;
-  index: number;
-  setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
-}) => {
-  const [, setDragged] = useContext(DraggedEvent);
-  const { isDragging, ...dragAndDropHandlers } = useDragAndDrop({
-    onDrag: () => {
-      setDragged(O.Some(event));
-    },
-    onDragEnd: () => {
-      setDragged(O.None());
-    },
-  });
+const relativePositionToHour = (
+  position: number,
+  withDayHeader: boolean = true,
+) => {
+  const hoursAndMinutes =
+    (position - (withDayHeader ? DAY_HEADER_HEIGHT : 0)) / HOUR_BLOCK_HEIGHT;
+  const hours = Math.floor(hoursAndMinutes);
+  const minutes = Math.round((hoursAndMinutes - hours) * 60);
 
+  return [hours, minutes];
+};
+
+const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
   const startDate = useMemo(() => new Date(event.startDate), [event]);
-
   const endDate = useMemo(() => new Date(event.endDate), [event]);
+
   const { top } = useMemo(
     () => startAndHeight(startDate, endDate, day),
     [startDate, endDate, day],
@@ -214,10 +204,7 @@ const DraggableCalendarEvent = ({
           top + HOUR_BLOCK_HEIGHT / HOUR_DIVISION,
           pointerPosition,
         );
-        const hoursAndMinutes =
-          (minBottom - DAY_HEADER_HEIGHT) / HOUR_BLOCK_HEIGHT;
-        const hours = Math.floor(hoursAndMinutes);
-        const minutes = (hoursAndMinutes - hours) * 60;
+        const [hours, minutes] = relativePositionToHour(minBottom);
 
         const newBottom = calcOffset(hours, minutes, Math.ceil);
         setBottom(newBottom);
@@ -231,10 +218,7 @@ const DraggableCalendarEvent = ({
   const onMouseUp = useMemo(
     () => () => {
       storages.map(({ eventsStorage }) => {
-        const hoursAndMinutes =
-          (bottom - DAY_HEADER_HEIGHT) / HOUR_BLOCK_HEIGHT;
-        const hours = Math.floor(hoursAndMinutes);
-        const minutes = (hoursAndMinutes - hours) * 60;
+        const [hours, minutes] = relativePositionToHour(bottom);
 
         const newEndDate = new Date(endDate);
         newEndDate.setHours(hours);
@@ -259,6 +243,52 @@ const DraggableCalendarEvent = ({
     };
   }, [onMouseUp, onMouseMove, isResizing]);
 
+  const ResizeDiv = useMemo(() => {
+    const Component = () => {
+      return (
+        <div
+          className="absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2"
+          onMouseDown={() => {
+            setResizing(true);
+          }}
+        />
+      );
+    };
+    return Component;
+  }, []);
+
+  return [
+    isResizing,
+    Math.abs(top - bottom),
+    ...[endDate.getDate() === day ? ResizeDiv : undefined],
+  ] as const;
+};
+
+const DraggableCalendarEvent = ({
+  event,
+  conflicts,
+  day,
+  index,
+  setSelectedEvent,
+}: {
+  event: CalendarEvent;
+  conflicts: Map<string, number>;
+  day: number;
+  index: number;
+  setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
+}) => {
+  const [, setDragged] = useContext(DraggedEvent);
+  const { isDragging, ...dragAndDropHandlers } = useDragAndDrop({
+    onDrag: () => {
+      setDragged(O.Some(event));
+    },
+    onDragEnd: () => {
+      setDragged(O.None());
+    },
+  });
+
+  const [isResizing, newHeight, ResizeDiv] = useResize({ event, day });
+
   return (
     <ShowCalendarEvent
       event={event}
@@ -269,21 +299,9 @@ const DraggableCalendarEvent = ({
       key={event.id}
       style={{
         opacity: isDragging ? 0.3 : 1,
-        ...(isResizing ? { height: Math.abs(top - bottom) } : {}),
+        ...(isResizing ? { height: newHeight } : {}),
       }}
-      ResizeDiv={
-        startDate.getDay() - endDate.getDay() === 0
-          ? () => (
-              <div
-                className="absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2"
-                onMouseDown={() => {
-                  console.log("mousedown");
-                  setResizing(true);
-                }}
-              />
-            )
-          : () => null
-      }
+      ResizeDiv={ResizeDiv}
       {...dragAndDropHandlers}
     />
   );
