@@ -1,7 +1,9 @@
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { DayViewContent } from "../day-view/dayContent";
+import { DayDropZone } from "../day-view/dayBackground";
+import { DraggedEvent } from "../day-view/dayEventsContent";
 
 export const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
 export type ViewSize = (typeof AcceptedDaysValue)[number];
@@ -28,6 +30,7 @@ export const FlexibleView = ({
     dayOfWeek: ViewSize;
     day: number;
     isToday: boolean;
+    dateAtMidNight: Date;
   }[];
   selectEvent: (value: O.Option<CalendarEvent>) => void;
   id: string;
@@ -51,6 +54,7 @@ export const FlexibleView = ({
   }
 
   const weekGridClass = weekGridClasses.at(days.length - 1);
+  const [dragged] = useContext(DraggedEvent);
 
   return (
     <div
@@ -58,26 +62,35 @@ export const FlexibleView = ({
       id={id}
     >
       <DayViewContent.HoursBackground />
-      {days.map(({ dayOfWeek, day, isToday, events }, index) => (
-        <DayViewContent.DayContainer
-          column={index}
-          key={`${index}${dayOfWeek}${day}`}
-        >
-          <DayViewContent.DayBackground
-            key={index}
-            dayOfWeek={dayOfWeek}
-            day={day}
-            isToday={isToday}
-          />
-          {clientSide && (
-            <DayViewContent.DayEvents
+      {days.map(
+        ({ dayOfWeek, day, isToday, events, dateAtMidNight }, index) => (
+          <DayViewContent.DayContainer
+            column={index}
+            key={`${index}${dayOfWeek}${day}`}
+          >
+            <DayViewContent.DayBackground
+              key={index}
+              dayOfWeek={dayOfWeek}
               day={day}
-              setSelectedEvent={setSelectedEvent}
-              events={events}
-             />
-          )}
-        </DayViewContent.DayContainer>
-      ))}
+              isToday={isToday}
+            />
+            {clientSide && (
+              <DayViewContent.DayEvents
+                day={day}
+                setSelectedEvent={setSelectedEvent}
+                events={events}
+              />
+            )}
+            {dragged.isSome() && (
+              <DayDropZone
+                date={dateAtMidNight}
+                day={day}
+                dayOfWeek={dayOfWeek}
+              />
+            )}
+          </DayViewContent.DayContainer>
+        ),
+      )}
     </div>
   );
 };

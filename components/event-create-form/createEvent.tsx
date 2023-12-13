@@ -126,7 +126,7 @@ const CreateEventButton = () => {
   return (
     <div className="">
       <Button.Primary
-        ref={buttonRef}
+        innerRef={buttonRef}
         sizeType="xl"
         className="absolute bottom-8 right-8 w-24 h-24 z-[1000] rounded-s-full rounded-e-full bg-primary-500"
         onClick={() => setOpen(!open)}
