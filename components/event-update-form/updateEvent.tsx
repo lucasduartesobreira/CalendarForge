@@ -46,12 +46,16 @@ const UpdateEventForm = ({
                 (async () =>
                   (await eventsStorage.findById(id))
                     .ok(Symbol("Record not found"))
-                    .map((event) =>
-                      event.recurring_settings != null ||
-                      form.recurring_settings != null
-                        ? setUpdatedForm(O.Some({ id, ...form }))
-                        : eventsStorage.update(id, form),
-                    ))();
+                    .map((event) => {
+                      if (
+                        event.recurring_settings != null ||
+                        form.recurring_settings != null
+                      ) {
+                        return setUpdatedForm(O.Some({ id, ...form }));
+                      }
+                      setOpen(false);
+                      return eventsStorage.update(id, form);
+                    }))();
               }}
               closeOnDelete={false}
               onDelete={({ id }) => {
