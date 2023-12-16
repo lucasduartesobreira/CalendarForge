@@ -815,6 +815,10 @@ export class RecurringEventsManager {
     const findRoot = await this.map.findById(id);
     return await findRoot
       .map(({ id: thisId }) => this.updateForward(thisId, event))
+      .map((result) => {
+        this.map.update(id, event);
+        return result;
+      })
       .ok(Symbol("Cannot update a deleted record"))
       .asyncFlatten();
   }
@@ -893,6 +897,10 @@ export class RecurringEventsManager {
             : this.deleteForward(recurring_id)
           : (async () => R.Ok(null))(),
       )
+      .map(async (result) => {
+        await this.map.remove(id);
+        return result;
+      })
       .asyncFlatten();
   }
 }

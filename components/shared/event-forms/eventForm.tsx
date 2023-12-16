@@ -43,6 +43,8 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   onDelete,
   onCreateTemplate: onTemplate,
   templateSelector: TemplateSelector,
+  closeOnSubmit = true,
+  closeOnDelete = true,
   blockedRefs,
 }: {
   initialFormState: T;
@@ -54,6 +56,8 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
     updateForm: (value: Partial<T>) => void;
   }>;
   blockedRefs: Option<RefObject<any>[]>;
+  closeOnSubmit?: boolean;
+  closeOnDelete?: boolean;
 }) => {
   const { storages } = useContext(StorageContext);
   const [form, setForm] = useState<T>(initialFormState);
@@ -117,6 +121,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
       setOpen={setOpen}
       refs={blockedRefs}
       className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
+      closeOnSubmit={closeOnSubmit}
     >
       <FormHeader setOpen={setOpen}>
         {TemplateSelector && (
@@ -456,6 +461,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
               <InputButtons.Delete
                 className="bg-red-500 font-semibold w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
                 setOpen={setOpen}
+                closeOnDelete={closeOnDelete}
                 onDelete={() => {
                   onDelete(form);
                 }}
