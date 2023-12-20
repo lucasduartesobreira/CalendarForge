@@ -330,9 +330,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
                       ? { type: value, afterFrequency: 1 }
                       : {
                           type: "date",
-                          afterDate: new Date(
-                            form.startDate + 24 * 3600 * 1000,
-                          ),
+                          afterDay: new Date(form.startDate + 24 * 3600 * 1000),
                         };
 
                   setForm({
@@ -369,17 +367,18 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
               {form.recurring_settings.stop.type === "date" && (
                 <InputText
                   type="date"
-                  value={getHTMLDateTime(
-                    form.recurring_settings.stop.afterDay ??
-                      new Date(form.startDate + 24 * 3600 * 1000),
-                  ).slice(0, 10)}
+                  value={form.recurring_settings.stop.afterDay
+                    .toISOString()
+                    .slice(0, 10)}
                   onChange={(e) => {
                     const value = e.target.valueAsDate;
                     if (
                       form.recurring_settings?.stop.type === "date" &&
                       value != null
                     ) {
-                      form.recurring_settings.stop.afterDay = value;
+                      form.recurring_settings.stop.afterDay = new Date(
+                        value.getTime() + value.getTimezoneOffset() * 1000 * 60,
+                      );
                     }
                     setForm({ ...form });
                   }}

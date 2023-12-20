@@ -74,6 +74,13 @@ type StopConfig =
 type CreateEvent = AddValue<CalendarEvent>;
 type UpdateEvent = UpdateValue<CalendarEvent>;
 
+const isBeforeOrEqual = (firstDate: Date, secondDate: Date) => {
+  return (
+    new Date(firstDate.getTime()).setHours(0, 0, 0, 0) <=
+    new Date(secondDate.getTime()).setHours(0, 0, 0, 0)
+  );
+};
+
 export const getRecurringDates = (
   startDate: Date,
   recurringSettings: RecurringSettings,
@@ -109,16 +116,20 @@ export const getRecurringDates = (
       const hoursAndMinutesInMiliseconds =
         startDate.getTime() - actualDayOnMidnight;
 
+      actualDay = new Date(
+        actualDay.getTime() +
+          24 * 3600 * 1000 * frequency +
+          hoursAndMinutesInMiliseconds,
+      );
+
       let dates = new Array();
-      dates.push(actualDay);
-      while (actualDay.getTime() < afterDay.getTime()) {
+      while (isBeforeOrEqual(actualDay, afterDay)) {
+        dates.push(actualDay);
         actualDay = new Date(
           actualDay.getTime() +
             24 * 3600 * 1000 * frequency +
             hoursAndMinutesInMiliseconds,
         );
-
-        dates.push(actualDay);
       }
 
       return dates;
@@ -159,8 +170,11 @@ export const getRecurringDates = (
       let { afterDay } = stop;
       afterDay.setHours(0, 0, 0, 0);
 
-      let lastDayPushed = startDate;
+      let lastDayPushed = new Date(startDate);
       lastDayPushed.setHours(0, 0, 0, 0);
+
+      const hoursAndMinutesInMiliseconds =
+        startDate.getTime() - lastDayPushed.getTime();
 
       if (afterDay.getTime() <= startDate.getTime()) return [];
 
@@ -169,7 +183,9 @@ export const getRecurringDates = (
       dates.push(startDate);
 
       let firstDayOfWeek = new Date(
-        startDate.getTime() - startDate.getDay() * 24 * 3600 * 1000,
+        startDate.getTime() -
+          startDate.getDay() * 24 * 3600 * 1000 -
+          hoursAndMinutesInMiliseconds,
       );
 
       while (lastDayPushed.getTime() <= afterDay.getTime()) {
@@ -179,13 +195,12 @@ export const getRecurringDates = (
           );
 
           if (newDay.getTime() > startDate.getTime()) {
-            if (
-              new Date(newDay.getTime()).setHours(0, 0, 0, 0) <=
-              afterDay.getTime()
-            )
-              dates.push(newDay);
-
             newDay.setHours(0, 0, 0, 0);
+            if (isBeforeOrEqual(newDay, afterDay))
+              dates.push(
+                new Date(newDay.getTime() + hoursAndMinutesInMiliseconds),
+              );
+
             lastDayPushed = newDay;
           }
         });
@@ -652,160 +667,266 @@ export class RecurringEventsManager {
     return toUpdate;
   }
 
+  private async allRelatedEvents(
+    id: CalendarEvent["id"],
+  ): Promise<
+    R.Result<
+      readonly [allEvents: CalendarEvent[], eventFound: CalendarEvent],
+      symbol
+    >
+  > {
+    return this.map.findById(id).then((eventFound) => {
+      return eventFound
+        .ok(Symbol(""))
+        .map(
+          (event) =>
+            [
+              this.map.findAll({ recurring_id: event.recurring_id ?? id }),
+              event.recurring_id
+                ? this.map.findById(event.recurring_id)
+                : (async () => O.Some(event))(),
+              (async () => event)(),
+            ] as const,
+        )
+        .map(async (events) => {
+          const [allEvents, base, eventFound] = await Promise.all(events);
+          return base
+            .map((baseEvent) => {
+              allEvents.splice(0, 0, baseEvent);
+              return [allEvents, eventFound] as const;
+            })
+            .ok(Symbol(""));
+        })
+        .asyncFlatten();
+    });
+  }
+
+  private findKeptRemovedAndToAddEvents({
+    oldStartDate,
+    newRecurringSettings,
+    allNextEvents,
+    referenceStartDate,
+    referenceEndDate,
+    eventFound,
+    event,
+    id,
+  }: {
+    oldStartDate: number;
+    newRecurringSettings: RecurringSettings;
+    allNextEvents: CalendarEvent[];
+    referenceStartDate: Date;
+    referenceEndDate: Date;
+    eventFound: CalendarEvent;
+    event: UpdateValue<CalendarEvent>;
+    id: CalendarEvent["id"];
+  }) {
+    const getNewRecurringDates = new Set(
+      getRecurringDates(new Date(oldStartDate), newRecurringSettings).map(
+        (date) => date.getTime(),
+      ),
+    ).add(oldStartDate);
+
+    const [kept, keptDates, removed] = allNextEvents.reduce(
+      (acc, event) => {
+        const { startDate, id } = event;
+        if (getNewRecurringDates.has(startDate)) {
+          acc[0].push(event);
+          acc[1].add(startDate);
+        } else {
+          acc[2].push(id);
+        }
+        return acc;
+      },
+      [new Array(), new Set([]), new Array()] as [
+        CalendarEvent[],
+        Set<CalendarEvent["startDate"]>,
+        CalendarEvent["id"][],
+      ],
+    );
+
+    const newEvents = Array.from(getNewRecurringDates.values())
+      .filter((dateToTest) => !keptDates.has(dateToTest))
+      .map((startDateMiliseconds) => {
+        const startDate = this.newDateWithReferenceHours(
+          startDateMiliseconds,
+          referenceStartDate,
+        );
+        return {
+          ...eventFound,
+          ...event,
+          recurring_id: id,
+          startDate: startDate,
+          endDate:
+            startDate +
+            referenceEndDate.getTime() -
+            referenceStartDate.getTime(),
+        };
+      });
+
+    return [kept, removed, newEvents] as const;
+  }
+
   async updateForward(
     id: CalendarEvent["id"],
     event: UpdateEvent,
   ): Promise<R.Result<null, symbol>> {
-    if (event.recurring_settings != null) {
-      const found = await this.map.findById(id);
-      return await found
-        .map(async (eventFound) => {
-          const {
-            changedStartDate,
-            changedEndDate,
-            changedRecurringSettings,
-            changedDateUnrelated,
-            changedUnrelatedSpecific,
-          } = this.hasChanged({
-            eventFound,
-            event,
+    const allFound = await this.allRelatedEvents(id);
+    const bulkWhat = allFound.map(([allEvents, eventFound]) => {
+      const {
+        changedStartDate,
+        changedEndDate,
+        changedRecurringSettings,
+        changedDateUnrelated,
+        changedUnrelatedSpecific,
+      } = this.hasChanged({
+        eventFound,
+        event,
+      });
+
+      const baseBulk = this.map.bulk(allEvents);
+      if (
+        !changedStartDate &&
+        !changedEndDate &&
+        !changedRecurringSettings &&
+        !changedDateUnrelated
+      )
+        return baseBulk;
+
+      const { startDate: oldStartDate, endDate: oldEndDate } = eventFound;
+      const {
+        startDate: newStartDate,
+        endDate: newEndDate,
+        recurring_settings: newRecurringSettings,
+      } = event;
+
+      const allNextEvents = allEvents.filter(
+        ({ startDate }) => startDate >= oldStartDate,
+      );
+
+      const referenceStartDate = new Date(newStartDate ?? oldStartDate);
+      const referenceEndDate = new Date(newEndDate ?? oldEndDate);
+
+      const dataToUpdate = this.fixedUpdate(event, {
+        ...changedUnrelatedSpecific,
+        changedRecurringSettings,
+      });
+
+      if (!changedRecurringSettings) {
+        const bulk = this.updateOnBulk(
+          allNextEvents,
+          dataToUpdate,
+          referenceStartDate,
+          referenceEndDate,
+          baseBulk,
+        );
+
+        return bulk;
+      } else if (newRecurringSettings != null) {
+        const [kept, removed, newEvents] = this.findKeptRemovedAndToAddEvents({
+          oldStartDate,
+          eventFound,
+          referenceEndDate,
+          referenceStartDate,
+          newRecurringSettings,
+          allNextEvents,
+          event,
+          id,
+        });
+
+        const bulkWithUpdated = this.updateOnBulk(
+          kept,
+          { ...dataToUpdate, recurring_id: id },
+          referenceStartDate,
+          referenceEndDate,
+          baseBulk,
+        );
+
+        const allNextSetIds = new Set(allNextEvents.map(({ id }) => id));
+
+        const beforeUpdatedEvent = allEvents.filter(
+          ({ id }) => !allNextSetIds.has(id),
+        );
+
+        if (beforeUpdatedEvent.length === 1) {
+          bulkWithUpdated.update({
+            id: beforeUpdatedEvent[0].id,
+            recurring_id: undefined,
+            recurring_settings: undefined,
           });
-
-          if (
-            !changedStartDate &&
-            !changedEndDate &&
-            !changedRecurringSettings &&
-            !changedDateUnrelated
-          )
-            return R.Ok(null);
-
-          const { startDate: oldStartDate, endDate: oldEndDate } = eventFound;
-          const {
-            startDate: newStartDate,
-            endDate: newEndDate,
-            recurring_settings: newRecurringSettings,
-            recurring_id,
-          } = event;
-
-          const foundAllRelatedEvents = await this.map.findAll({
-            recurring_id: recurring_id ?? id,
-          });
-
-          if (!foundAllRelatedEvents.find(({ id: thisId }) => thisId === id)) {
-            foundAllRelatedEvents.splice(0, 0, eventFound);
-          }
-
-          const allNextEvents = foundAllRelatedEvents.filter(
-            ({ startDate }) => startDate >= oldStartDate,
+        } else {
+          const capped = getCappedRecurringSetting(
+            new Date(
+              beforeUpdatedEvent.at(-1)?.startDate ??
+                referenceStartDate.getTime() - 24 * 3600 * 1000,
+            ),
+            newRecurringSettings,
           );
+          beforeUpdatedEvent.forEach(({ id }) =>
+            bulkWithUpdated.update({ id, recurring_settings: capped }),
+          );
+        }
 
-          const baseBulk = this.map.bulk(allNextEvents);
+        const bulkRemoved = this.removeFromBulk(removed, bulkWithUpdated);
 
-          const referenceStartDate = new Date(newStartDate ?? oldStartDate);
-          const referenceEndDate = new Date(newEndDate ?? oldEndDate);
+        bulkRemoved.update({
+          id,
+          ...dataToUpdate,
+          recurring_id: undefined,
+        });
+        const bulkComplete = this.addToBulk(newEvents, bulkWithUpdated);
 
-          const dataToUpdate = this.fixedUpdate(event, {
-            ...changedUnrelatedSpecific,
-            changedRecurringSettings,
+        return bulkComplete;
+      } else if (
+        newRecurringSettings == null &&
+        eventFound.recurring_settings != null
+      ) {
+        const allNext = allNextEvents.reduce(
+          (acc, { id: thisId }) => {
+            if (thisId !== id) acc.push(thisId);
+            return acc;
+          },
+          [] as CalendarEvent["id"][],
+        );
+
+        const allNextIdsSet = new Set(allNext);
+
+        const bulk = this.removeFromBulk(allNext, baseBulk);
+        bulk.update({
+          id,
+          recurring_id: undefined,
+          recurring_settings: undefined,
+        });
+
+        const beforeUpdatedEvent = allEvents.filter(
+          (event) => !allNextIdsSet.has(event.id),
+        );
+
+        if (beforeUpdatedEvent.length === 1) {
+          bulk.update({
+            id: beforeUpdatedEvent[0].id,
+            recurring_id: undefined,
+            recurring_settings: undefined,
           });
+        } else {
+          const capped = getCappedRecurringSetting(
+            new Date(
+              beforeUpdatedEvent.at(-1)?.startDate ??
+                referenceStartDate.getTime() - 24 * 3600 * 1000,
+            ),
+            eventFound.recurring_settings,
+          );
+          beforeUpdatedEvent.forEach(({ id }) =>
+            bulk.update({ id, recurring_settings: capped }),
+          );
+        }
 
-          if (!changedRecurringSettings) {
-            const bulk = this.updateOnBulk(
-              allNextEvents,
-              dataToUpdate,
-              referenceStartDate,
-              referenceEndDate,
-              baseBulk,
-            );
+        return bulk;
+      } else {
+        return baseBulk;
+      }
+    });
 
-            return await bulk.commit();
-          } else if (newRecurringSettings != null) {
-            const getNewRecurringDates = new Set(
-              getRecurringDates(
-                new Date(oldStartDate),
-                newRecurringSettings,
-              ).map((date) => date.getTime()),
-            );
-
-            const [kept, keptDates, removed] = allNextEvents.reduce(
-              (acc, event) => {
-                const { startDate, id } = event;
-                if (getNewRecurringDates.has(startDate)) {
-                  acc[0].push(event);
-                  acc[1].add(startDate);
-                } else {
-                  acc[2].push(id);
-                }
-                return acc;
-              },
-              [new Array(), new Set([]), new Array()] as [
-                CalendarEvent[],
-                Set<CalendarEvent["startDate"]>,
-                CalendarEvent["id"][],
-              ],
-            );
-
-            const newEvents = Array.from(getNewRecurringDates.values())
-              .filter((dateToTest) => !keptDates.has(dateToTest))
-              .map((startDateMiliseconds) => {
-                const startDate = this.newDateWithReferenceHours(
-                  startDateMiliseconds,
-                  referenceStartDate,
-                );
-                return {
-                  ...eventFound,
-                  ...event,
-                  recurring_id: id,
-                  startDate: startDate,
-                  endDate:
-                    startDate +
-                    referenceEndDate.getTime() -
-                    referenceStartDate.getTime(),
-                };
-              });
-
-            const bulkRemoved = this.removeFromBulk(removed, baseBulk);
-            const bulkWithUpdated = this.updateOnBulk(
-              kept,
-              { ...dataToUpdate, recurring_id: id },
-              referenceStartDate,
-              referenceEndDate,
-              bulkRemoved,
-            );
-
-            bulkWithUpdated.update({
-              id,
-              recurring_id: undefined,
-              ...dataToUpdate,
-            });
-            const bulkComplete = this.addToBulk(newEvents, bulkWithUpdated);
-
-            return await bulkComplete.commit();
-          } else if (newRecurringSettings == null) {
-            const allNext = allNextEvents.reduce(
-              (acc, { id: thisId }) => {
-                if (thisId !== id) acc.push(thisId);
-                return acc;
-              },
-              [] as CalendarEvent["id"][],
-            );
-            const bulk = this.removeFromBulk(allNext, baseBulk);
-            bulk.update({
-              id,
-              recurring_id: undefined,
-              recurring_settings: undefined,
-            });
-
-            return await bulk.commit();
-          } else {
-            return R.Ok(null);
-          }
-        })
-        .ok(Symbol("Cannot update deleted event"))
-        .asyncFlatten();
-    }
-
-    return R.Ok(null);
+    return bulkWhat.map((bulk) => bulk.commit()).asyncFlatten();
   }
 
   async updateAll(
@@ -814,76 +935,84 @@ export class RecurringEventsManager {
   ): Promise<R.Result<null, symbol>> {
     const findRoot = await this.map.findById(id);
     return await findRoot
-      .map(({ id: thisId }) => this.updateForward(thisId, event))
-      .map((result) => {
-        this.map.update(id, event);
-        return result;
+      .map(({ id: thisId, startDate, endDate }) => {
+        const oldStartDate = new Date(startDate);
+        const oldEndDate = new Date(endDate);
+
+        const newStartDate = new Date(event.startDate ?? startDate);
+        const newEndDate = new Date(event.endDate ?? endDate);
+
+        return this.updateForward(thisId, {
+          ...event,
+          startDate: oldStartDate.setHours(
+            newStartDate.getHours(),
+            newStartDate.getMinutes(),
+            newStartDate.getSeconds(),
+            newStartDate.getMilliseconds(),
+          ),
+          endDate: oldEndDate.setHours(
+            newEndDate.getHours(),
+            newEndDate.getMinutes(),
+            newEndDate.getSeconds(),
+            newEndDate.getMilliseconds(),
+          ),
+        });
       })
       .ok(Symbol("Cannot update a deleted record"))
       .asyncFlatten();
   }
 
   async deleteForward(id: CalendarEvent["id"]) {
-    const found = await this.map.findById(id);
-    return found
-      .map(async (eventFound) => {
-        const { recurring_settings } = eventFound;
-        if (recurring_settings != null) {
-          const base = eventFound.recurring_id
-            ? await this.map.findById(eventFound.recurring_id)
-            : O.Some(eventFound);
+    const allRelatedEvents = await this.allRelatedEvents(id);
+    const bulk = allRelatedEvents.map(([allRelatedEventsFound, eventFound]) => {
+      const { recurring_settings } = eventFound;
+      const bulk = this.map.bulk(allRelatedEventsFound);
+      if (recurring_settings == null) return bulk;
 
-          return await base
-            .ok(Symbol("Cannot find main event"))
-            .map(async (base) => {
-              const allRelatedEventsFound = await this.map.findAll({
-                recurring_id: eventFound.recurring_id ?? id,
-              });
+      const allForward = allRelatedEventsFound.reduce(
+        (acc, nextEvent) => {
+          const { id, startDate } = nextEvent;
+          if (startDate >= eventFound.startDate) {
+            acc.set(id, nextEvent);
+          }
+          return acc;
+        },
+        new Map() as Map<CalendarEvent["id"], CalendarEvent>,
+      );
 
-              if (allRelatedEventsFound.find(({ id }) => id === base.id))
-                allRelatedEventsFound.splice(0, 0, base);
+      const removedFromBulk = this.removeFromBulk(
+        Array.from(allForward.keys()),
+        bulk,
+      );
 
-              const allForward = allRelatedEventsFound.reduce(
-                (acc, nextEvent) => {
-                  const { id, startDate } = nextEvent;
-                  if (startDate > eventFound.startDate) {
-                    acc.set(id, nextEvent);
-                  }
-                  return acc;
-                },
-                new Map() as Map<CalendarEvent["id"], CalendarEvent>,
-              );
+      const allBefore = allRelatedEventsFound.filter(
+        (relatedEvent) => !allForward.has(relatedEvent.id),
+      );
 
-              const bulk = this.map.bulk(allRelatedEventsFound);
-              const removedFromBulk = this.removeFromBulk(
-                Array.from(allForward.keys()),
-                bulk,
-              );
+      if (allBefore.length === 1) {
+        removedFromBulk.update({
+          id: allBefore[0].id,
+          recurring_settings: undefined,
+        });
 
-              const allBefore = allRelatedEventsFound.filter(
-                (relatedEvent) => !allForward.has(relatedEvent.id),
-              );
+        return removedFromBulk;
+      }
 
-              const cappedRecurringSettings = getCappedRecurringSetting(
-                new Date(allBefore.at(-1)?.startDate ?? eventFound.startDate),
-                recurring_settings,
-              );
+      const cappedRecurringSettings = getCappedRecurringSetting(
+        new Date(allBefore.at(-1)?.startDate ?? eventFound.startDate),
+        recurring_settings,
+      );
 
-              return allBefore.reduce((bulk, event) => {
-                bulk.update({
-                  id: event.id,
-                  recurring_settings: cappedRecurringSettings,
-                });
-                return bulk;
-              }, removedFromBulk);
-            })
-            .map(async (bulk) => (await bulk).commit())
-            .asyncFlatten();
-        }
-        return R.Ok(null);
-      })
-      .ok(Symbol("Couldn't find record with this id"))
-      .asyncFlatten();
+      return allBefore.reduce((bulk, event) => {
+        bulk.update({
+          id: event.id,
+          recurring_settings: cappedRecurringSettings,
+        });
+        return bulk;
+      }, removedFromBulk);
+    });
+
+    return bulk.map((bulk) => bulk.commit()).asyncFlatten();
   }
 
   async deleteAll(id: CalendarEvent["id"]) {
@@ -897,10 +1026,6 @@ export class RecurringEventsManager {
             : this.deleteForward(recurring_id)
           : (async () => R.Ok(null))(),
       )
-      .map(async (result) => {
-        await this.map.remove(id);
-        return result;
-      })
       .asyncFlatten();
   }
 }

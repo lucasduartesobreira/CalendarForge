@@ -1,7 +1,7 @@
 import { RecurringEventsHandler, StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { EventForm } from "../shared/event-forms/eventForm";
 import { InputButtons, InputText, PopupForm } from "../shared/forms/forms";
 
@@ -23,8 +23,6 @@ const UpdateEventForm = ({
 
   const [selectedOption, setOption] = useState<"all" | "forward" | "one">();
 
-  useEffect(() => console.log(updatedForm), [updatedForm]);
-  useEffect(() => console.log(selectedOption), [selectedOption]);
   const ref = useRef(null);
 
   return storages
@@ -46,15 +44,29 @@ const UpdateEventForm = ({
                 (async () =>
                   (await eventsStorage.findById(id))
                     .ok(Symbol("Record not found"))
-                    .map((event) => {
+                    .map(async (event) => {
+                      const addingRecurring =
+                        form.recurring_settings != null &&
+                        event.recurring_settings == null;
+                      const removingRecurring =
+                        form.recurring_settings == null &&
+                        event.recurring_settings != null;
+                      const changingARecurringEvent =
+                        form.recurring_settings != null ||
+                        event.recurring_settings != null;
                       if (
-                        event.recurring_settings != null ||
-                        form.recurring_settings != null
+                        changingARecurringEvent &&
+                        !addingRecurring &&
+                        !removingRecurring
                       ) {
                         return setUpdatedForm(O.Some({ id, ...form }));
+                      } else if (removingRecurring || addingRecurring) {
+                        await recurringEventsManager.updateForward(id, form);
+                        return setOpen(false);
                       }
-                      setOpen(false);
-                      return eventsStorage.update(id, form);
+
+                      await eventsStorage.update(id, form);
+                      return setOpen(false);
                     }))();
               }}
               closeOnDelete={false}
@@ -62,11 +74,12 @@ const UpdateEventForm = ({
                 (async () =>
                   (await eventsStorage.findById(id))
                     .ok(Symbol("Record not found"))
-                    .map((event) =>
-                      event.recurring_settings != null
-                        ? setDeleteId(O.Some(id))
-                        : eventsStorage.remove(id),
-                    ))();
+                    .map((event) => {
+                      if (event.recurring_settings != null)
+                        return setDeleteId(O.Some(id));
+                      eventsStorage.remove(id);
+                      return setOpen(false);
+                    }))();
               }}
               onCreateTemplate={(form) => {
                 const { startDate: _sd, endDate: _ed, ...template } = form;
