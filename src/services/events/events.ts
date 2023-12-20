@@ -81,6 +81,8 @@ const isBeforeOrEqual = (firstDate: Date, secondDate: Date) => {
   );
 };
 
+const HOUR_IN_MILLISECONDS = 3600 * 1000;
+
 export const getRecurringDates = (
   startDate: Date,
   recurringSettings: RecurringSettings,
@@ -97,7 +99,8 @@ export const getRecurringDates = (
       while (afterFrequency > 0) {
         dates.push(
           new Date(
-            startDate.getTime() + 24 * 3600 * 1000 * dates.length * frequency,
+            startDate.getTime() +
+              24 * HOUR_IN_MILLISECONDS * dates.length * frequency,
           ),
         );
         afterFrequency--;
@@ -118,7 +121,7 @@ export const getRecurringDates = (
 
       actualDay = new Date(
         actualDay.getTime() +
-          24 * 3600 * 1000 * frequency +
+          24 * HOUR_IN_MILLISECONDS * frequency +
           hoursAndMinutesInMiliseconds,
       );
 
@@ -127,7 +130,7 @@ export const getRecurringDates = (
         dates.push(actualDay);
         actualDay = new Date(
           actualDay.getTime() +
-            24 * 3600 * 1000 * frequency +
+            24 * HOUR_IN_MILLISECONDS * frequency +
             hoursAndMinutesInMiliseconds,
         );
       }
@@ -147,12 +150,12 @@ export const getRecurringDates = (
       let dates = new Array();
       dates.push(startDate);
       let firstDayOfWeek = new Date(
-        startDate.getTime() - startDate.getDay() * 24 * 3600 * 1000,
+        startDate.getTime() - startDate.getDay() * 24 * HOUR_IN_MILLISECONDS,
       );
       while (afterFrequency > 0) {
         daysSet.forEach((dayOfWeek) => {
           const newDay = new Date(
-            firstDayOfWeek.getTime() + dayOfWeek * 24 * 3600 * 1000,
+            firstDayOfWeek.getTime() + dayOfWeek * 24 * HOUR_IN_MILLISECONDS,
           );
           if (newDay.getTime() > startDate.getTime()) {
             dates.push(newDay);
@@ -160,7 +163,7 @@ export const getRecurringDates = (
         });
 
         firstDayOfWeek = new Date(
-          firstDayOfWeek.getTime() + 7 * 24 * 3600 * 1000,
+          firstDayOfWeek.getTime() + 7 * 24 * HOUR_IN_MILLISECONDS,
         );
         afterFrequency--;
       }
@@ -184,14 +187,14 @@ export const getRecurringDates = (
 
       let firstDayOfWeek = new Date(
         startDate.getTime() -
-          startDate.getDay() * 24 * 3600 * 1000 -
+          startDate.getDay() * 24 * HOUR_IN_MILLISECONDS -
           hoursAndMinutesInMiliseconds,
       );
 
       while (lastDayPushed.getTime() <= afterDay.getTime()) {
         daysSet.forEach((dayOfWeek) => {
           const newDay = new Date(
-            firstDayOfWeek.getTime() + dayOfWeek * 24 * 3600 * 1000,
+            firstDayOfWeek.getTime() + dayOfWeek * 24 * HOUR_IN_MILLISECONDS,
           );
 
           if (newDay.getTime() > startDate.getTime()) {
@@ -206,7 +209,7 @@ export const getRecurringDates = (
         });
 
         firstDayOfWeek = new Date(
-          firstDayOfWeek.getTime() + 7 * 24 * 3600 * 1000,
+          firstDayOfWeek.getTime() + 7 * 24 * HOUR_IN_MILLISECONDS,
         );
       }
 
@@ -217,11 +220,13 @@ export const getRecurringDates = (
   return [];
 };
 
+const atMidnight = (date: Date) => new Date(date).setHours(0, 0, 0, 0);
+
 export const getCappedRecurringSetting = (
   capDate: Date,
   recurringSettings: RecurringSettings,
 ): RecurringSettings => {
-  const capDateAtMidnight = new Date(capDate.getTime()).setHours(0, 0, 0, 0);
+  const capDateAtMidnight = atMidnight(capDate);
   const updatedAfterDay = new Date(capDateAtMidnight);
 
   return {
@@ -242,7 +247,7 @@ export class EventStorageIndexedDb
   private static DEFAULT_VALUE(): Omit<CalendarEvent, "id"> {
     return {
       title: "",
-      endDate: Date.now() + 60 * 60 * 1000,
+      endDate: Date.now() + HOUR_IN_MILLISECONDS,
       startDate: Date.now(),
       description: "",
       calendar_id: "",
@@ -857,7 +862,7 @@ export class RecurringEventsManager {
           const capped = getCappedRecurringSetting(
             new Date(
               beforeUpdatedEvent.at(-1)?.startDate ??
-                referenceStartDate.getTime() - 24 * 3600 * 1000,
+                referenceStartDate.getTime() - 24 * HOUR_IN_MILLISECONDS,
             ),
             newRecurringSettings,
           );
@@ -911,7 +916,7 @@ export class RecurringEventsManager {
           const capped = getCappedRecurringSetting(
             new Date(
               beforeUpdatedEvent.at(-1)?.startDate ??
-                referenceStartDate.getTime() - 24 * 3600 * 1000,
+                referenceStartDate.getTime() - 24 * HOUR_IN_MILLISECONDS,
             ),
             eventFound.recurring_settings,
           );
