@@ -1,5 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { CalendarEvent, EventStorageIndexedDb } from "@/services/events/events";
+import {
+  CalendarEvent,
+  EventStorageIndexedDb,
+  RecurringEventsManager,
+} from "@/services/events/events";
 import {
   createContext,
   useCallback,
@@ -45,6 +49,10 @@ const StorageContext = createContext<StorageContext>({
     tasksStorageListener: undefined,
   },
 });
+
+export const RecurringEventsHandler = createContext<
+  O.Option<RecurringEventsManager>
+>(O.None());
 type StateUpdate = {} | undefined;
 
 const useForceUpdate = () => {

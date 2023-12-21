@@ -152,12 +152,8 @@ export class IndexedDbStorageBuilder<
     keyPath: (keyof V & string)[];
     options?: IDBIndexParameters;
   }[] = new Array(10);
-  private defaultValue?: V;
-  private key = "id";
 
-  private constructor(defaultValue?: V) {
-    this.defaultValue = defaultValue;
-  }
+  private constructor(_defaultValue?: V) {}
 
   static new<
     K extends keyof V & string,

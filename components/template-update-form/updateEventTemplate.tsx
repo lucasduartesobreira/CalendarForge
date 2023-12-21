@@ -5,7 +5,6 @@ import {
   UpdateTemplate,
 } from "@/services/events/eventTemplates";
 import { useContext, useEffect, useState } from "react";
-import OutsideClick from "../utils/outsideClick";
 import * as O from "@/utils/option";
 import {
   UpdateNotificationForm,
@@ -43,7 +42,11 @@ export const UpdateEventTemplateForm = ({
     <
       A extends keyof Omit<
         UpdateTemplate,
-        "notifications" | "color" | "task_id"
+        | "notifications"
+        | "color"
+        | "task_id"
+        | "recurring_id"
+        | "recurring_settings"
       >,
     >(
       prop: A,

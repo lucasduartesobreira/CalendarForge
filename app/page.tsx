@@ -3,11 +3,18 @@ import { useContext, useEffect, useState } from "react";
 import CalendarWeek from "@/components/calendar-week-view/calendarWeek";
 import CreateEventButton from "@/components/event-create-form/createEvent";
 import SideBar from "@/components/sidebar/sideBar";
-import { StorageContext, useDataStorage } from "@/hooks/dataHook";
+import {
+  RecurringEventsHandler,
+  StorageContext,
+  useDataStorage,
+} from "@/hooks/dataHook";
 import { useMap } from "@/hooks/mapHook";
 import { WeekNavigation } from "@/components/calendar-navbar/navBar";
 import * as O from "@/utils/option";
-import { CalendarEvent } from "@/services/events/events";
+import {
+  CalendarEvent,
+  RecurringEventsManager,
+} from "@/services/events/events";
 import { DraggedEvent } from "@/components/shared/day-view/dayEventsContent";
 
 const NavBarContainer = ({ children }: { children: any }) => {
@@ -83,38 +90,49 @@ const Home = () => {
   const [startDate, setStartDate] = useDate();
   const draggedHook = useState<O.Option<CalendarEvent>>(O.None());
   const [menuType, setMenuType] = useState<"calendar" | "projects">("calendar");
+  const [recurringEventsManager, setManager] = useState<
+    O.Option<RecurringEventsManager>
+  >(O.None());
+
+  useEffect(() => {
+    data.storages.map(({ eventsStorage }) =>
+      setManager(O.Some(new RecurringEventsManager(eventsStorage))),
+    );
+  }, [data.storages]);
 
   return (
     <StorageContext.Provider value={data}>
-      <DraggedEvent.Provider value={draggedHook}>
-        <main className="h-full flex flex-col bg-white">
-          <NavBarContainer>
-            <nav className="mx-6 col-start-1 flex gap-2 text-text-inverse items-center">
-              <button
-                onClick={() => setMenuType("calendar")}
-                className={`font-semibold py-1 px-2 my-2 ${
-                  menuType === "calendar"
-                    ? "border-text-inverse bg-primary-300 rounded-md border-[1px] border-primary-100"
-                    : ""
-                }`}
-              >
-                Calendar
-              </button>
-            </nav>
-            {menuType === "calendar" && (
-              <WeekNavigation
-                startDate={startDate}
-                setStartDate={setStartDate}
-              />
-            )}
-          </NavBarContainer>
-          <FlexContent>
-            {menuType === "calendar" && (
-              <CalendarContent startDate={startDate} />
-            )}
-          </FlexContent>
-        </main>
-      </DraggedEvent.Provider>
+      <RecurringEventsHandler.Provider value={recurringEventsManager}>
+        <DraggedEvent.Provider value={draggedHook}>
+          <main className="h-full flex flex-col bg-white">
+            <NavBarContainer>
+              <nav className="mx-6 col-start-1 flex gap-2 text-text-inverse items-center">
+                <button
+                  onClick={() => setMenuType("calendar")}
+                  className={`font-semibold py-1 px-2 my-2 ${
+                    menuType === "calendar"
+                      ? "border-text-inverse bg-primary-300 rounded-md border-[1px] border-primary-100"
+                      : ""
+                  }`}
+                >
+                  Calendar
+                </button>
+              </nav>
+              {menuType === "calendar" && (
+                <WeekNavigation
+                  startDate={startDate}
+                  setStartDate={setStartDate}
+                />
+              )}
+            </NavBarContainer>
+            <FlexContent>
+              {menuType === "calendar" && (
+                <CalendarContent startDate={startDate} />
+              )}
+            </FlexContent>
+          </main>
+        </DraggedEvent.Provider>
+      </RecurringEventsHandler.Provider>
     </StorageContext.Provider>
   );
 };

@@ -14,6 +14,8 @@ export const PopupForm = ({
   children,
   onSubmit,
   backgroundDiv,
+  closeOnSubmit = true,
+  innerRef,
   ...props
 }: RequiredPropsWithChildren<
   HTMLFormExtended<{
@@ -21,6 +23,8 @@ export const PopupForm = ({
     refs: Option<RefObject<any>[]>;
     onSubmit: () => void;
     backgroundDiv?: HTMLDivExtended<HTMLDivElement>;
+    closeOnSubmit?: boolean;
+    innerRef?: RefObject<any>;
   }>
 >) => {
   return (
@@ -39,8 +43,9 @@ export const PopupForm = ({
             ev.preventDefault();
             ev.stopPropagation();
             onSubmit();
-            setOpen(false);
+            if (closeOnSubmit) setOpen(false);
           }}
+          ref={innerRef}
           className={`text-neutral-500 bg-white rounded-xl shadow-lg overflow-hidden relative flex flex-col gap-2 p-4 justify-center ${props.className} `}
         >
           {children}
@@ -122,11 +127,13 @@ const DeleteButton = ({
   className,
   onDelete,
   text,
+  closeOnDelete = true,
   ...props
 }: HTMLButtonExtended<{
   setOpen: (value: boolean) => void;
   onDelete: () => void;
   text: string;
+  closeOnDelete?: boolean;
 }>) => {
   return (
     <button
@@ -136,7 +143,7 @@ const DeleteButton = ({
         e.preventDefault();
         e.stopPropagation();
         onDelete();
-        setOpen(false);
+        if (closeOnDelete) setOpen(false);
       }}
     >
       {text}
