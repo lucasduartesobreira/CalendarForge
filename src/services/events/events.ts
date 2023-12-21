@@ -74,14 +74,21 @@ type StopConfig =
 type CreateEvent = AddValue<CalendarEvent>;
 type UpdateEvent = UpdateValue<CalendarEvent>;
 
-const isBeforeOrEqual = (firstDate: Date, secondDate: Date) => {
-  return (
-    new Date(firstDate.getTime()).setHours(0, 0, 0, 0) <=
-    new Date(secondDate.getTime()).setHours(0, 0, 0, 0)
-  );
+const isPreviousDay = (firstDate: Date, secondDate: Date) => {
+  return atMidnight(firstDate) <= atMidnight(secondDate);
 };
 
 const HOUR_IN_MILLISECONDS = 3600 * 1000;
+
+const offsetDays = (date: Date, days: number, hoursFromMidnight: number) => {
+  return new Date(
+    atMidnight(date) + days * 24 * HOUR_IN_MILLISECONDS + hoursFromMidnight,
+  );
+};
+
+const getTimeSinceMidnight = (date: Date) => {
+  return date.getTime() - atMidnight(date);
+};
 
 export const getRecurringDates = (
   startDate: Date,
@@ -96,42 +103,43 @@ export const getRecurringDates = (
       let { afterFrequency } = stop;
       let dates = new Array();
       dates.push(startDate);
+
+      const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
+
       while (afterFrequency > 0) {
-        dates.push(
-          new Date(
-            startDate.getTime() +
-              24 * HOUR_IN_MILLISECONDS * dates.length * frequency,
-          ),
+        const newDay = offsetDays(
+          startDate,
+          dates.length * frequency,
+          hoursAndMinutesInMiliseconds,
         );
+        dates.push(newDay);
         afterFrequency--;
       }
 
       return dates;
     } else {
-      let { afterDay } = stop;
+      let { afterDay: originalAfterDay } = stop;
+      if (isPreviousDay(originalAfterDay, startDate)) return [];
+      const finalDay = new Date(atMidnight(originalAfterDay));
 
-      if (afterDay.getTime() <= startDate.getTime()) return [];
+      let actualDay = new Date(atMidnight(startDate));
 
-      afterDay.setHours(0, 0, 0, 0);
-      let actualDay = startDate;
-      const actualDayOnMidnight = actualDay.setHours(0, 0, 0, 0);
+      const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
 
-      const hoursAndMinutesInMiliseconds =
-        startDate.getTime() - actualDayOnMidnight;
-
-      actualDay = new Date(
-        actualDay.getTime() +
-          24 * HOUR_IN_MILLISECONDS * frequency +
-          hoursAndMinutesInMiliseconds,
+      actualDay = offsetDays(
+        actualDay,
+        frequency,
+        hoursAndMinutesInMiliseconds,
       );
 
       let dates = new Array();
-      while (isBeforeOrEqual(actualDay, afterDay)) {
+      dates.push(startDate);
+      while (isPreviousDay(actualDay, finalDay)) {
         dates.push(actualDay);
-        actualDay = new Date(
-          actualDay.getTime() +
-            24 * HOUR_IN_MILLISECONDS * frequency +
-            hoursAndMinutesInMiliseconds,
+        actualDay = offsetDays(
+          actualDay,
+          frequency,
+          hoursAndMinutesInMiliseconds,
         );
       }
 
@@ -149,68 +157,64 @@ export const getRecurringDates = (
 
       let dates = new Array();
       dates.push(startDate);
-      let firstDayOfWeek = new Date(
-        startDate.getTime() - startDate.getDay() * 24 * HOUR_IN_MILLISECONDS,
-      );
+
+      const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
+
+      let firstDayOfWeek = offsetDays(startDate, -startDate.getDay(), 0);
+
       while (afterFrequency > 0) {
         daysSet.forEach((dayOfWeek) => {
-          const newDay = new Date(
-            firstDayOfWeek.getTime() + dayOfWeek * 24 * HOUR_IN_MILLISECONDS,
+          const newDay = offsetDays(
+            firstDayOfWeek,
+            dayOfWeek,
+            hoursAndMinutesInMiliseconds,
           );
           if (newDay.getTime() > startDate.getTime()) {
             dates.push(newDay);
           }
         });
 
-        firstDayOfWeek = new Date(
-          firstDayOfWeek.getTime() + 7 * 24 * HOUR_IN_MILLISECONDS,
-        );
+        firstDayOfWeek = offsetDays(firstDayOfWeek, 7, 0);
         afterFrequency--;
       }
 
       return dates;
     } else {
-      let { afterDay } = stop;
-      afterDay.setHours(0, 0, 0, 0);
+      let { afterDay: originalAfterDay } = stop;
+      const afterDay = new Date(atMidnight(originalAfterDay));
 
-      let lastDayPushed = new Date(startDate);
-      lastDayPushed.setHours(0, 0, 0, 0);
+      let lastDayPushed = new Date(atMidnight(startDate));
 
-      const hoursAndMinutesInMiliseconds =
-        startDate.getTime() - lastDayPushed.getTime();
+      if (isPreviousDay(afterDay, lastDayPushed)) return [];
 
-      if (afterDay.getTime() <= startDate.getTime()) return [];
+      const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
 
       let dates = new Array();
 
       dates.push(startDate);
 
-      let firstDayOfWeek = new Date(
-        startDate.getTime() -
-          startDate.getDay() * 24 * HOUR_IN_MILLISECONDS -
-          hoursAndMinutesInMiliseconds,
-      );
+      let firstDayOfWeek = offsetDays(startDate, -startDate.getDay(), 0);
 
       while (lastDayPushed.getTime() <= afterDay.getTime()) {
         daysSet.forEach((dayOfWeek) => {
-          const newDay = new Date(
-            firstDayOfWeek.getTime() + dayOfWeek * 24 * HOUR_IN_MILLISECONDS,
+          const newDay = offsetDays(
+            firstDayOfWeek,
+            dayOfWeek,
+            hoursAndMinutesInMiliseconds,
           );
 
           if (newDay.getTime() > startDate.getTime()) {
-            newDay.setHours(0, 0, 0, 0);
-            if (isBeforeOrEqual(newDay, afterDay))
+            const newDayAtMidgnight = atMidnight(newDay);
+            if (isPreviousDay(newDay, afterDay))
               dates.push(
-                new Date(newDay.getTime() + hoursAndMinutesInMiliseconds),
+                new Date(newDayAtMidgnight + hoursAndMinutesInMiliseconds),
               );
 
-            lastDayPushed = newDay;
+            lastDayPushed = new Date(newDayAtMidgnight);
           }
         });
 
-        firstDayOfWeek = new Date(
-          firstDayOfWeek.getTime() + 7 * 24 * HOUR_IN_MILLISECONDS,
-        );
+        firstDayOfWeek = offsetDays(firstDayOfWeek, 7, 0);
       }
 
       return dates;
