@@ -122,7 +122,7 @@ const UpdateEventForm = ({
                   }}
                   closeOnSubmit={true}
                   className="text-black"
-                  ref={ref}
+                  innerRef={ref}
                 >
                   <label className="flex gap-1">
                     <InputText
@@ -186,7 +186,7 @@ const UpdateEventForm = ({
                   }}
                   closeOnSubmit={true}
                   className="text-black"
-                  ref={ref}
+                  innerRef={ref}
                 >
                   <label className="flex gap-1">
                     <InputText

@@ -15,6 +15,7 @@ export const PopupForm = ({
   onSubmit,
   backgroundDiv,
   closeOnSubmit = true,
+  innerRef,
   ...props
 }: RequiredPropsWithChildren<
   HTMLFormExtended<{
@@ -23,6 +24,7 @@ export const PopupForm = ({
     onSubmit: () => void;
     backgroundDiv?: HTMLDivExtended<HTMLDivElement>;
     closeOnSubmit?: boolean;
+    innerRef?: RefObject<any>;
   }>
 >) => {
   return (
@@ -43,6 +45,7 @@ export const PopupForm = ({
             onSubmit();
             if (closeOnSubmit) setOpen(false);
           }}
+          ref={innerRef}
           className={`text-neutral-500 bg-white rounded-xl shadow-lg overflow-hidden relative flex flex-col gap-2 p-4 justify-center ${props.className} `}
         >
           {children}
