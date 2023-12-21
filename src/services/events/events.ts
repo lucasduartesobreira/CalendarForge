@@ -90,128 +90,110 @@ const getTimeSinceMidnight = (date: Date) => {
   return date.getTime() - atMidnight(date);
 };
 
-export const getRecurringDates = (
-  startDate: Date,
-  recurringSettings: RecurringSettings,
-): Date[] => {
-  const { frequencyType, stop } = recurringSettings;
-  const dates = [startDate];
-
+const getStopDate = (startDate: Date, recurringSetting: RecurringSettings) => {
+  const { frequencyType, stop } = recurringSetting;
+  const { type: stopType } = stop;
   if (frequencyType === "daily") {
-    const { frequency } = recurringSettings;
-    if (frequency <= 0) return [];
+    const { frequency } = recurringSetting;
+    if (stopType === "frequency") {
+      const { afterFrequency } = stop;
+      const stopDate = offsetDays(startDate, afterFrequency * frequency, 0);
+      return stopDate;
+    }
+    return new Date(atMidnight(stop.afterDay));
+  }
 
-    if ("afterFrequency" in stop) {
-      let { afterFrequency } = stop;
-      const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
+  if (stopType === "frequency") {
+    const { afterFrequency } = stop;
+    const lastDayOfWeek = offsetDays(startDate, 6 - startDate.getDay(), 0);
+    const stopDate = offsetDays(lastDayOfWeek, 7 * afterFrequency, 0);
+    return stopDate;
+  }
 
-      while (afterFrequency > 0) {
-        const newDay = offsetDays(
-          startDate,
-          dates.length * frequency,
-          hoursAndMinutesInMiliseconds,
-        );
-        dates.push(newDay);
-        afterFrequency--;
-      }
+  return new Date(atMidnight(stop.afterDay));
+};
 
-      return dates;
-    } else {
-      let { afterDay: originalAfterDay } = stop;
-      if (isPreviousDay(originalAfterDay, startDate)) return [];
-      const finalDay = new Date(atMidnight(originalAfterDay));
+const DatesGenerators = {
+  daily: (startDate: Date, stopDate: Date, frequency: number) => {
+    const dates = [startDate];
 
-      let actualDay = new Date(atMidnight(startDate));
+    if (isPreviousDay(stopDate, startDate)) return [];
 
-      const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
+    let actualDay = new Date(atMidnight(startDate));
 
+    const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
+
+    actualDay = offsetDays(actualDay, frequency, hoursAndMinutesInMiliseconds);
+
+    while (isPreviousDay(actualDay, stopDate)) {
+      dates.push(actualDay);
       actualDay = offsetDays(
         actualDay,
         frequency,
         hoursAndMinutesInMiliseconds,
       );
+    }
 
-      while (isPreviousDay(actualDay, finalDay)) {
-        dates.push(actualDay);
-        actualDay = offsetDays(
-          actualDay,
-          frequency,
+    return dates;
+  },
+  weekly: (startDate: Date, stopDate: Date, daysSet: Set<DaysOfWeek>) => {
+    const afterDay = stopDate;
+    let lastDayPushed = new Date(atMidnight(startDate));
+
+    if (isPreviousDay(afterDay, lastDayPushed)) return [];
+
+    const dates = [startDate];
+
+    const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
+    let firstDayOfWeek = offsetDays(startDate, -startDate.getDay(), 0);
+
+    while (lastDayPushed.getTime() <= afterDay.getTime()) {
+      daysSet.forEach((dayOfWeek) => {
+        const newDay = offsetDays(
+          firstDayOfWeek,
+          dayOfWeek,
           hoursAndMinutesInMiliseconds,
         );
-      }
 
-      return dates;
+        if (newDay.getTime() > startDate.getTime()) {
+          const newDayAtMidgnight = atMidnight(newDay);
+          if (isPreviousDay(newDay, afterDay))
+            dates.push(
+              new Date(newDayAtMidgnight + hoursAndMinutesInMiliseconds),
+            );
+
+          lastDayPushed = new Date(newDayAtMidgnight);
+        }
+      });
+
+      firstDayOfWeek = offsetDays(firstDayOfWeek, 7, 0);
     }
-  } else if (frequencyType === "weekly") {
-    const { days } = recurringSettings;
 
-    if (days.length === 0) return [];
+    return dates;
+  },
+};
 
-    const daysSet = new Set(days.sort());
-
-    if (stop.type === "frequency") {
-      let { afterFrequency } = stop;
-
-      const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
-
-      let firstDayOfWeek = offsetDays(startDate, -startDate.getDay(), 0);
-
-      while (afterFrequency > 0) {
-        daysSet.forEach((dayOfWeek) => {
-          const newDay = offsetDays(
-            firstDayOfWeek,
-            dayOfWeek,
-            hoursAndMinutesInMiliseconds,
-          );
-          if (newDay.getTime() > startDate.getTime()) {
-            dates.push(newDay);
-          }
-        });
-
-        firstDayOfWeek = offsetDays(firstDayOfWeek, 7, 0);
-        afterFrequency--;
-      }
-
-      return dates;
-    } else {
-      let { afterDay: originalAfterDay } = stop;
-      const afterDay = new Date(atMidnight(originalAfterDay));
-
-      let lastDayPushed = new Date(atMidnight(startDate));
-
-      if (isPreviousDay(afterDay, lastDayPushed)) return [];
-
-      const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
-
-      let firstDayOfWeek = offsetDays(startDate, -startDate.getDay(), 0);
-
-      while (lastDayPushed.getTime() <= afterDay.getTime()) {
-        daysSet.forEach((dayOfWeek) => {
-          const newDay = offsetDays(
-            firstDayOfWeek,
-            dayOfWeek,
-            hoursAndMinutesInMiliseconds,
-          );
-
-          if (newDay.getTime() > startDate.getTime()) {
-            const newDayAtMidgnight = atMidnight(newDay);
-            if (isPreviousDay(newDay, afterDay))
-              dates.push(
-                new Date(newDayAtMidgnight + hoursAndMinutesInMiliseconds),
-              );
-
-            lastDayPushed = new Date(newDayAtMidgnight);
-          }
-        });
-
-        firstDayOfWeek = offsetDays(firstDayOfWeek, 7, 0);
-      }
-
-      return dates;
-    }
+export const getRecurringDates = (
+  startDate: Date,
+  recurringSettings: RecurringSettings,
+) => {
+  const { frequencyType } = recurringSettings;
+  const stopDate = getStopDate(startDate, recurringSettings);
+  if (frequencyType === "daily") {
+    const generatorOfDatesUntilStopDate = DatesGenerators[frequencyType];
+    return generatorOfDatesUntilStopDate(
+      startDate,
+      stopDate,
+      recurringSettings.frequency,
+    );
+  } else {
+    const generatorOfDatesUntilStopDate = DatesGenerators[frequencyType];
+    return generatorOfDatesUntilStopDate(
+      startDate,
+      stopDate,
+      new Set(recurringSettings.days),
+    );
   }
-
-  return [];
 };
 
 const atMidnight = (date: Date) => new Date(date).setHours(0, 0, 0, 0);
