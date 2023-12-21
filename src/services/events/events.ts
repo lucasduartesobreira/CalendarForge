@@ -95,15 +95,14 @@ export const getRecurringDates = (
   recurringSettings: RecurringSettings,
 ): Date[] => {
   const { frequencyType, stop } = recurringSettings;
+  const dates = [startDate];
+
   if (frequencyType === "daily") {
     const { frequency } = recurringSettings;
     if (frequency <= 0) return [];
 
     if ("afterFrequency" in stop) {
       let { afterFrequency } = stop;
-      let dates = new Array();
-      dates.push(startDate);
-
       const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
 
       while (afterFrequency > 0) {
@@ -132,8 +131,6 @@ export const getRecurringDates = (
         hoursAndMinutesInMiliseconds,
       );
 
-      let dates = new Array();
-      dates.push(startDate);
       while (isPreviousDay(actualDay, finalDay)) {
         dates.push(actualDay);
         actualDay = offsetDays(
@@ -154,9 +151,6 @@ export const getRecurringDates = (
 
     if (stop.type === "frequency") {
       let { afterFrequency } = stop;
-
-      let dates = new Array();
-      dates.push(startDate);
 
       const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
 
@@ -188,10 +182,6 @@ export const getRecurringDates = (
       if (isPreviousDay(afterDay, lastDayPushed)) return [];
 
       const hoursAndMinutesInMiliseconds = getTimeSinceMidnight(startDate);
-
-      let dates = new Array();
-
-      dates.push(startDate);
 
       let firstDayOfWeek = offsetDays(startDate, -startDate.getDay(), 0);
 
