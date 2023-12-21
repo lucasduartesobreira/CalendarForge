@@ -82,7 +82,15 @@ const UpdateEventForm = ({
                     }))();
               }}
               onCreateTemplate={(form) => {
-                const { startDate: _sd, endDate: _ed, ...template } = form;
+                const {
+                  startDate: _sd,
+                  endDate: _ed,
+                  recurring_settings: _recurring_settings,
+                  recurring_id: _recurring_id,
+                  task_id: _task_id,
+                  todo_id: _todo_id,
+                  ...template
+                } = form;
                 eventsTemplateStorage.add(template);
               }}
               setOpen={setOpen}
