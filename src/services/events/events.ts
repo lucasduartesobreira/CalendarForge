@@ -276,7 +276,9 @@ export class EventStorageIndexedDb
 
     return dbResult
       .andThen((db) => {
-        return this.indexedDbBuilder.build(db, forceUpdate);
+        return this.indexedDbBuilder
+          .addIndex({ keyPath: ["task_id"], options: { unique: false } })
+          .build(db, forceUpdate);
       })
       .map((value) => new EventStorageIndexedDb(value));
   }
