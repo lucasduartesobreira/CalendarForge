@@ -19,42 +19,14 @@ import { Bulk } from "@/utils/bulk";
 
 export type Task = {
   id: string;
-  project_id: string;
-  board_id: string;
   title: string;
   description: string;
-  position: number;
-  startDate?: number;
-  endDate?: number;
 };
 
 const TaskValidator: ValidatorType<Task> = {
   id: { optional: false, type: "string" },
   title: { optional: false, type: "string" },
   description: { optional: false, type: "string" },
-  board_id: { optional: false, type: "string" },
-  project_id: { optional: false, type: "string" },
-  position: {
-    optional: false,
-    type: "number",
-    validator(a) {
-      return a >= 0;
-    },
-  },
-  startDate: {
-    optional: true,
-    type: "number",
-    validator(this, date) {
-      return date && this.endDate ? date <= this.endDate : true;
-    },
-  },
-  endDate: {
-    optional: true,
-    type: "number",
-    validator(this, date) {
-      return date && this.startDate ? date >= this.startDate : true;
-    },
-  },
 };
 
 export class TaskStorageIndexedDb
@@ -67,9 +39,6 @@ export class TaskStorageIndexedDb
     return {
       title: "",
       description: "",
-      board_id: "",
-      project_id: "",
-      position: 0,
     };
   }
 
@@ -131,13 +100,8 @@ export class TaskStorageIndexedDb
           const validated = validateTypes(
             {
               id,
-              project_id: updateValue.project_id ?? foundTask.project_id,
-              board_id: updateValue.board_id ?? foundTask.board_id,
               title: updateValue.title ?? foundTask.title,
               description: updateValue.description ?? foundTask.description,
-              position: updateValue.position ?? foundTask.position,
-              startDate: updateValue.startDate ?? foundTask.startDate,
-              endDate: updateValue.endDate ?? foundTask.endDate,
             },
             TaskValidator,
           );
