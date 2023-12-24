@@ -11,7 +11,7 @@ import { CalendarEvent, CreateEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { Button } from "../shared/button-view/buttons";
-import { EventForm } from "../shared/event-forms/eventForm";
+import { EventForm, EventTypeSwitch } from "../shared/event-forms/eventForm";
 
 const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
 
@@ -69,6 +69,7 @@ const CreateEventForm = ({
           } as Omit<CalendarEvent, "id">
         }
         templateSelector={TemplateSelector}
+        ChangeEventTypeSwitch={EventTypeSwitch(false)}
       />
     ),
   );

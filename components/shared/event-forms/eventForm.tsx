@@ -37,6 +37,57 @@ const dayOfWeekFirstLetter = {
   6: "S",
 };
 
+export const EventTypeSwitch = (locked: boolean) => {
+  const Component = ({
+    isTask,
+    setIsTask,
+  }: {
+    isTask: boolean;
+    setIsTask: (value: boolean) => void;
+  }) => (
+    <div className="flex gap-4 justify-center align-center text-sm text-center align-text-center">
+      <Button.Primary
+        value="Event"
+        sizeType="lg"
+        className="text-center align-text-center font-semibold px-2 py-0.5"
+        disabled={!isTask}
+        onClick={
+          locked
+            ? (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            : (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsTask(false);
+              }
+        }
+      />
+      <Button.Primary
+        value="Task"
+        sizeType="lg"
+        className="text-center align-text-center font-semibold px-2 py-0.5"
+        disabled={isTask}
+        onClick={
+          locked
+            ? (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            : (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsTask(true);
+              }
+        }
+      />
+    </div>
+  );
+
+  return Component;
+};
+
 export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   initialFormState,
   setOpen,
@@ -47,6 +98,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   closeOnSubmit = true,
   closeOnDelete = true,
   blockedRefs,
+  ChangeEventTypeSwitch,
 }: {
   initialFormState: T;
   setOpen: (value: boolean) => void;
@@ -59,6 +111,10 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   blockedRefs: Option<RefObject<any>[]>;
   closeOnSubmit?: boolean;
   closeOnDelete?: boolean;
+  ChangeEventTypeSwitch: JSXElementConstructor<{
+    isTask: boolean;
+    setIsTask: (value: boolean) => void;
+  }>;
 }) => {
   const { storages } = useContext(StorageContext);
   const [form, setForm] = useState<T>(initialFormState);
@@ -141,30 +197,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         onChange={handleChangeText("title")}
         type="text"
       />
-      <div className="flex gap-4 justify-center align-center text-sm text-center align-text-center">
-        <Button.Primary
-          value="Event"
-          sizeType="lg"
-          className="text-center align-text-center font-semibold px-2 py-0.5"
-          disabled={!isTask}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsTask(false);
-          }}
-        />
-        <Button.Primary
-          value="Task"
-          sizeType="lg"
-          className="text-center align-text-center font-semibold px-2 py-0.5"
-          disabled={isTask}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsTask(true);
-          }}
-        />
-      </div>
+      <ChangeEventTypeSwitch setIsTask={setIsTask} isTask={isTask} />
       <label className="text-sm text-neutral-500 flex-initial w-full">
         Description
         <div

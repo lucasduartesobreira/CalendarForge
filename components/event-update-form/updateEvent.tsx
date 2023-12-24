@@ -5,7 +5,7 @@ import {
 } from "@/services/events/events";
 import * as O from "@/utils/option";
 import { useContext, useRef, useState } from "react";
-import { EventForm } from "../shared/event-forms/eventForm";
+import { EventForm, EventTypeSwitch } from "../shared/event-forms/eventForm";
 import { InputButtons, InputText, PopupForm } from "../shared/forms/forms";
 import { UpdateValue } from "@/utils/storage";
 
@@ -130,6 +130,7 @@ const UpdateEventForm = ({
         return (
           <>
             <EventForm
+              ChangeEventTypeSwitch={EventTypeSwitch(true)}
               closeOnSubmit={false}
               onSubmit={(updatedForm, type) => {
                 const { id } = updatedForm;
