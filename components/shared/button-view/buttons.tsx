@@ -1,4 +1,4 @@
-import { HTMLDivExtended } from "@/utils/types";
+import { HTMLButtonExtended, HTMLDivExtended } from "@/utils/types";
 import { RefObject } from "react";
 
 const ButtonSecondary = ({
@@ -17,19 +17,32 @@ const ButtonPrimary = ({
   value,
   sizeType,
   innerRef,
+  disabled,
   ...props
-}: HTMLDivExtended<
-  HTMLButtonElement,
-  {
-    value: string;
-    sizeType: "xl";
-    innerRef: RefObject<any>;
-  }
-> & { ref?: never }) => {
+}: HTMLButtonExtended<{
+  value: string;
+  sizeType: "sm" | "base" | "md" | "lg" | "xl";
+  innerRef?: RefObject<any>;
+}> & { ref?: never }) => {
+  const size =
+    sizeType === "xl"
+      ? "rounded-xl shadow-xl"
+      : sizeType === "sm"
+      ? "rounded-sm shadow-sm"
+      : sizeType === "base"
+      ? "rounded shadow"
+      : sizeType === "md"
+      ? "rounded-md shadow-md"
+      : sizeType === "lg"
+      ? "rounded-lg shadow-lg"
+      : "";
+
   return (
     <button
       {...props}
-      className={`${props.className} bg-primary-500 text-white rounded-xl shadow-xl`}
+      className={`${disabled ? "opacity-40" : ""} ${
+        props.className
+      } bg-primary-500 text-white ${size}`}
       ref={innerRef}
     >
       {value}
