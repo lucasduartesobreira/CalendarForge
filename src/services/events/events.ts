@@ -237,7 +237,7 @@ export class EventStorageIndexedDb
   > = IndexedDbStorageBuilder.new(
     EventStorageIndexedDb.DB_NAME,
     EventStorageIndexedDb.DEFAULT_VALUE(),
-  );
+  ).addIndex({ keyPath: ["task_id"], options: { unique: false } });
 
   private constructor(map: IndexedDbStorage<"id", CalendarEvent>) {
     this.map = map;
@@ -276,9 +276,7 @@ export class EventStorageIndexedDb
 
     return dbResult
       .andThen((db) => {
-        return this.indexedDbBuilder
-          .addIndex({ keyPath: ["task_id"], options: { unique: false } })
-          .build(db, forceUpdate);
+        return this.indexedDbBuilder.build(db, forceUpdate);
       })
       .map((value) => new EventStorageIndexedDb(value));
   }
