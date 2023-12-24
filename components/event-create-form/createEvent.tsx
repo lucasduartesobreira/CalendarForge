@@ -43,12 +43,22 @@ const CreateEventForm = ({
 
   return storages.mapOrElse(
     () => null,
-    ({ eventsStorage }) => (
+    ({ eventsStorage, tasksStorage }) => (
       <EventForm
         blockedRefs={blockdRefs}
         setOpen={setOpen}
-        onSubmit={(form) => {
-          eventsStorage.add(form);
+        onSubmit={(form, type) => {
+          if (type === "task") {
+            tasksStorage
+              .add({ title: form.title, description: form.description })
+              .then((result) =>
+                result.map((taskCreated) =>
+                  eventsStorage.add({ ...form, task_id: taskCreated.id }),
+                ),
+              );
+          } else {
+            eventsStorage.add(form);
+          }
         }}
         initialFormState={
           {
