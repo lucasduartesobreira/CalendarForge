@@ -25,6 +25,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import remarkHeadingGap from "remark-heading-gap";
+import { Button } from "../button-view/buttons";
 
 const dayOfWeekFirstLetter = {
   0: "S",
@@ -49,9 +50,9 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
 }: {
   initialFormState: T;
   setOpen: (value: boolean) => void;
-  onSubmit: (form: T) => void;
-  onDelete?: (form: T) => void;
-  onCreateTemplate?: (form: T) => void;
+  onSubmit: (form: T, type: "task" | "event") => void;
+  onDelete?: (form: T, type: "task" | "event") => void;
+  onCreateTemplate?: (form: T, type: "task" | "event") => void;
   templateSelector?: JSXElementConstructor<{
     updateForm: (value: Partial<T>) => void;
   }>;
@@ -113,15 +114,18 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
     form.description.length !== 0,
   );
 
+  const [isTask, setIsTask] = useState(form.task_id != null);
+
   return (
     <PopupForm
       onSubmit={() => {
-        onSubmit(form);
+        onSubmit(form, isTask ? "task" : "event");
       }}
       setOpen={setOpen}
       refs={blockedRefs}
       className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
       closeOnSubmit={closeOnSubmit}
+      id="event-form-global"
     >
       <FormHeader setOpen={setOpen}>
         {TemplateSelector && (
@@ -137,6 +141,30 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         onChange={handleChangeText("title")}
         type="text"
       />
+      <div className="flex gap-4 justify-center align-center text-sm text-center align-text-center">
+        <Button.Primary
+          value="Event"
+          sizeType="lg"
+          className="text-center align-text-center font-semibold px-2 py-0.5"
+          disabled={!isTask}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsTask(false);
+          }}
+        />
+        <Button.Primary
+          value="Task"
+          sizeType="lg"
+          className="text-center align-text-center font-semibold px-2 py-0.5"
+          disabled={isTask}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsTask(true);
+          }}
+        />
+      </div>
       <label className="text-sm text-neutral-500 flex-initial w-full">
         Description
         <div
@@ -462,8 +490,9 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
                 setOpen={setOpen}
                 closeOnDelete={closeOnDelete}
                 onDelete={() => {
-                  onDelete(form);
+                  onDelete(form, isTask ? "task" : "event");
                 }}
+                form="event-form-global"
                 text="Delete"
               />
             )}
@@ -472,9 +501,10 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
                 setOpen={setOpen}
                 className="w-full"
                 onWarning={() => {
-                  onTemplate(form);
+                  onTemplate(form, isTask ? "task" : "event");
                 }}
                 text="Make Template"
+                form="event-form-global"
               />
             )}
           </div>
@@ -483,6 +513,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
           type="submit"
           className="w-full left-0 font-semibold"
           value={"Save"}
+          form="event-form-global"
         />
       </div>
     </PopupForm>
