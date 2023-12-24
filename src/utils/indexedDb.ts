@@ -21,7 +21,7 @@ export interface StorageAPI<
 }
 
 const DB_NAME = "calendar";
-const DB_VERSION = 9;
+const DB_VERSION = 13;
 
 const requestIntoResult = <T>(
   req: IDBRequest<T>,
@@ -204,10 +204,10 @@ export class IndexedDbStorageBuilder<
         );
 
         indexes.forEach(({ keyPath, options }) => {
-          const indexName = keyPath.join(",");
-          if (!store.indexNames.contains(indexName)) {
+          try {
+            const indexName = keyPath.join(",");
             store.createIndex(indexName, keyPath, options);
-          }
+          } catch (e) {}
         });
       }
     };
@@ -423,6 +423,10 @@ class IndexedDbStorage<
         [-1, -1] as [maxValue: number, maxIndex: number],
       );
 
+    if (indexMatches[1] === -1) {
+      return ["", [""], []];
+    }
+
     const indexKeys = aList.indexesNames[indexMatches[1]];
 
     const indexKeySplitted = indexKeys.split(",");
@@ -467,7 +471,7 @@ class IndexedDbStorage<
             return await requestIntoResult<V | undefined>(index.get(query));
           }
 
-          cursorReq = store.openCursor(query);
+          cursorReq = index.openCursor(query);
           keys = notFound;
         } else {
           cursorReq = store.openCursor();
