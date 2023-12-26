@@ -1,13 +1,17 @@
 import { StorageContext } from "@/hooks/dataHook";
-import { CalendarEvent } from "@/services/events/events";
+import { CalendarEvent, EventColors } from "@/services/events/events";
 import * as O from "@/utils/option";
 import { HTMLDivExtended } from "@/utils/types";
 import {
   JSXElementConstructor,
+  MutableRefObject,
+  RefObject,
   createContext,
   useContext,
   useEffect,
   useMemo,
+  useReducer,
+  useRef,
   useState,
 } from "react";
 
@@ -100,37 +104,43 @@ type DivType = HTMLDivExtended<HTMLDivElement>;
 const useDragAndDrop = ({
   onDrag,
   onDragEnd,
+  blockedRef,
 }: {
   onDrag: () => void;
   onDragEnd: () => void;
+  blockedRef: O.Option<MutableRefObject<any>>;
 }) => {
   const [timeout, setTout] = useState<O.Option<number>>(O.None());
   const [isDragging, setIsDragging] = useState(false);
 
-  const onMouseDown: DivType["onMouseDown"] = () => {
-    window.addEventListener(
-      "mouseup",
-      () => {
-        timeout.map((id) => {
-          window.clearTimeout(id);
-        });
-        if (isDragging) onDragEnd();
-        setTout(O.None());
-        setIsDragging(false);
-        onDragEnd();
-      },
-      { once: true },
+  const onMouseDown: DivType["onMouseDown"] = (e) => {
+    const isChild = blockedRef.map(
+      (ref) => ref.current != null && !ref.current.contains(e.target),
     );
-    setTout(
-      O.Some(
-        window.setTimeout(() => {
-          console.log("automatic dragging");
+    if (isChild.unwrapOrElse(() => true)) {
+      window.addEventListener(
+        "mouseup",
+        () => {
+          timeout.map((id) => {
+            window.clearTimeout(id);
+          });
+          if (isDragging) onDragEnd();
           setTout(O.None());
-          setIsDragging(true);
-          onDrag();
-        }, 400),
-      ),
-    );
+          setIsDragging(false);
+          onDragEnd();
+        },
+        { once: true },
+      );
+      setTout(
+        O.Some(
+          window.setTimeout(() => {
+            setTout(O.None());
+            setIsDragging(true);
+            onDrag();
+          }, 400),
+        ),
+      );
+    }
   };
 
   const _onMouseLeave: DivType["onMouseLeave"] = () => {
@@ -278,6 +288,15 @@ const DraggableCalendarEvent = ({
   setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
 }) => {
   const [, setDragged] = useContext(DraggedEvent);
+
+  const [Checkbox, completedTask, ref] = (() => {
+    const { task_id } = event;
+    if (task_id) {
+      return TaskCompleteCheckboxFactory(false, task_id);
+    }
+    return [undefined, undefined, undefined] as const;
+  })();
+
   const { isDragging, ...dragAndDropHandlers } = useDragAndDrop({
     onDrag: () => {
       setDragged(O.Some(event));
@@ -285,10 +304,10 @@ const DraggableCalendarEvent = ({
     onDragEnd: () => {
       setDragged(O.None());
     },
+    blockedRef: ref != null ? O.Some(ref) : O.None(),
   });
 
   const [isResizing, newHeight, ResizeDiv] = useResize({ event, day });
-
   return (
     <ShowCalendarEvent
       event={event}
@@ -298,13 +317,107 @@ const DraggableCalendarEvent = ({
       setSelectedEvent={setSelectedEvent}
       key={event.id}
       style={{
-        opacity: isDragging ? 0.3 : 1,
+        opacity: isDragging ? 0.3 : undefined,
         ...(isResizing ? { height: newHeight } : {}),
       }}
+      TaskCompleteCheckbox={Checkbox}
       ResizeDiv={ResizeDiv}
+      completed={completedTask}
       {...dragAndDropHandlers}
     />
   );
+};
+
+const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
+  const { storages } = useContext(StorageContext);
+  const [completed, setCompleted] = useState<boolean>();
+  const [controller, setController] = useReducer(
+    (
+      state: { stage: number; value: undefined | boolean },
+      action:
+        | { type: "start_fetching" }
+        | { type: "finish_fetching"; value: boolean }
+        | { type: "allow_update" },
+    ) => {
+      const { type } = action;
+      const { stage, value } = state;
+      if (type === "start_fetching" && stage === -1) {
+        return { stage: 0, value: undefined };
+      }
+      if (type === "finish_fetching" && stage === 0) {
+        const { value: actionValue } = action;
+        return { stage: 1, value: actionValue };
+      }
+      if (type === "allow_update" && stage === 1) {
+        return { stage: 2, value };
+      }
+
+      return state;
+    },
+    { stage: -1, value: undefined },
+  );
+
+  useEffect(() => {
+    if (controller.stage === 2) {
+      storages.map(({ tasksStorage }) => {
+        tasksStorage.update(taskId, { completed: completed });
+      });
+    }
+
+    if (controller.stage === 1 && completed === controller.value) {
+      setController({ type: "allow_update" });
+    }
+  }, [completed]);
+
+  useEffect(() => {
+    storages.map(({ tasksStorage }) => {
+      setController({ type: "start_fetching" });
+      tasksStorage.findById(taskId).then((found) => {
+        found.map((task) => {
+          setCompleted(task.completed);
+          setController({
+            type: "finish_fetching",
+            value: task.completed ?? false,
+          });
+        });
+      });
+    });
+  }, [storages]);
+
+  const ref = useRef(null);
+
+  const CreateComponent = ({
+    backgroundColor,
+  }: {
+    backgroundColor: string;
+  }) => {
+    return (
+      <input
+        ref={ref}
+        className={`align-center ml-auto mr-1 appearance-none w-[16px] h-[16px] border-2 border-gray-300 rounded-full ${backgroundColor} checked:bg-blue-500 checked:border-transparent focus:outline-none`}
+        type="checkbox"
+        checked={completed}
+        onChange={() => {
+          setCompleted(!completed);
+        }}
+        disabled={locked}
+      />
+    );
+  };
+
+  return [CreateComponent, completed, ref] as const;
+};
+
+const backgroundColor = {
+  "#003f5c": "bg-[#003f5c]",
+  "#374c80": "bg-[#374c80]",
+  "#7a5195": "bg-[#7a5195]",
+  "#bc5090": "bg-[#bc5090]",
+  "#ef5675": "bg-[#ef5675]",
+  "#ff764a": "bg-[#ff764a]",
+  "#ffa600": "bg-[#ffa600]",
+} satisfies {
+  [Key in (typeof EventColors)[number]]: `bg-[${Key}]`;
 };
 
 export const ShowCalendarEvent = ({
@@ -319,6 +432,8 @@ export const ShowCalendarEvent = ({
   onMouseDown,
   onMouseLeave,
   onMouseUp,
+  TaskCompleteCheckbox,
+  completed,
   ...props
 }: HTMLDivExtended<
   HTMLDivElement,
@@ -328,17 +443,22 @@ export const ShowCalendarEvent = ({
     day: number;
     index: number;
     setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
+    TaskCompleteCheckbox?: JSXElementConstructor<{ backgroundColor: string }>;
+    completed?: boolean;
     ResizeDiv?: JSXElementConstructor<{}>;
   }
 >) => {
   const conflictNumber = conflicts.get(event.id);
   const left = 10 * (conflictNumber ?? 0);
   const width = 100 / (conflictNumber ?? 1) - left;
+  const eventColor = event.color ?? "#7a5195";
 
   return (
     <div
       {...props}
-      className={`${className} absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
+      className={`${className ?? ""} ${
+        backgroundColor[eventColor]
+      } absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
       style={{
         ...startAndHeight(
           new Date(event.startDate),
@@ -348,26 +468,29 @@ export const ShowCalendarEvent = ({
         width: `${width}%`,
         left: `${left}%`,
         zIndex: `${index}`,
-        backgroundColor: event.color ?? "#7a5195",
         borderWidth: conflictNumber ? 1 : 0,
         ...style,
+        opacity: completed ? 0.7 : style?.opacity,
       }}
     >
       <div
         onMouseDown={onMouseDown}
         onMouseLeave={onMouseLeave}
         onMouseUp={onMouseUp}
-        className="w-full h-full"
+        className="flex w-full h-full items-start"
       >
         <button
           key={event.id}
           onClick={() => {
             setSelectedEvent(O.Some(event));
           }}
-          className="text-xs align-top select-none"
+          className="text-xs select-none"
         >
           {event.title}
         </button>
+        {event.task_id && TaskCompleteCheckbox != null && (
+          <TaskCompleteCheckbox backgroundColor={backgroundColor[eventColor]} />
+        )}
       </div>
       {ResizeDiv && <ResizeDiv />}
     </div>
