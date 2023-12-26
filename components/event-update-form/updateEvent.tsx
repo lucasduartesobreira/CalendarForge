@@ -159,6 +159,12 @@ const UpdateEventForm = ({
                       return setOpen(false);
                     }))();
               }}
+              onDuplicate={(form) => {
+                (async () => {
+                  const { recurring_id, todo_id, ...rest } = form;
+                  await eventsStorage.add(rest);
+                })();
+              }}
               onCreateTemplate={(form) => {
                 const {
                   startDate: _sd,

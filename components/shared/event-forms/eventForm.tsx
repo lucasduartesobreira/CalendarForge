@@ -93,6 +93,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   setOpen,
   onSubmit,
   onDelete,
+  onDuplicate,
   onCreateTemplate: onTemplate,
   templateSelector: TemplateSelector,
   closeOnSubmit = true,
@@ -108,6 +109,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   templateSelector?: JSXElementConstructor<{
     updateForm: (value: Partial<T>) => void;
   }>;
+  onDuplicate?: (form: T, type: "task" | "event") => void;
   blockedRefs: Option<RefObject<any>[]>;
   closeOnSubmit?: boolean;
   closeOnDelete?: boolean;
@@ -527,7 +529,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         />
       </div>
       <div className="absolute w-full bottom-0 flex flex-col gap-[4px] left-0">
-        {(onDelete || onTemplate) && (
+        {(onDelete || onTemplate || onDuplicate) && (
           <div className="w-full flex items-center justify-center gap-2 px-4">
             {onDelete && (
               <InputButtons.Delete
@@ -549,6 +551,17 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
                   onTemplate(form, isTask ? "task" : "event");
                 }}
                 text="Make Template"
+                form="event-form-global"
+              />
+            )}
+            {onDuplicate && (
+              <InputButtons.Warning
+                setOpen={setOpen}
+                className="w-full"
+                onWarning={() => {
+                  onDuplicate(form, isTask ? "task" : "event");
+                }}
+                text="Duplicate"
                 form="event-form-global"
               />
             )}
