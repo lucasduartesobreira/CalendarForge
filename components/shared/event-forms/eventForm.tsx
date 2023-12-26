@@ -533,7 +533,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
           <div className="w-full flex items-center justify-center gap-2 px-4">
             {onDelete && (
               <InputButtons.Delete
-                className="bg-red-500 font-semibold w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
+                className="bg-red-500 font-semibold max-w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
                 setOpen={setOpen}
                 closeOnDelete={closeOnDelete}
                 onDelete={() => {
@@ -543,25 +543,25 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
                 text="Delete"
               />
             )}
-            {onTemplate && (
-              <InputButtons.Warning
-                setOpen={setOpen}
-                className="w-full"
-                onWarning={() => {
-                  onTemplate(form, isTask ? "task" : "event");
-                }}
-                text="Make Template"
-                form="event-form-global"
-              />
-            )}
             {onDuplicate && (
               <InputButtons.Warning
                 setOpen={setOpen}
-                className="w-full"
+                className="w-full font-bold"
                 onWarning={() => {
                   onDuplicate(form, isTask ? "task" : "event");
                 }}
                 text="Duplicate"
+                form="event-form-global"
+              />
+            )}
+            {onTemplate && (
+              <InputButtons.Tertiary
+                setOpen={setOpen}
+                className="w-full font-base"
+                onWarning={() => {
+                  onTemplate(form, isTask ? "task" : "event");
+                }}
+                text="Make Template"
                 form="event-form-global"
               />
             )}
