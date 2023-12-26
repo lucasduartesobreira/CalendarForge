@@ -5,7 +5,6 @@ import { HTMLDivExtended } from "@/utils/types";
 import {
   JSXElementConstructor,
   MutableRefObject,
-  RefObject,
   createContext,
   useContext,
   useEffect,
@@ -329,7 +328,7 @@ const DraggableCalendarEvent = ({
 };
 
 const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
-  const { storages } = useContext(StorageContext);
+  const { storages, listeners } = useContext(StorageContext);
   const [completed, setCompleted] = useState<boolean>();
   const [controller, setController] = useReducer(
     (
@@ -368,6 +367,14 @@ const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
       setController({ type: "allow_update" });
     }
   }, [completed]);
+
+  useEffect(() => {
+    storages.map(({ tasksStorage }) =>
+      tasksStorage
+        .findById(taskId)
+        .then((found) => found.map((task) => setCompleted(task.completed))),
+    );
+  }, [storages, listeners.tasksStorageListener]);
 
   useEffect(() => {
     storages.map(({ tasksStorage }) => {
