@@ -21,12 +21,14 @@ export type Task = {
   id: string;
   title: string;
   description: string;
+  completed: boolean;
 };
 
 const TaskValidator: ValidatorType<Task> = {
   id: { optional: false, type: "string" },
   title: { optional: false, type: "string" },
   description: { optional: false, type: "string" },
+  completed: { optional: true, type: "boolean" },
 };
 
 export class TaskStorageIndexedDb
@@ -39,6 +41,7 @@ export class TaskStorageIndexedDb
     return {
       title: "",
       description: "",
+      completed: false,
     };
   }
 
@@ -102,6 +105,7 @@ export class TaskStorageIndexedDb
               id,
               title: updateValue.title ?? foundTask.title,
               description: updateValue.description ?? foundTask.description,
+              completed: updateValue.completed ?? foundTask.completed,
             },
             TaskValidator,
           );
