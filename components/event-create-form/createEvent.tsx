@@ -50,7 +50,11 @@ const CreateEventForm = ({
         onSubmit={(form, type) => {
           if (type === "task") {
             tasksStorage
-              .add({ title: form.title, description: form.description })
+              .add({
+                title: form.title,
+                description: form.description,
+                completed: false,
+              })
               .then((result) =>
                 result.map((taskCreated) =>
                   eventsStorage.add({ ...form, task_id: taskCreated.id }),
