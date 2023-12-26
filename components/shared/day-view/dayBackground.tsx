@@ -242,15 +242,17 @@ const DayHeader = ({
   dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7;
 }) => {
   return (
-    <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-600 justify-center items-center top-0 rounded-lg shadow-lg border-[1px] border-neutral-200 overflow-hidden z-[10000]">
-      <div className="text-center relative px-8 py-4">
+    <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-600 justify-center items-center top-0 rounded-lg shadow-lg border-[1px] border-neutral-200 overflow-hidden z-[10000] select-none">
+      <div className="text-center relative px-8 py-4 select-none">
         <div
-          className={`${color} flex justify-center items-center font-mono text-4x1 font-bold px-4 py-2 rounded-[1rem] border-[1px] border-primary-500 text-primary-500 shadow-md w-10 h-10`}
+          className={`${color} select-none flex justify-center items-center font-mono text-4x1 font-bold px-4 py-2 rounded-[1rem] border-[1px] border-primary-500 text-primary-500 shadow-md w-10 h-10`}
         >
-          <span className="text-center">{day}</span>
+          <span className="text-center select-none">{day}</span>
         </div>
-        <div className="absolute bottom-2 right-2">
-          <a className="text-xs font-mono">{dayToString[dayOfWeek]}</a>
+        <div className="absolute bottom-2 right-2 select-none">
+          <a className="text-xs font-mono select-none">
+            {dayToString[dayOfWeek]}
+          </a>
         </div>
       </div>
     </div>
@@ -288,7 +290,7 @@ const SquareBG = ({
 }: HTMLDivExtended<HTMLDivElement, PropsWithChildren>) => {
   return (
     <div
-      className={`${className} border-[1px] border-t-0 border-l-0 border-neutral-300 `}
+      className={`${className} border-[1px] border-t-0 border-l-0 border-neutral-300 select-none`}
     >
       {childrens}
     </div>
