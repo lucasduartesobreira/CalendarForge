@@ -2,7 +2,6 @@ import OutsideClick from "@/components/utils/outsideClick";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import { Task } from "@/services/task/task";
-import { getHTMLDateTime } from "@/utils/date";
 import { Option, Some } from "@/utils/option";
 import {
   DetailedHTMLProps,
@@ -102,48 +101,7 @@ export function TaskForm<Props extends PropsFullPage<Task>>({
             className="px-2 py-1 bg-neutral-200 rounded-md"
           />
         </label>
-        <div className="flex flex-nowrap gap-1 w-full justify-center">
-          <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200 w-full">
-            <a className="text-neutral-500">Inital Date</a>
-            <input
-              type="date"
-              value={
-                task.startDate != null
-                  ? getHTMLDateTime(new Date(task.startDate)).slice(0, 10)
-                  : undefined
-              }
-              className="bg-neutral-200 w-full"
-              onChange={(e) => {
-                if (e.currentTarget.valueAsDate) {
-                  setTask({
-                    type: "changeStartDate",
-                    value: e.currentTarget.valueAsDate,
-                  });
-                }
-              }}
-            />
-          </label>
-          <label className="px-2 py-1 text-sm flex flex-col flex-nowrap justify-center rounded-md bg-neutral-200 w-full">
-            <a className="text-neutral-500">End Date</a>
-            <input
-              type="date"
-              value={
-                task.endDate != null
-                  ? getHTMLDateTime(new Date(task.endDate)).slice(0, 10)
-                  : undefined
-              }
-              className="bg-neutral-200"
-              onChange={(e) => {
-                if (e.currentTarget.valueAsDate) {
-                  setTask({
-                    type: "changeEndDate",
-                    value: e.currentTarget.valueAsDate,
-                  });
-                }
-              }}
-            />
-          </label>
-        </div>
+        <div className="flex flex-nowrap gap-1 w-full justify-center" />
         <label className="flex flex-col flex-nowrap justify-center">
           <p className="text-neutral-500">Description</p>
           <input

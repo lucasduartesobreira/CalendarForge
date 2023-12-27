@@ -1,9 +1,99 @@
 import { RecurringEventsHandler, StorageContext } from "@/hooks/dataHook";
-import { CalendarEvent } from "@/services/events/events";
+import {
+  CalendarEvent,
+  RecurringEventsManager,
+} from "@/services/events/events";
 import * as O from "@/utils/option";
 import { useContext, useRef, useState } from "react";
-import { EventForm } from "../shared/event-forms/eventForm";
+import { EventForm, EventTypeSwitch } from "../shared/event-forms/eventForm";
 import { InputButtons, InputText, PopupForm } from "../shared/forms/forms";
+import { UpdateValue } from "@/utils/storage";
+
+type Storages = StorageContext["storages"] extends O.OptionClass<infer A>
+  ? A
+  : never;
+const submitHandlers = {
+  event: async (
+    originalEvent: CalendarEvent,
+    updatedEventValue: UpdateValue<CalendarEvent>,
+    setters: {
+      setOpen: (value: boolean) => void;
+      setUpdatedForm: (value: O.Option<CalendarEvent>) => void;
+    },
+    storages: Pick<Storages, "eventsStorage" | "tasksStorage"> & {
+      recurringEventsManager: RecurringEventsManager;
+    },
+  ) => {
+    const { setUpdatedForm, setOpen } = setters;
+    if (originalEvent.task_id != null) {
+      setOpen(false);
+      return;
+    }
+
+    const { id } = originalEvent;
+    const { eventsStorage, recurringEventsManager } = storages;
+
+    const addingRecurring =
+      updatedEventValue.recurring_settings != null &&
+      originalEvent.recurring_settings == null;
+    const removingRecurring =
+      updatedEventValue.recurring_settings == null &&
+      originalEvent.recurring_settings != null;
+    const changingARecurringEvent =
+      updatedEventValue.recurring_settings != null ||
+      originalEvent.recurring_settings != null;
+
+    if (changingARecurringEvent && !addingRecurring && !removingRecurring) {
+      return setUpdatedForm(O.Some({ ...originalEvent, ...updatedEventValue }));
+    } else if (removingRecurring || addingRecurring) {
+      await recurringEventsManager.updateForward(id, updatedEventValue);
+      return setOpen(false);
+    }
+    await eventsStorage.update(id, updatedEventValue);
+    return setOpen(false);
+  },
+  task: async (
+    originalEvent: CalendarEvent,
+    updatedEventValue: UpdateValue<CalendarEvent>,
+    setters: {
+      setOpen: (value: boolean) => void;
+      setUpdatedForm: (value: O.Option<CalendarEvent>) => void;
+    },
+    storages: Pick<Storages, "eventsStorage" | "tasksStorage"> & {
+      recurringEventsManager: RecurringEventsManager;
+    },
+  ) => {
+    const { task_id: taskId } = originalEvent;
+    const { setOpen } = setters;
+
+    if (taskId == null) {
+      setOpen(false);
+      return;
+    }
+
+    const { eventsStorage, tasksStorage } = storages;
+
+    const allRelatedToTask = await eventsStorage.findAll({
+      task_id: originalEvent.task_id,
+    });
+
+    const bulk = eventsStorage.bulk(allRelatedToTask);
+    const { title, description, recurring_settings, recurring_id, ...rest } =
+      updatedEventValue;
+    allRelatedToTask.forEach((eventFound) =>
+      bulk.update({
+        id: eventFound.id,
+        title,
+        description,
+      }),
+    );
+    bulk.update({ id: originalEvent.id, ...rest });
+    (await bulk.commit()).map(() =>
+      tasksStorage.update(taskId, { title, description }),
+    );
+    return setOpen(false);
+  },
+};
 
 const UpdateEventForm = ({
   setOpen,
@@ -34,39 +124,27 @@ const UpdateEventForm = ({
       ({
         eventsStorage,
         eventsTemplateStorage,
+        tasksStorage,
         manager: recurringEventsManager,
       }) => {
         return (
           <>
             <EventForm
+              ChangeEventTypeSwitch={EventTypeSwitch(true)}
               closeOnSubmit={false}
-              onSubmit={({ id, ...form }) => {
+              onSubmit={(updatedForm, type) => {
+                const { id } = updatedForm;
                 (async () =>
                   (await eventsStorage.findById(id))
                     .ok(Symbol("Record not found"))
                     .map(async (event) => {
-                      const addingRecurring =
-                        form.recurring_settings != null &&
-                        event.recurring_settings == null;
-                      const removingRecurring =
-                        form.recurring_settings == null &&
-                        event.recurring_settings != null;
-                      const changingARecurringEvent =
-                        form.recurring_settings != null ||
-                        event.recurring_settings != null;
-                      if (
-                        changingARecurringEvent &&
-                        !addingRecurring &&
-                        !removingRecurring
-                      ) {
-                        return setUpdatedForm(O.Some({ id, ...form }));
-                      } else if (removingRecurring || addingRecurring) {
-                        await recurringEventsManager.updateForward(id, form);
-                        return setOpen(false);
-                      }
-
-                      await eventsStorage.update(id, form);
-                      return setOpen(false);
+                      const handler = submitHandlers[type];
+                      await handler(
+                        event,
+                        updatedForm,
+                        { setOpen, setUpdatedForm },
+                        { tasksStorage, eventsStorage, recurringEventsManager },
+                      );
                     }))();
               }}
               closeOnDelete={false}
@@ -81,6 +159,12 @@ const UpdateEventForm = ({
                       return setOpen(false);
                     }))();
               }}
+              onDuplicate={(form) => {
+                (async () => {
+                  const { recurring_id, todo_id, ...rest } = form;
+                  await eventsStorage.add(rest);
+                })();
+              }}
               onCreateTemplate={(form) => {
                 const {
                   startDate: _sd,
@@ -94,7 +178,7 @@ const UpdateEventForm = ({
                 eventsTemplateStorage.add(template);
               }}
               setOpen={setOpen}
-              initialFormState={initialForm}
+              initialFormState={{ ...initialForm }}
               blockedRefs={O.Some([ref])}
             />
             {updatedForm.mapOrElse(

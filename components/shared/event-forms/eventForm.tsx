@@ -25,6 +25,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import remarkHeadingGap from "remark-heading-gap";
+import { Button } from "../button-view/buttons";
 
 const dayOfWeekFirstLetter = {
   0: "S",
@@ -36,28 +37,86 @@ const dayOfWeekFirstLetter = {
   6: "S",
 };
 
+export const EventTypeSwitch = (locked: boolean) => {
+  const Component = ({
+    isTask,
+    setIsTask,
+  }: {
+    isTask: boolean;
+    setIsTask: (value: boolean) => void;
+  }) => (
+    <div className="flex gap-4 justify-center align-center text-sm text-center align-text-center">
+      <Button.Primary
+        value="Event"
+        sizeType="lg"
+        className="text-center align-text-center font-semibold px-2 py-0.5"
+        disabled={!isTask}
+        onClick={
+          locked
+            ? (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            : (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsTask(false);
+              }
+        }
+      />
+      <Button.Primary
+        value="Task"
+        sizeType="lg"
+        className="text-center align-text-center font-semibold px-2 py-0.5"
+        disabled={isTask}
+        onClick={
+          locked
+            ? (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            : (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsTask(true);
+              }
+        }
+      />
+    </div>
+  );
+
+  return Component;
+};
+
 export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   initialFormState,
   setOpen,
   onSubmit,
   onDelete,
+  onDuplicate,
   onCreateTemplate: onTemplate,
   templateSelector: TemplateSelector,
   closeOnSubmit = true,
   closeOnDelete = true,
   blockedRefs,
+  ChangeEventTypeSwitch,
 }: {
   initialFormState: T;
   setOpen: (value: boolean) => void;
-  onSubmit: (form: T) => void;
-  onDelete?: (form: T) => void;
-  onCreateTemplate?: (form: T) => void;
+  onSubmit: (form: T, type: "task" | "event") => void;
+  onDelete?: (form: T, type: "task" | "event") => void;
+  onCreateTemplate?: (form: T, type: "task" | "event") => void;
   templateSelector?: JSXElementConstructor<{
     updateForm: (value: Partial<T>) => void;
   }>;
+  onDuplicate?: (form: T, type: "task" | "event") => void;
   blockedRefs: Option<RefObject<any>[]>;
   closeOnSubmit?: boolean;
   closeOnDelete?: boolean;
+  ChangeEventTypeSwitch: JSXElementConstructor<{
+    isTask: boolean;
+    setIsTask: (value: boolean) => void;
+  }>;
 }) => {
   const { storages } = useContext(StorageContext);
   const [form, setForm] = useState<T>(initialFormState);
@@ -113,15 +172,23 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
     form.description.length !== 0,
   );
 
+  const [isTask, setIsTask] = useState(form.task_id != null);
+
   return (
     <PopupForm
       onSubmit={() => {
-        onSubmit(form);
+        if (isTask) {
+          form.recurring_settings = undefined;
+          form.recurring_id = undefined;
+        }
+
+        onSubmit(form, isTask ? "task" : "event");
       }}
       setOpen={setOpen}
       refs={blockedRefs}
       className="text-neutral-500 relative flex flex-col gap-2 p-4 bg-white rounded-xl shadow-lg justify-center overflow-hidden text-text-primary"
       closeOnSubmit={closeOnSubmit}
+      id="event-form-global"
     >
       <FormHeader setOpen={setOpen}>
         {TemplateSelector && (
@@ -137,6 +204,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         onChange={handleChangeText("title")}
         type="text"
       />
+      <ChangeEventTypeSwitch setIsTask={setIsTask} isTask={isTask} />
       <label className="text-sm text-neutral-500 flex-initial w-full">
         Description
         <div
@@ -197,197 +265,204 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
             />
           </label>
         </div>
-        <label className="text-sm px-2 py-1 w-full bg-neutral-200 rounded-md justify-start flex flex-col gap-1">
-          <div className="flex gap-1">
-            <a className="pl-2 py-1">Repeating</a>
-            <select
-              value={form.recurring_settings?.frequencyType}
-              className="bg-neutral-200 text-center"
-              onChange={(event) => {
-                const value = event.target.value;
-                const newSettings =
-                  value === "never"
-                    ? undefined
-                    : value === "daily"
-                    ? {
-                        frequencyType: value,
-                        frequency: 1,
-                        stop: form.recurring_settings?.stop ?? {
-                          type: "frequency",
-                          afterFrequency: 1,
-                        },
-                      }
-                    : {
-                        frequencyType: value,
-                        days: [new Date(form.startDate).getDay()],
-                        stop: form.recurring_settings?.stop ?? {
-                          type: "frequency",
-                          afterFrequency: 1,
-                        },
-                      };
-
-                setForm({
-                  ...form,
-                  recurring_settings: newSettings,
-                });
-              }}
-            >
-              <option value={"never"}>never</option>
-              <option value={"weekly"}>weekly</option>
-              <option value={"daily"}>daily</option>
-            </select>
-            {
-              <>
-                {form.recurring_settings != undefined &&
-                  form.recurring_settings.frequencyType === "daily" &&
-                  form.recurring_settings.frequency != null && (
-                    <>
-                      <a className="py-1">every</a>
-                      <InputText
-                        type="number"
-                        className="text-sm text-black w-[56px] text-right"
-                        value={form.recurring_settings.frequency}
-                        min={1}
-                        max={365}
-                        onChange={(e) => {
-                          const value = e.currentTarget.valueAsNumber;
-                          const { recurring_settings } = form;
-                          if (recurring_settings?.frequencyType === "daily")
-                            recurring_settings.frequency =
-                              value == Number.NaN ? 1 : value;
-
-                          setForm({
-                            ...form,
-                            recurring_settings,
-                          });
-                        }}
-                      />
-                      <a className="py-1">days</a>
-                    </>
-                  )}
-                {form.recurring_settings != undefined &&
-                  form.recurring_settings.frequencyType === "weekly" &&
-                  form.recurring_settings.days != null && (
-                    <>
-                      <a className="py-1 pr-1">every</a>
-                      {([0, 1, 2, 3, 4, 5, 6] as const).map((value) => {
-                        return (
-                          <InputText
-                            key={value}
-                            type="button"
-                            className={`px-1 py-0 rounded-full font-mono  ${
-                              form.recurring_settings?.frequencyType ===
-                              "weekly"
-                                ? form.recurring_settings.days.find(
-                                    (day) => day === value,
-                                  ) != null
-                                  ? "bg-primary-400 text-text-inverse font-bold"
-                                  : "bg-neutral-400 text-text-inverse font-semibold"
-                                : ""
-                            }`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-
-                              const { recurring_settings } = form;
-                              if (
-                                recurring_settings?.frequencyType === "weekly"
-                              ) {
-                                const daysSet = new Set(
-                                  recurring_settings.days,
-                                );
-                                if (daysSet.has(value)) daysSet.delete(value);
-                                else daysSet.add(value);
-
-                                setForm({
-                                  ...form,
-                                  recurring_settings: {
-                                    ...recurring_settings,
-                                    days: Array.from(daysSet),
-                                  },
-                                });
-                              }
-                            }}
-                            value={dayOfWeekFirstLetter[value]}
-                          />
-                        );
-                      })}
-                    </>
-                  )}
-              </>
-            }
-          </div>
-          {form.recurring_settings != null && (
-            <div className="flex gap-1 pb-1">
-              <a className="pl-2">Stopping after</a>
+        {!isTask && (
+          <label className="text-sm px-2 py-1 w-full bg-neutral-200 rounded-md justify-start flex flex-col gap-1">
+            <div className="flex gap-1">
+              <a className="pl-2 py-1">Repeating</a>
               <select
-                className="bg-neutral-200"
-                value={form.recurring_settings.stop.type}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const newStopSetting =
-                    value === "frequency"
-                      ? { type: value, afterFrequency: 1 }
+                value={form.recurring_settings?.frequencyType}
+                className="bg-neutral-200 text-center"
+                onChange={(event) => {
+                  const value = event.target.value;
+                  const newSettings =
+                    value === "never"
+                      ? undefined
+                      : value === "daily"
+                      ? {
+                          frequencyType: value,
+                          frequency: 1,
+                          stop: form.recurring_settings?.stop ?? {
+                            type: "frequency",
+                            afterFrequency: 1,
+                          },
+                        }
                       : {
-                          type: "date",
-                          afterDay: new Date(form.startDate + 24 * 3600 * 1000),
+                          frequencyType: value,
+                          days: [new Date(form.startDate).getDay()],
+                          stop: form.recurring_settings?.stop ?? {
+                            type: "frequency",
+                            afterFrequency: 1,
+                          },
                         };
 
                   setForm({
                     ...form,
-                    recurring_settings: {
-                      ...form.recurring_settings,
-                      stop: newStopSetting,
-                    },
+                    recurring_settings: newSettings,
                   });
                 }}
               >
-                <option value={"date"}>the day</option>
-                <option value={"frequency"}>repeating</option>
+                <option value={"never"}>never</option>
+                <option value={"weekly"}>weekly</option>
+                <option value={"daily"}>daily</option>
               </select>
-              {form.recurring_settings.stop.type === "frequency" && (
+              {
                 <>
+                  {form.recurring_settings != undefined &&
+                    form.recurring_settings.frequencyType === "daily" &&
+                    form.recurring_settings.frequency != null && (
+                      <>
+                        <a className="py-1">every</a>
+                        <InputText
+                          type="number"
+                          className="text-sm text-black w-[56px] text-right"
+                          value={form.recurring_settings.frequency}
+                          min={1}
+                          max={365}
+                          onChange={(e) => {
+                            const value = e.currentTarget.valueAsNumber;
+                            const { recurring_settings } = form;
+                            if (recurring_settings?.frequencyType === "daily")
+                              recurring_settings.frequency =
+                                value == Number.NaN ? 1 : value;
+
+                            setForm({
+                              ...form,
+                              recurring_settings,
+                            });
+                          }}
+                        />
+                        <a className="py-1">days</a>
+                      </>
+                    )}
+                  {form.recurring_settings != undefined &&
+                    form.recurring_settings.frequencyType === "weekly" &&
+                    form.recurring_settings.days != null && (
+                      <>
+                        <a className="py-1 pr-1">every</a>
+                        {([0, 1, 2, 3, 4, 5, 6] as const).map((value) => {
+                          return (
+                            <InputText
+                              key={value}
+                              type="button"
+                              className={`px-1 py-0 rounded-full font-mono  ${
+                                form.recurring_settings?.frequencyType ===
+                                "weekly"
+                                  ? form.recurring_settings.days.find(
+                                      (day) => day === value,
+                                    ) != null
+                                    ? "bg-primary-400 text-text-inverse font-bold"
+                                    : "bg-neutral-400 text-text-inverse font-semibold"
+                                  : ""
+                              }`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+
+                                const { recurring_settings } = form;
+                                if (
+                                  recurring_settings?.frequencyType === "weekly"
+                                ) {
+                                  const daysSet = new Set(
+                                    recurring_settings.days,
+                                  );
+                                  if (daysSet.has(value)) daysSet.delete(value);
+                                  else daysSet.add(value);
+
+                                  setForm({
+                                    ...form,
+                                    recurring_settings: {
+                                      ...recurring_settings,
+                                      days: Array.from(daysSet),
+                                    },
+                                  });
+                                }
+                              }}
+                              value={dayOfWeekFirstLetter[value]}
+                            />
+                          );
+                        })}
+                      </>
+                    )}
+                </>
+              }
+            </div>
+            {form.recurring_settings != null && (
+              <div className="flex gap-1 pb-1">
+                <a className="pl-2">Stopping after</a>
+                <select
+                  className="bg-neutral-200"
+                  value={form.recurring_settings.stop.type}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const newStopSetting =
+                      value === "frequency"
+                        ? { type: value, afterFrequency: 1 }
+                        : {
+                            type: "date",
+                            afterDay: new Date(
+                              form.startDate + 24 * 3600 * 1000,
+                            ),
+                          };
+
+                    setForm({
+                      ...form,
+                      recurring_settings: {
+                        ...form.recurring_settings,
+                        stop: newStopSetting,
+                      },
+                    });
+                  }}
+                >
+                  <option value={"date"}>the day</option>
+                  <option value={"frequency"}>repeating</option>
+                </select>
+                {form.recurring_settings.stop.type === "frequency" && (
+                  <>
+                    <InputText
+                      type="number"
+                      min={1}
+                      max={365}
+                      className="py-0 text-right w-[56px]"
+                      value={form.recurring_settings.stop.afterFrequency}
+                      onChange={(e) => {
+                        const value = e.target.valueAsNumber;
+                        if (
+                          form.recurring_settings?.stop.type === "frequency"
+                        ) {
+                          form.recurring_settings.stop.afterFrequency = value;
+                        }
+                        setForm({ ...form });
+                      }}
+                    />
+                    <a className="pl-2">time(s)</a>
+                  </>
+                )}
+                {form.recurring_settings.stop.type === "date" && (
                   <InputText
-                    type="number"
-                    min={1}
-                    max={365}
-                    className="py-0 text-right w-[56px]"
-                    value={form.recurring_settings.stop.afterFrequency}
+                    type="date"
+                    value={form.recurring_settings.stop.afterDay
+                      .toISOString()
+                      .slice(0, 10)}
                     onChange={(e) => {
-                      const value = e.target.valueAsNumber;
-                      if (form.recurring_settings?.stop.type === "frequency") {
-                        form.recurring_settings.stop.afterFrequency = value;
+                      const value = e.target.valueAsDate;
+                      if (
+                        form.recurring_settings?.stop.type === "date" &&
+                        value != null
+                      ) {
+                        form.recurring_settings.stop.afterDay = new Date(
+                          value.getTime() +
+                            value.getTimezoneOffset() * 1000 * 60,
+                        );
                       }
                       setForm({ ...form });
                     }}
+                    className="py-0"
                   />
-                  <a className="pl-2">time(s)</a>
-                </>
-              )}
-              {form.recurring_settings.stop.type === "date" && (
-                <InputText
-                  type="date"
-                  value={form.recurring_settings.stop.afterDay
-                    .toISOString()
-                    .slice(0, 10)}
-                  onChange={(e) => {
-                    const value = e.target.valueAsDate;
-                    if (
-                      form.recurring_settings?.stop.type === "date" &&
-                      value != null
-                    ) {
-                      form.recurring_settings.stop.afterDay = new Date(
-                        value.getTime() + value.getTimezoneOffset() * 1000 * 60,
-                      );
-                    }
-                    setForm({ ...form });
-                  }}
-                  className="py-0"
-                />
-              )}
-            </div>
-          )}
-        </label>
+                )}
+              </div>
+            )}
+          </label>
+        )}
       </div>
       <select
         onChange={(event) => {
@@ -454,27 +529,40 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         />
       </div>
       <div className="absolute w-full bottom-0 flex flex-col gap-[4px] left-0">
-        {(onDelete || onTemplate) && (
+        {(onDelete || onTemplate || onDuplicate) && (
           <div className="w-full flex items-center justify-center gap-2 px-4">
             {onDelete && (
               <InputButtons.Delete
-                className="bg-red-500 font-semibold w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
+                className="bg-red-500 font-semibold max-w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
                 setOpen={setOpen}
                 closeOnDelete={closeOnDelete}
                 onDelete={() => {
-                  onDelete(form);
+                  onDelete(form, isTask ? "task" : "event");
                 }}
+                form="event-form-global"
                 text="Delete"
               />
             )}
-            {onTemplate && (
+            {onDuplicate && (
               <InputButtons.Warning
                 setOpen={setOpen}
-                className="w-full"
+                className="w-full font-bold"
                 onWarning={() => {
-                  onTemplate(form);
+                  onDuplicate(form, isTask ? "task" : "event");
+                }}
+                text="Duplicate"
+                form="event-form-global"
+              />
+            )}
+            {onTemplate && (
+              <InputButtons.Tertiary
+                setOpen={setOpen}
+                className="w-full font-base"
+                onWarning={() => {
+                  onTemplate(form, isTask ? "task" : "event");
                 }}
                 text="Make Template"
+                form="event-form-global"
               />
             )}
           </div>
@@ -483,6 +571,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
           type="submit"
           className="w-full left-0 font-semibold"
           value={"Save"}
+          form="event-form-global"
         />
       </div>
     </PopupForm>

@@ -165,7 +165,34 @@ const WarningButton = ({
   return (
     <button
       {...props}
-      className={`${className} bg-amber-500 font-semibold rounded-xl text-text-inverse px-2 py-1 text-sm`}
+      className={`bg-amber-500 font-semibold rounded-xl text-text-inverse px-2 py-1 text-sm ${className}`}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onWarning();
+        setOpen(false);
+      }}
+    >
+      {text}
+    </button>
+  );
+};
+
+const TertiaryButton = ({
+  setOpen,
+  className,
+  onWarning: onWarning,
+  text,
+  ...props
+}: HTMLButtonExtended<{
+  setOpen: (value: boolean) => void;
+  onWarning: () => void;
+  text: string;
+}>) => {
+  return (
+    <button
+      {...props}
+      className={`bg-white border-2 border-primary-500 text-primary-500 rounded-xl px-2 py-1 text-sm ${className} `}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -182,4 +209,5 @@ export const InputButtons = {
   Primary: InputButton,
   Delete: DeleteButton,
   Warning: WarningButton,
+  Tertiary: TertiaryButton,
 };
