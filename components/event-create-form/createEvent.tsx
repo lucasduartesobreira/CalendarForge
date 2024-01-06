@@ -13,14 +13,12 @@ import { EventTemplate } from "@/services/events/eventTemplates";
 import { Button } from "../shared/button-view/buttons";
 import { EventForm, EventTypeSwitch } from "../shared/event-forms/eventForm";
 
-const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
-
 const initialFormState: CreateEvent = {
   title: "",
   endDate: Date.now() + 60 * 60 * 1000,
   startDate: Date.now(),
   description: "",
-  calendar_id: OWN_CALENDAR_ID,
+  calendar_id: "",
   notifications: [],
   color: "#7a5195",
 };
