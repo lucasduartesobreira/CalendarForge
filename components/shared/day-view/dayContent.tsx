@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import { DayBackground, HoursBackground } from "./dayBackground";
+import { Background, DayBackground, HoursBackground } from "./dayBackground";
 import { DayEvents } from "./dayEventsContent";
 
 const colStartClass = [
@@ -28,5 +28,6 @@ export const DayViewContent = {
   HoursBackground: HoursBackground,
   DayBackground: DayBackground,
   DayEvents: DayEvents,
+  Background: Background,
   DayContainer,
 };

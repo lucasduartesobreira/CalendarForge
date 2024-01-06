@@ -301,6 +301,34 @@ export const HoursBackground = ({ column }: { column: number }) => {
   );
 };
 
+export const Background = ({
+  header,
+  hourContent: HourContent,
+}: {
+  header?: ReactNode;
+  hourContent?: JSXElementConstructor<{ hour: number }>;
+}) => {
+  return (
+    <div
+      className={`grid grid-rows-[auto,repeat(24,64px)] absolute w-full bg-white text-neutral-300`}
+    >
+      {header || (
+        <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-700 justify-center items-center top-0 shadow-lg border-[1px] border-neutral-200 overflow-hidden" />
+      )}
+      {range24.map((_value, index) => {
+        return (
+          <SquareBG
+            key={index}
+            className={`${rowStartClass[index + 1]} col-start-[1] row-span-1`}
+          >
+            {HourContent && <HourContent hour={index + 1} />}
+          </SquareBG>
+        );
+      })}
+    </div>
+  );
+};
+
 const SquareBG = ({
   children: childrens,
   className,
