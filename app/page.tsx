@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import CalendarWeek from "@/components/calendar-week-view/calendarWeek";
 import CreateEventButton from "@/components/event-create-form/createEvent";
 import SideBar from "@/components/sidebar/sideBar";
@@ -17,9 +17,17 @@ import {
 } from "@/services/events/events";
 import { DraggedEvent } from "@/components/shared/day-view/dayEventsContent";
 
-const NavBarContainer = ({ children }: { children: any }) => {
+const NavBarContainer = ({
+  children,
+  className,
+}: {
+  children: any;
+  className?: string;
+}) => {
   return (
-    <div className="flex-none rounded-b-md grid grid-cols-[auto_15%] grid-rows-[100%] relative h-[42px] bg-primary-500 items-center">
+    <div
+      className={`flex-none rounded-b-md flex w-full relative h-[42px] bg-primary-500 items-center ${className}`}
+    >
       {children}
     </div>
   );
@@ -85,6 +93,8 @@ const useDate = () => {
   return [startDate, setStartDate] as const;
 };
 
+const CalendarMode = createContext<O.Option<"editor" | "normal">>(O.None());
+
 const Home = () => {
   const data = useDataStorage();
   const [startDate, setStartDate] = useDate();
@@ -100,38 +110,58 @@ const Home = () => {
     );
   }, [data.storages]);
 
+  const [calendarMode, setChecked] = useState(false);
+
   return (
     <StorageContext.Provider value={data}>
       <RecurringEventsHandler.Provider value={recurringEventsManager}>
-        <DraggedEvent.Provider value={draggedHook}>
-          <main className="h-full flex flex-col bg-white">
-            <NavBarContainer>
-              <nav className="mx-6 col-start-1 flex gap-2 text-text-inverse items-center">
-                <button
-                  onClick={() => setMenuType("calendar")}
-                  className={`font-semibold py-1 px-2 my-2 ${
-                    menuType === "calendar"
-                      ? "border-text-inverse bg-primary-300 rounded-md border-[1px] border-primary-100"
-                      : ""
-                  }`}
-                >
-                  Calendar
-                </button>
-              </nav>
-              {menuType === "calendar" && (
-                <WeekNavigation
-                  startDate={startDate}
-                  setStartDate={setStartDate}
-                />
-              )}
-            </NavBarContainer>
-            <FlexContent>
-              {menuType === "calendar" && (
-                <CalendarContent startDate={startDate} />
-              )}
-            </FlexContent>
-          </main>
-        </DraggedEvent.Provider>
+        <CalendarMode.Provider
+          value={O.Some(calendarMode ? "normal" : "editor")}
+        >
+          <DraggedEvent.Provider value={draggedHook}>
+            <main className="h-full flex flex-col bg-white">
+              <NavBarContainer>
+                <nav className="mx-6 col-start-1 flex gap-2 text-text-inverse items-center">
+                  <button
+                    onClick={() => setMenuType("calendar")}
+                    className={`font-semibold py-1 px-2 my-2 ${
+                      menuType === "calendar"
+                        ? "border-text-inverse bg-primary-300 rounded-md border-[1px] border-primary-100"
+                        : ""
+                    }`}
+                  >
+                    Calendar
+                  </button>
+                </nav>
+                {menuType === "calendar" && (
+                  <label className="relative inline-flex items-center cursor-pointer ml-auto mr-auto">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={calendarMode}
+                      onChange={() => setChecked(!calendarMode)}
+                    />
+                    <div className="w-11 h-6 bg-white peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-primary-400 peer-checked:after:bg-primary-400 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-primary-200 after:border-primary-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-200" />
+                    <span className="ms-3 text-sm font-semibold text-text-inverse select-none">
+                      {calendarMode ? "Editor" : "Normal"}
+                    </span>
+                  </label>
+                )}
+                {menuType === "calendar" && (
+                  <WeekNavigation
+                    startDate={startDate}
+                    setStartDate={setStartDate}
+                  />
+                )}
+              </NavBarContainer>
+              <FlexContent>
+                {menuType === "calendar" && (
+                  <CalendarContent startDate={startDate} />
+                )}
+              </FlexContent>
+            </main>
+          </DraggedEvent.Provider>
+        </CalendarMode.Provider>
       </RecurringEventsHandler.Provider>
     </StorageContext.Provider>
   );
