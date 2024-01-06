@@ -10,6 +10,7 @@ const colStartClass = [
   "col-start-[6]",
   "col-start-[7]",
   "col-start-[8]",
+  "col-start-[9]",
 ] as const;
 
 const DayContainer = ({
