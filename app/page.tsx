@@ -16,6 +16,7 @@ import {
   RecurringEventsManager,
 } from "@/services/events/events";
 import { DraggedEvent } from "@/components/shared/day-view/dayEventsContent";
+import CalendarEditorWeek from "@/components/calendar-editor-week-view/calendarEditorWeek";
 
 const NavBarContainer = ({
   children,
@@ -57,6 +58,47 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
     }
   }, [storages, listeners.calendarsStorageListener]);
 
+  const calendarMode = useContext(CalendarModeContext);
+
+  return calendarMode
+    .map((mode) =>
+      mode === "normal" ? (
+        <>
+          <SideBar
+            viewableCalendarsState={viewableCalendarsState}
+            className="p-1 w-[15%]"
+          />
+          <div className="ml-auto w-[85%] max-h-[100%] bg-white">
+            <CalendarWeek
+              style={
+                "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+              }
+              startDate={startDate}
+              viewableCalendarsState={viewableCalendarsState}
+            />
+          </div>
+          <CreateEventButton />
+        </>
+      ) : mode === "editor" ? (
+        <>
+          <SideBar
+            viewableCalendarsState={viewableCalendarsState}
+            className="p-1 w-[15%]"
+          />
+          <div className="ml-auto w-[85%] max-h-[100%] bg-white">
+            <CalendarEditorWeek
+              style={
+                "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+              }
+              startDate={startDate}
+              viewableCalendarsState={viewableCalendarsState}
+            />
+          </div>
+          <CreateEventButton />
+        </>
+      ) : null,
+    )
+    .unwrapOrElse(() => null);
   return (
     <>
       <SideBar
@@ -93,7 +135,9 @@ const useDate = () => {
   return [startDate, setStartDate] as const;
 };
 
-const CalendarMode = createContext<O.Option<"editor" | "normal">>(O.None());
+const CalendarModeContext = createContext<O.Option<"editor" | "normal">>(
+  O.None(),
+);
 
 const Home = () => {
   const data = useDataStorage();
@@ -115,8 +159,8 @@ const Home = () => {
   return (
     <StorageContext.Provider value={data}>
       <RecurringEventsHandler.Provider value={recurringEventsManager}>
-        <CalendarMode.Provider
-          value={O.Some(calendarMode ? "normal" : "editor")}
+        <CalendarModeContext.Provider
+          value={O.Some(calendarMode ? "editor" : "normal")}
         >
           <DraggedEvent.Provider value={draggedHook}>
             <main className="h-full flex flex-col bg-white">
@@ -161,7 +205,7 @@ const Home = () => {
               </FlexContent>
             </main>
           </DraggedEvent.Provider>
-        </CalendarMode.Provider>
+        </CalendarModeContext.Provider>
       </RecurringEventsHandler.Provider>
     </StorageContext.Provider>
   );
