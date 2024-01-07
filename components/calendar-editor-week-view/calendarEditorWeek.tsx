@@ -2,13 +2,30 @@
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
-import { useContext, useEffect, useMemo, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import UpdateEventForm from "@/components/event-update-form/updateEvent";
 import { Actions } from "@/hooks/mapHook";
 import { FlexibleView, ViewSize } from "../shared/flexible-view/flexibleView";
 import { DayViewContent } from "../shared/day-view/dayContent";
 
 const CALENDAR_WEEK_CONTAINER_ID = "calendar-editor-week-container";
+
+export const EventsDisplayedContext = createContext<
+  O.Option<
+    [
+      displayedEvents: CalendarEvent[],
+      setEvents: Dispatch<SetStateAction<CalendarEvent[]>>,
+    ]
+  >
+>(O.None());
 
 const CalendarEditorWeek = ({
   style,
@@ -30,6 +47,8 @@ const CalendarEditorWeek = ({
   const [selectedEvent, setSelectedEvent] = useState<O.Option<CalendarEvent>>(
     O.None(),
   );
+
+  const displayedEventsCtx = useContext(EventsDisplayedContext);
   useEffect(() => {
     if (storages.isSome() && viewableCalendarsState.isSome()) {
       const { eventsStorage } = storages.unwrap();
@@ -49,6 +68,7 @@ const CalendarEditorWeek = ({
         )
         .then((filteredValue) => {
           setEvents(filteredValue);
+          displayedEventsCtx.map(([, setEvents]) => setEvents(filteredValue));
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
