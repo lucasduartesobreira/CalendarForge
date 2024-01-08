@@ -34,12 +34,29 @@ export class ShortcutBuilder {
 
   private constructor() {}
 
-  build(key: string, action: () => void): Shortcut {
+  build(
+    key: string,
+    action: () => void,
+    options?: { debugging: boolean },
+  ): Shortcut {
     if (key.length === 0)
       throw Symbol("Cannot create a shortcut without a key");
 
     return {
       handler: (event) => {
+        if (options?.debugging) {
+          const { ctrlKey, altKey, metaKey, shiftKey } = event;
+          console.log(
+            "eventKey:",
+            event.key,
+            "key: ",
+            key,
+            "modifiers: ",
+            this.modifiers,
+            "event modifiers: ",
+            { ctrlKey, shiftKey, altKey, metaKey },
+          );
+        }
         if (event.key === key) {
           const isModifiersPressed =
             Object.entries(this.modifiers).find(
