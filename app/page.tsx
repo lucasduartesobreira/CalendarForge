@@ -20,6 +20,7 @@ import CalendarEditorWeek, {
   EventsDisplayedContext,
 } from "@/components/calendar-editor-week-view/calendarEditorWeek";
 import { EditorSideBar } from "@/components/calendar-editor-sidebar/sideBar";
+import { CalendarModeContext } from "@/components/calendar-editor-week-view/contexts";
 
 const NavBarContainer = ({
   children,
@@ -119,10 +120,6 @@ const useDate = () => {
 
   return [startDate, setStartDate] as const;
 };
-
-const CalendarModeContext = createContext<O.Option<"editor" | "normal">>(
-  O.None(),
-);
 
 const Home = () => {
   const data = useDataStorage();
