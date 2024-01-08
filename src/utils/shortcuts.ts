@@ -1,7 +1,7 @@
 type Modifiers = "ctrl" | "shift" | "alt" | "meta";
 type ShortcutModifiers = { [Key in Modifiers as `${Key}Key`]: boolean };
 export type Shortcut = {
-  handler: (this: Window, event: WindowEventMap["keypress"]) => void;
+  handler: (this: Window, event: WindowEventMap["keyup"]) => void;
 };
 
 export class ShortcutBuilder {
