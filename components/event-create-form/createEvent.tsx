@@ -12,6 +12,8 @@ import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { Button } from "../shared/button-view/buttons";
 import { EventForm, EventTypeSwitch } from "../shared/event-forms/eventForm";
+import { useShortcut } from "@/hooks/useShortcut";
+import { ShortcutBuilder } from "@/utils/shortcuts";
 
 const initialFormState: CreateEvent = {
   title: "",
@@ -38,6 +40,12 @@ const CreateEventForm = ({
   initialEndDate.setSeconds(0, 0);
 
   const { storages } = useContext(StorageContext);
+  useShortcut(
+    ShortcutBuilder.new().build("Escape", () => {
+      setOpen(false);
+    }),
+    "all",
+  );
 
   return storages.mapOrElse(
     () => null,
@@ -134,6 +142,12 @@ const TemplateSelector = ({
 
 const CreateEventButton = () => {
   const [open, setOpen] = useState(false);
+  useShortcut(
+    ShortcutBuilder.new().build("n", () => {
+      if (!open) setOpen(true);
+    }),
+    "all",
+  );
   const buttonRef = useRef(null);
   return (
     <div className="">
