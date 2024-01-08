@@ -20,7 +20,12 @@ import CalendarEditorWeek, {
   EventsDisplayedContext,
 } from "@/components/calendar-editor-week-view/calendarEditorWeek";
 import { EditorSideBar } from "@/components/calendar-editor-sidebar/sideBar";
-import { CalendarModeContext } from "@/components/calendar-editor-week-view/contexts";
+import {
+  CalendarModeContext,
+  SelectedEvents,
+} from "@/components/calendar-editor-week-view/contexts";
+import { useShortcut } from "@/hooks/useShortcut";
+import { ShortcutBuilder } from "@/utils/shortcuts";
 
 const NavBarContainer = ({
   children,
@@ -63,6 +68,15 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
   }, [storages, listeners.calendarsStorageListener]);
 
   const calendarMode = useContext(CalendarModeContext);
+  const selectedEvents = useState<Map<CalendarEvent["id"], CalendarEvent>>(
+    new Map(),
+  );
+  useShortcut(
+    ShortcutBuilder.new().build("Escape", () => {
+      selectedEvents[1](new Map());
+    }),
+    "editor",
+  );
 
   return calendarMode
     .map((mode) =>
@@ -84,7 +98,7 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
           <CreateEventButton />
         </>
       ) : mode === "editor" ? (
-        <>
+        <SelectedEvents.Provider value={O.Some(selectedEvents)}>
           <EditorSideBar
             viewableCalendarsState={viewableCalendarsState}
             className="p-1 w-[20%]"
@@ -99,7 +113,7 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
             />
           </div>
           <CreateEventButton />
-        </>
+        </SelectedEvents.Provider>
       ) : null,
     )
     .unwrapOrElse(() => null);

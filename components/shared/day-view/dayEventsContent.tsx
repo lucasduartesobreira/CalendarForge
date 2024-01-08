@@ -1,3 +1,4 @@
+import { SelectedEvents } from "@/components/calendar-editor-week-view/contexts";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent, EventColors } from "@/services/events/events";
 import * as O from "@/utils/option";
@@ -296,7 +297,7 @@ const DraggableCalendarEvent = ({
     return [undefined, undefined, undefined] as const;
   })();
 
-  const { isDragging, ...dragAndDropHandlers } = useDragAndDrop({
+  const { isDragging, onMouseUp, ...dragAndDropHandlers } = useDragAndDrop({
     onDrag: () => {
       setDragged(O.Some(event));
     },
@@ -307,6 +308,26 @@ const DraggableCalendarEvent = ({
   });
 
   const [isResizing, newHeight, ResizeDiv] = useResize({ event, day });
+  const selectedEventsCtx = useContext(SelectedEvents);
+  const dragAndSelectHandler: DivType["onMouseUp"] = (mouseEvent) => {
+    selectedEventsCtx.map(([selectedEvents, setSelected]) => {
+      if (mouseEvent.ctrlKey) {
+        if (selectedEvents.has(event.id)) {
+          selectedEvents.delete(event.id);
+        } else {
+          selectedEvents.set(event.id, event);
+        }
+
+        setSelected(selectedEvents);
+      } else {
+        selectedEvents.clear();
+        setSelected(selectedEvents.set(event.id, event));
+      }
+    });
+
+    onMouseUp(mouseEvent);
+  };
+
   return (
     <ShowCalendarEvent
       event={event}
@@ -322,6 +343,7 @@ const DraggableCalendarEvent = ({
       TaskCompleteCheckbox={Checkbox}
       ResizeDiv={ResizeDiv}
       completed={completedTask}
+      onMouseUp={dragAndSelectHandler}
       {...dragAndDropHandlers}
     />
   );
