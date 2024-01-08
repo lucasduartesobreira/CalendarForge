@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import CalendarWeek from "@/components/calendar-week-view/calendarWeek";
 import CreateEventButton from "@/components/event-create-form/createEvent";
 import SideBar from "@/components/sidebar/sideBar";
