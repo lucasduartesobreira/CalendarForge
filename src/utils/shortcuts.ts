@@ -1,64 +1,59 @@
 type Modifiers = "ctrl" | "shift" | "alt" | "meta";
-type ShortcutModifiers = { [Key in Modifiers as `${Key}Key`]?: boolean };
+type ShortcutModifiers = { [Key in Modifiers as `${Key}Key`]: boolean };
+export type Shortcut = {
+  handler: (this: Window, event: WindowEventMap["keypress"]) => void;
+};
 
-function Building<This, Args extends any[], Return>(
-  target: (this: This, ...args: Args) => Return,
-  _context: ClassMethodDecoratorContext<
-    This,
-    (this: This, ...args: Args) => Return
-  >,
-) {
-  function replacementMethod(this: This, ...args: Args): This {
-    target.call(this, ...args);
+export class ShortcutBuilder {
+  private modifiers: ShortcutModifiers = {
+    ctrlKey: false,
+    shiftKey: false,
+    altKey: false,
+    metaKey: false,
+  };
 
+  altKey(value = true) {
+    this.modifiers.altKey = value;
     return this;
   }
 
-  return replacementMethod;
-}
-
-class ShortcutBuilder {
-  modifiers: ShortcutModifiers = {};
-  _key: string = "";
-
-  @Building
-  altKey(value = true) {
-    this.modifiers.altKey = value;
-  }
-
-  @Building
   ctrlKey(value = true) {
     this.modifiers.ctrlKey = value;
+    return this;
   }
 
-  @Building
   shiftKey(value = true) {
     this.modifiers.shiftKey = value;
+    return this;
   }
 
-  @Building
   metaKey(value = true) {
     this.modifiers.metaKey = value;
+    return this;
   }
 
-  @Building
-  key(key: string) {
-    this._key = key;
-  }
+  private constructor() {}
 
-  build(
-    action: () => void,
-  ): (this: Window, event: WindowEventMap["keypress"]) => void {
-    return (event) => {
-      if (event.key === this._key) {
-        const isModifiersPressed =
-          Object.entries(this.modifiers).find(
-            ([key, value]) => event[key as keyof ShortcutModifiers] != value,
-          ) != null;
-        if (isModifiersPressed) {
-          action();
+  build(key: string, action: () => void): Shortcut {
+    if (key.length === 0)
+      throw Symbol("Cannot create a shortcut without a key");
+
+    return {
+      handler: (event) => {
+        if (event.key === key) {
+          const isModifiersPressed =
+            Object.entries(this.modifiers).find(
+              ([key, value]) => event[key as keyof ShortcutModifiers] != value,
+            ) == null;
+          if (isModifiersPressed) {
+            action();
+          }
         }
-      }
+      },
     };
+  }
+
+  static new() {
+    return new ShortcutBuilder();
   }
 }
