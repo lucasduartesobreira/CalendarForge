@@ -102,6 +102,22 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
     ),
     "editor",
   );
+
+  useShortcut(
+    ShortcutBuilder.new().build(
+      "Delete",
+      () => {
+        const selected = selectedEvents[0];
+        if (selected.size === 1) {
+          const [[eventId]] = selected.entries();
+          storages.map(({ eventsStorage }) => eventsStorage.remove(eventId));
+        }
+      },
+      { debugging: true },
+    ),
+    "editor",
+  );
+
   return calendarMode
     .map((mode) =>
       mode === "normal" ? (
