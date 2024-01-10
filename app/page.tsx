@@ -78,6 +78,30 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
     "editor",
   );
 
+  useShortcut(
+    ShortcutBuilder.new().build(
+      "d",
+      () => {
+        const selected = selectedEvents[0];
+        if (selected.size === 1) {
+          const [
+            [
+              ,
+              {
+                id: _,
+                task_id: _task_id,
+                recurring_id: _recurring_id,
+                ...event
+              },
+            ],
+          ] = selected.entries();
+          storages.map(({ eventsStorage }) => eventsStorage.add(event));
+        }
+      },
+      { debugging: true },
+    ),
+    "editor",
+  );
   return calendarMode
     .map((mode) =>
       mode === "normal" ? (
