@@ -390,7 +390,7 @@ const TaskCompleteCheckboxFactory = (
     if (controller.stage === 1 && completed === controller.value) {
       setController({ type: "allow_update" });
     }
-  }, [completed]);
+  }, [taskId, completed, controller.value]);
 
   useEffect(() => {
     if (taskId == null) return;
@@ -400,7 +400,7 @@ const TaskCompleteCheckboxFactory = (
         .findById(taskId)
         .then((found) => found.map((task) => setCompleted(task.completed))),
     );
-  }, [storages, listeners.tasksStorageListener]);
+  }, [taskId, storages, listeners.tasksStorageListener]);
 
   useEffect(() => {
     if (taskId == null) return;
@@ -417,7 +417,7 @@ const TaskCompleteCheckboxFactory = (
         });
       });
     });
-  }, [storages]);
+  }, [taskId, storages]);
 
   const ref = useRef(null);
 
