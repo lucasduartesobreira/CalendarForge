@@ -595,7 +595,7 @@ class IndexedDbStorage<
             if (matches) {
               const updatedValue = { ...value, ...updated };
               requestIntoResult(cursor.update(updatedValue)).then(() => {
-                acc.push(value);
+                acc.push(updatedValue);
               });
             }
 
