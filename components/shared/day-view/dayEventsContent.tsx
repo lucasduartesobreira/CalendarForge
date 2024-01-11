@@ -289,13 +289,10 @@ const DraggableCalendarEvent = ({
 }) => {
   const [, setDragged] = useContext(DraggedEvent);
 
-  const [Checkbox, completedTask, ref] = (() => {
-    const { task_id } = event;
-    if (task_id) {
-      return TaskCompleteCheckboxFactory(false, task_id);
-    }
-    return [undefined, undefined, undefined] as const;
-  })();
+  const [Checkbox, completedTask, ref] = TaskCompleteCheckboxFactory(
+    false,
+    event.task_id,
+  );
 
   const { isDragging, onMouseUp, ...dragAndDropHandlers } = useDragAndDrop({
     onDrag: () => {
@@ -349,7 +346,10 @@ const DraggableCalendarEvent = ({
   );
 };
 
-const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
+const TaskCompleteCheckboxFactory = (
+  locked: boolean,
+  taskId: string | undefined,
+) => {
   const { storages, listeners } = useContext(StorageContext);
   const [completed, setCompleted] = useState<boolean>();
   const [controller, setController] = useReducer(
@@ -379,6 +379,8 @@ const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
   );
 
   useEffect(() => {
+    if (taskId == null) return;
+
     if (controller.stage === 2) {
       storages.map(({ tasksStorage }) => {
         tasksStorage.update(taskId, { completed: completed });
@@ -391,6 +393,8 @@ const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
   }, [completed]);
 
   useEffect(() => {
+    if (taskId == null) return;
+
     storages.map(({ tasksStorage }) =>
       tasksStorage
         .findById(taskId)
@@ -399,6 +403,8 @@ const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
   }, [storages, listeners.tasksStorageListener]);
 
   useEffect(() => {
+    if (taskId == null) return;
+
     storages.map(({ tasksStorage }) => {
       setController({ type: "start_fetching" });
       tasksStorage.findById(taskId).then((found) => {
@@ -415,26 +421,30 @@ const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
 
   const ref = useRef(null);
 
-  const CreateComponent = ({
-    backgroundColor,
-  }: {
-    backgroundColor: string;
-  }) => {
-    return (
-      <input
-        ref={ref}
-        className={`align-center ml-auto mr-1 appearance-none w-[16px] h-[16px] border-2 border-gray-300 rounded-full ${backgroundColor} checked:bg-blue-500 checked:border-transparent focus:outline-none`}
-        type="checkbox"
-        checked={completed}
-        onChange={() => {
-          setCompleted(!completed);
-        }}
-        disabled={locked}
-      />
-    );
-  };
-
-  return [CreateComponent, completed, ref] as const;
+  return useMemo(() => {
+    if (taskId != null) {
+      const CreateComponent = ({
+        backgroundColor,
+      }: {
+        backgroundColor: string;
+      }) => {
+        return (
+          <input
+            ref={ref}
+            className={`align-center ml-auto mr-1 appearance-none w-[16px] h-[16px] border-2 border-gray-300 rounded-full ${backgroundColor} checked:bg-blue-500 checked:border-transparent focus:outline-none`}
+            type="checkbox"
+            checked={completed}
+            onChange={() => {
+              setCompleted(!completed);
+            }}
+            disabled={locked}
+          />
+        );
+      };
+      return [CreateComponent, completed, ref] as const;
+    }
+    return [undefined, undefined, undefined];
+  }, [taskId, completed, locked]);
 };
 
 const backgroundColor = {
