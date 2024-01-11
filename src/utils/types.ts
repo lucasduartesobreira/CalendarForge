@@ -1,10 +1,12 @@
 import {
   ButtonHTMLAttributes,
   DetailedHTMLProps,
+  Dispatch,
   FormHTMLAttributes,
   HTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
+  SetStateAction,
 } from "react";
 
 export type HTMLDivExtended<Attribute, V = unknown> = DetailedHTMLProps<
@@ -32,3 +34,5 @@ export type HTMLButtonExtended<V = unknown> = DetailedHTMLProps<
   V;
 
 export type RequiredPropsWithChildren<V> = V & { children: ReactNode };
+
+export type UseStateReturn<V> = [V, Dispatch<SetStateAction<V>>];

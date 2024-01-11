@@ -16,7 +16,7 @@ import { Actions } from "@/hooks/mapHook";
 import { FlexibleView, ViewSize } from "../shared/flexible-view/flexibleView";
 import { DayViewContent } from "../shared/day-view/dayContent";
 
-const CALENDAR_WEEK_CONTAINER_ID = "calendar-editor-week-container";
+const CALENDAR_WEEK_CONTAINER_ID = "calendar-week-container";
 
 export const EventsDisplayedContext = createContext<
   O.Option<

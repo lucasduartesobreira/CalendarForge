@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { RefObject, useContext, useEffect, useState } from "react";
 import CalendarWeek from "@/components/calendar-week-view/calendarWeek";
 import CreateEventButton from "@/components/event-create-form/createEvent";
 import SideBar from "@/components/sidebar/sideBar";
@@ -23,6 +23,7 @@ import { EditorSideBar } from "@/components/calendar-editor-sidebar/sideBar";
 import {
   CalendarModeContext,
   SelectedEvents,
+  SelectedRefs,
 } from "@/components/calendar-editor-week-view/contexts";
 import { useShortcut } from "@/hooks/useShortcut";
 import { ShortcutBuilder } from "@/utils/shortcuts";
@@ -71,6 +72,11 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
   const selectedEvents = useState<Map<CalendarEvent["id"], CalendarEvent>>(
     new Map(),
   );
+
+  const selectedRefs = useState<
+    Map<CalendarEvent["id"], RefObject<HTMLDivElement>>
+  >(new Map());
+
   useShortcut(
     ShortcutBuilder.new().build("Escape", () => {
       selectedEvents[1](new Map());
@@ -105,7 +111,30 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
     "editor",
   );
 
-    ),
+  useShortcut(
+    ShortcutBuilder.new().build("t", () => {
+      const selected = selectedEvents[0];
+      if (selected.size === 1) {
+        const [[eventId, event]] = selected.entries();
+        storages.map(({ eventsStorage, tasksStorage }) =>
+          event.task_id != null
+            ? eventsStorage.update(eventId, { task_id: undefined })
+            : tasksStorage
+                .add({
+                  title: event.title,
+                  description: event.description,
+                  completed: false,
+                })
+                .then((result) =>
+                  result
+                    .map((task) =>
+                      eventsStorage.update(eventId, { task_id: task.id }),
+                    )
+                    .asyncFlatten(),
+                ),
+        );
+      }
+    }),
     "editor",
   );
 
@@ -130,20 +159,22 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
         </>
       ) : mode === "editor" ? (
         <SelectedEvents.Provider value={O.Some(selectedEvents)}>
-          <EditorSideBar
-            viewableCalendarsState={viewableCalendarsState}
-            className="p-1 w-[20%]"
-          />
-          <div className="ml-auto w-[85%] max-h-[100%] bg-white">
-            <CalendarEditorWeek
-              style={
-                "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
-              }
-              startDate={startDate}
+          <SelectedRefs.Provider value={O.Some(selectedRefs)}>
+            <EditorSideBar
               viewableCalendarsState={viewableCalendarsState}
+              className="p-1 w-[20%]"
             />
-          </div>
-          <CreateEventButton />
+            <div className="ml-auto w-[85%] max-h-[100%] bg-white">
+              <CalendarEditorWeek
+                style={
+                  "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+                }
+                startDate={startDate}
+                viewableCalendarsState={viewableCalendarsState}
+              />
+            </div>
+            <CreateEventButton />
+          </SelectedRefs.Provider>
         </SelectedEvents.Provider>
       ) : null,
     )

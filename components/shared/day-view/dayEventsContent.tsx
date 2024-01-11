@@ -1,4 +1,7 @@
-import { SelectedEvents } from "@/components/calendar-editor-week-view/contexts";
+import {
+  SelectedEvents,
+  SelectedRefs,
+} from "@/components/calendar-editor-week-view/contexts";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent, EventColors } from "@/services/events/events";
 import * as O from "@/utils/option";
@@ -306,21 +309,39 @@ const DraggableCalendarEvent = ({
 
   const [isResizing, newHeight, ResizeDiv] = useResize({ event, day });
   const selectedEventsCtx = useContext(SelectedEvents);
-  const dragAndSelectHandler: DivType["onMouseUp"] = (mouseEvent) => {
-    selectedEventsCtx.map(([selectedEvents, setSelected]) => {
-      if (mouseEvent.ctrlKey) {
-        if (selectedEvents.has(event.id)) {
-          selectedEvents.delete(event.id);
-        } else {
-          selectedEvents.set(event.id, event);
-        }
+  const selectedRefsCtx = useContext(SelectedRefs);
 
-        setSelected(selectedEvents);
-      } else {
-        selectedEvents.clear();
-        setSelected(selectedEvents.set(event.id, event));
-      }
-    });
+  const compRef: DivType["ref"] = useRef(null);
+  const dragAndSelectHandler: DivType["onMouseUp"] = (mouseEvent) => {
+    selectedEventsCtx
+      .flatMap((selectedEvents) =>
+        selectedRefsCtx.map(
+          (selectedRefs) => [selectedEvents, selectedRefs] as const,
+        ),
+      )
+      .map(
+        ([[selectedEvents, setSelected], [selectedRefs, setSelectedRefs]]) => {
+          if (mouseEvent.ctrlKey) {
+            if (selectedEvents.has(event.id)) {
+              selectedEvents.delete(event.id);
+              selectedRefs.delete(event.id);
+            } else {
+              selectedEvents.set(event.id, event);
+              selectedRefs.set(event.id, compRef);
+            }
+
+            setSelected(selectedEvents);
+            setSelectedRefs(selectedRefs);
+          } else {
+            selectedEvents.clear();
+            selectedRefs.clear();
+            setSelected(selectedEvents.set(event.id, event));
+            setSelectedRefs(selectedRefs.set(event.id, compRef));
+          }
+
+          return selectedEvents;
+        },
+      );
 
     onMouseUp(mouseEvent);
   };
@@ -341,6 +362,7 @@ const DraggableCalendarEvent = ({
       ResizeDiv={ResizeDiv}
       completed={completedTask}
       onMouseUp={dragAndSelectHandler}
+      componentRef={compRef}
       {...dragAndDropHandlers}
     />
   );
@@ -473,6 +495,7 @@ export const ShowCalendarEvent = ({
   onMouseUp,
   TaskCompleteCheckbox,
   completed,
+  componentRef,
   ...props
 }: HTMLDivExtended<
   HTMLDivElement,
@@ -485,6 +508,7 @@ export const ShowCalendarEvent = ({
     TaskCompleteCheckbox?: JSXElementConstructor<{ backgroundColor: string }>;
     completed?: boolean;
     ResizeDiv?: JSXElementConstructor<{}>;
+    componentRef?: DivType["ref"];
   }
 >) => {
   const conflictNumber = conflicts.get(event.id);
@@ -495,6 +519,7 @@ export const ShowCalendarEvent = ({
   return (
     <div
       {...props}
+      ref={componentRef}
       className={`${className ?? ""} ${
         backgroundColor[eventColor]
       } absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}
