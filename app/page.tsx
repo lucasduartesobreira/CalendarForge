@@ -79,41 +79,32 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
   );
 
   useShortcut(
-    ShortcutBuilder.new().build(
-      "d",
-      () => {
-        const selected = selectedEvents[0];
-        if (selected.size === 1) {
-          const [
-            [
-              ,
-              {
-                id: _,
-                task_id: _task_id,
-                recurring_id: _recurring_id,
-                ...event
-              },
-            ],
-          ] = selected.entries();
-          storages.map(({ eventsStorage }) => eventsStorage.add(event));
-        }
-      },
-      { debugging: true },
-    ),
+    ShortcutBuilder.new().build("d", () => {
+      const selected = selectedEvents[0];
+      if (selected.size === 1) {
+        const [
+          [
+            ,
+            { id: _, task_id: _task_id, recurring_id: _recurring_id, ...event },
+          ],
+        ] = selected.entries();
+        storages.map(({ eventsStorage }) => eventsStorage.add(event));
+      }
+    }),
     "editor",
   );
 
   useShortcut(
-    ShortcutBuilder.new().build(
-      "Delete",
-      () => {
-        const selected = selectedEvents[0];
-        if (selected.size === 1) {
-          const [[eventId]] = selected.entries();
-          storages.map(({ eventsStorage }) => eventsStorage.remove(eventId));
-        }
-      },
-      { debugging: true },
+    ShortcutBuilder.new().build("Delete", () => {
+      const selected = selectedEvents[0];
+      if (selected.size === 1) {
+        const [[eventId]] = selected.entries();
+        storages.map(({ eventsStorage }) => eventsStorage.remove(eventId));
+      }
+    }),
+    "editor",
+  );
+
     ),
     "editor",
   );
