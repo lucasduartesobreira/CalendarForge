@@ -405,13 +405,14 @@ export class EventStorageIndexedDb
     return resultAsync();
   }
 
-  update(eventId: string, event: UpdateEvent) {
-    const resultAsync = async () =>
-      (await this.map.findAndUpdate({ id: eventId }, event))
-        .map((value) => value.at(0))
-        .andThen((value) => (value != null ? R.Ok(value) : R.Err(NOT_FOUND)));
+  async update(eventId: string, event: UpdateEvent) {
+    const found = await this.map.findById(eventId);
+    const result = (await this.map.findAndUpdate({ id: eventId }, event))
+      .map((value) => value.at(0))
+      .andThen((value) => (value != null ? R.Ok(value) : R.Err(NOT_FOUND)));
 
-    return resultAsync();
+    this.emit("update", { args: [eventId, event], result, opsSpecific: found });
+    return result;
   }
 
   values() {
