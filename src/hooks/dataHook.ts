@@ -131,6 +131,35 @@ export function useDataStorage(): StorageContext {
           },
         );
 
+        eventsUnwrapped.on("update", ({ result, opsSpecific }) => {
+          const found = opsSpecific as O.Option<CalendarEvent>;
+          result
+            .option()
+            .flatMap((updatedEvent) =>
+              found.map((foundEvent) => [updatedEvent, foundEvent] as const),
+            )
+            .map(([updatedEvent, foundEvent]) => {
+              const { task_id: updatedTaskId } = updatedEvent;
+              const { task_id: foundTaskId } = foundEvent;
+              const wasTurnedIntoEvent =
+                updatedTaskId == null && foundTaskId != null;
+
+              if (wasTurnedIntoEvent) {
+                const taskId = foundTaskId;
+                return eventsUnwrapped
+                  .find({ task_id: taskId })
+                  .then((result) => {
+                    result.mapOrElse(
+                      () => {
+                        tasksUnwraped.remove(taskId);
+                      },
+                      () => {},
+                    );
+                  });
+              }
+            });
+        });
+
         eventsUnwrapped.on("removeWithFilter", ({ result: output }) => {
           const deletedEvents = output;
           if (deletedEvents) {
