@@ -1,5 +1,6 @@
 import { HTMLButtonExtended, HTMLDivExtended } from "@/utils/types";
 import { RefObject } from "react";
+import { twMerge } from "tailwind-merge";
 
 const ButtonSecondary = ({
   value,
@@ -40,9 +41,10 @@ const ButtonPrimary = ({
   return (
     <button
       {...props}
-      className={`${disabled ? "opacity-40" : ""} ${
-        props.className
-      } bg-primary-500 text-white ${size}`}
+      className={twMerge(
+        `${disabled ? "opacity-40" : ""} bg-primary-500 text-white ${size}`,
+        props.className,
+      )}
       ref={innerRef}
     >
       {value}
@@ -77,9 +79,12 @@ const ButtonTertiary = ({
   return (
     <button
       {...props}
-      className={`${disabled ? "opacity-40" : ""} ${
-        props.className
-      } bg-white text-primary-500 border-2 border-primary-500 ${size}`}
+      className={twMerge(
+        `${
+          disabled ? "opacity-40" : ""
+        } bg-white text-primary-500 border-2 border-primary-500 ${size}`,
+        props.className,
+      )}
       ref={innerRef}
     >
       {value}
