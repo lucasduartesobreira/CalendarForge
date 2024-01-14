@@ -173,10 +173,10 @@ const Selection = () => {
   const DuplicateActionComponent = useMemo(DuplicateAction, []);
 
   if (
-    dimensions.x_start !== Number.MAX_SAFE_INTEGER &&
-    dimensions.x_end !== Number.MIN_SAFE_INTEGER &&
-    dimensions.y_start !== Number.MAX_SAFE_INTEGER &&
-    dimensions.y_end !== Number.MIN_SAFE_INTEGER
+    dimensions.x_start < Number.MAX_SAFE_INTEGER &&
+    dimensions.x_end > Number.MIN_SAFE_INTEGER &&
+    dimensions.y_start < Number.MAX_SAFE_INTEGER &&
+    dimensions.y_end > Number.MIN_SAFE_INTEGER
   )
     return (
       <div
