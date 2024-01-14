@@ -170,7 +170,7 @@ const Selection = () => {
     });
   }, [selectedRefs]);
 
-  const DuplicateActionComponent = useMemo(DuplicateAction, []);
+  const DuplicateActionComponent = DuplicateAction();
 
   if (
     dimensions.x_start < Number.MAX_SAFE_INTEGER &&
