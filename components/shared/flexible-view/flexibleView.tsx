@@ -1,10 +1,21 @@
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
-import { PropsWithChildren, useContext, useEffect, useState } from "react";
+import {
+  PropsWithChildren,
+  RefObject,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { DayViewContent } from "../day-view/dayContent";
 import { DayDropZone } from "../day-view/dayBackground";
 import { DraggedEvent } from "../day-view/dayEventsContent";
-import { SelectedRefs } from "@/components/calendar-editor-week-view/contexts";
+import {
+  SelectedEvents,
+  SelectedRefs,
+} from "@/components/calendar-editor-week-view/contexts";
+import { Button } from "../button-view/buttons";
 
 export const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
 export type ViewSize = (typeof AcceptedDaysValue)[number];
@@ -178,3 +189,96 @@ const Selection = () => {
 
   return null;
 };
+
+class ButtonBuilder {
+  private _action: (
+    selectedEvents: Map<CalendarEvent["id"], CalendarEvent>,
+    selectedRefs: Map<CalendarEvent["id"], RefObject<HTMLDivElement>>,
+  ) => void = () => {};
+  private _text: string = "";
+  private _isVisible: (
+    selectedEvents: Map<CalendarEvent["id"], CalendarEvent>,
+    selectedRefs: Map<CalendarEvent["id"], RefObject<HTMLDivElement>>,
+  ) => boolean = () => true;
+
+  action(
+    a: (
+      selectedEvents: Map<CalendarEvent["id"], CalendarEvent>,
+      selectedRefs: Map<CalendarEvent["id"], RefObject<HTMLDivElement>>,
+    ) => void,
+  ) {
+    this._action = a;
+
+    return this;
+  }
+
+  text(text: string) {
+    this._text = text;
+
+    return this;
+  }
+
+  visible(value: boolean): ButtonBuilder;
+  visible(
+    value: (
+      selectedEvents: Map<CalendarEvent["id"], CalendarEvent>,
+      selectedRefs: Map<CalendarEvent["id"], RefObject<HTMLDivElement>>,
+    ) => boolean,
+  ): ButtonBuilder;
+  visible(
+    value:
+      | ((
+          selectedEvents: Map<CalendarEvent["id"], CalendarEvent>,
+          selectedRefs: Map<CalendarEvent["id"], RefObject<HTMLDivElement>>,
+        ) => boolean)
+      | boolean,
+  ) {
+    this._isVisible = typeof value === "boolean" ? () => value : value;
+
+    return this;
+  }
+
+  build() {
+    const Component = () => {
+      const selectedRefsCtx = useContext(SelectedRefs);
+      const selectedEventsCtx = useContext(SelectedEvents);
+
+      return selectedRefsCtx
+        .flatMap(([refsState, refSet]) =>
+          selectedEventsCtx.map(
+            ([eventsState, eventSet]) =>
+              [
+                [refsState, eventsState],
+                [refSet, eventSet],
+              ] as const,
+          ),
+        )
+        .mapOrElse(
+          () => null,
+          ([[selectedRefs, selectedEvents], [refSet, eventSet]]) => {
+            if (this._isVisible(selectedEvents, selectedRefs)) {
+              return (
+                <Button.Tertiary
+                  sizeType="md"
+                  value={this._text}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    this._action(selectedEvents, selectedRefs);
+                    refSet(new Map());
+                    eventSet(new Map());
+                  }}
+                  className="pointer-events-auto px-2 py-1"
+                />
+              );
+            }
+
+            return null;
+          },
+        );
+    };
+
+    return Component;
+  }
+}
