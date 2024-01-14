@@ -166,7 +166,7 @@ const Selection = () => {
   )
     return (
       <div
-        className="bg-transparent border-2 border-dashed border-amber-400 absolute pointer-events-none rounded-lg"
+        className="bg-transparent border-2 border-dashed border-primary-400 absolute pointer-events-none rounded-lg"
         style={{
           top: dimensions.y_start - 4,
           left: dimensions.x_start - 4,
