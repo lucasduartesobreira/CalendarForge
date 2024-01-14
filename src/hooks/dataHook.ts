@@ -205,6 +205,14 @@ export function useDataStorage(): StorageContext {
           });
         });
 
+        eventsUnwrapped.on("remove", ({ result }) => {
+          result.map(({ notifications }) => {
+            notifications.forEach((notification) => {
+              notificationManager.remove(notification.id);
+            });
+          });
+        });
+
         eventsUnwrapped.on("removeWithFilter", ({ result: output }) => {
           const deletedEvents = output;
           if (deletedEvents) {
@@ -214,6 +222,14 @@ export function useDataStorage(): StorageContext {
               });
             });
           }
+        });
+
+        eventsUnwrapped.on("removeAll", ({ result }) => {
+          result.map(([, event]) => {
+            event.notifications.forEach((notification) => {
+              notificationManager.remove(notification.id);
+            });
+          });
         });
 
         calendarsUnwrapped.on("remove", ({ result }) => {
