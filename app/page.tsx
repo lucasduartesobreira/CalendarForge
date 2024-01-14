@@ -80,6 +80,7 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
   useShortcut(
     ShortcutBuilder.new().build("Escape", () => {
       selectedEvents[1](new Map());
+      selectedRefs[1](new Map());
     }),
     "editor",
   );
