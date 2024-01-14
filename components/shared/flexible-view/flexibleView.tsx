@@ -5,7 +5,6 @@ import {
   RefObject,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 import { DayViewContent } from "../day-view/dayContent";
@@ -171,6 +170,7 @@ const Selection = () => {
   }, [selectedRefs]);
 
   const DuplicateActionComponent = DuplicateAction();
+  const DeleteActionComponent = DeleteAction();
 
   if (
     dimensions.x_start < Number.MAX_SAFE_INTEGER &&
@@ -188,8 +188,9 @@ const Selection = () => {
           height: Math.abs(dimensions.y_start - dimensions.y_end) + 4 + 4,
         }}
       >
-        <div className="absolute -translate-y-[42px] min-h-fit">
+        <div className="absolute -translate-y-[42px] min-h-fit flex gap-2">
           <DuplicateActionComponent />
+          <DeleteActionComponent />
         </div>
       </div>
     );
@@ -305,6 +306,19 @@ const DuplicateAction = () => {
           ...rest
         } = event;
         eventsStorage.add(rest);
+      });
+    })
+    .build();
+};
+const DeleteAction = () => {
+  const { storages } = useContext(StorageContext);
+  return new ButtonBuilder()
+    .visible((selectedEvents) => selectedEvents.size === 1)
+    .text("Delete")
+    .action((events) => {
+      storages.map(({ eventsStorage }) => {
+        const [[eventId]] = events.entries();
+        eventsStorage.remove(eventId);
       });
     })
     .build();
