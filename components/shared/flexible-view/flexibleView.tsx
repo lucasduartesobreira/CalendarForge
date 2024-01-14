@@ -16,6 +16,7 @@ import {
   SelectedRefs,
 } from "@/components/calendar-editor-week-view/contexts";
 import { Button } from "../button-view/buttons";
+import { StorageContext } from "@/hooks/dataHook";
 
 export const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
 export type ViewSize = (typeof AcceptedDaysValue)[number];
@@ -169,6 +170,8 @@ const Selection = () => {
     });
   }, [selectedRefs]);
 
+  const DuplicateActionComponent = useMemo(DuplicateAction, []);
+
   if (
     dimensions.x_start !== Number.MAX_SAFE_INTEGER &&
     dimensions.x_end !== Number.MIN_SAFE_INTEGER &&
@@ -184,7 +187,11 @@ const Selection = () => {
           width: Math.abs(dimensions.x_end - dimensions.x_start) + 4 + 4,
           height: Math.abs(dimensions.y_start - dimensions.y_end) + 4 + 4,
         }}
-      />
+      >
+        <div className="absolute -translate-y-[42px] min-h-fit">
+          <DuplicateActionComponent />
+        </div>
+      </div>
     );
 
   return null;
@@ -282,3 +289,23 @@ class ButtonBuilder {
     return Component;
   }
 }
+
+const DuplicateAction = () => {
+  const { storages } = useContext(StorageContext);
+  return new ButtonBuilder()
+    .visible((selectedEvents) => selectedEvents.size === 1)
+    .text("Duplicate")
+    .action((events) => {
+      storages.map(({ eventsStorage }) => {
+        const [[, event]] = events.entries();
+        const {
+          id: _id,
+          task_id: _task_id,
+          recurring_id: _recurring_id,
+          ...rest
+        } = event;
+        eventsStorage.add(rest);
+      });
+    })
+    .build();
+};
