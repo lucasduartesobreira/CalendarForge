@@ -160,6 +160,51 @@ export function useDataStorage(): StorageContext {
             });
         });
 
+        eventsUnwrapped.on("remove", ({ result }) => {
+          result.map(({ task_id }) => {
+            eventsUnwrapped.find({ task_id }).then((findResult) =>
+              findResult.mapOrElse(
+                () => {
+                  task_id != null && tasksUnwraped.remove(task_id);
+                },
+                () => {},
+              ),
+            );
+          });
+        });
+
+        eventsUnwrapped.on("removeWithFilter", ({ result }) => {
+          result.map((event) => {
+            eventsUnwrapped
+              .find({ task_id: event.task_id })
+              .then((findResult) =>
+                findResult.mapOrElse(
+                  () => {
+                    event.task_id != null &&
+                      tasksUnwraped.remove(event.task_id);
+                  },
+                  () => {},
+                ),
+              );
+          });
+        });
+
+        eventsUnwrapped.on("removeAll", ({ result }) => {
+          result.map(([, event]) => {
+            eventsUnwrapped
+              .find({ task_id: event.task_id })
+              .then((findResult) =>
+                findResult.mapOrElse(
+                  () => {
+                    event.task_id != null &&
+                      tasksUnwraped.remove(event.task_id);
+                  },
+                  () => {},
+                ),
+              );
+          });
+        });
+
         eventsUnwrapped.on("removeWithFilter", ({ result: output }) => {
           const deletedEvents = output;
           if (deletedEvents) {
