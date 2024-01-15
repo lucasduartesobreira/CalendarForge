@@ -14,3 +14,9 @@ export const SelectedEvents = createContext<
 export const SelectedRefs = createContext<
   Option<UseStateReturn<Map<CalendarEvent["id"], RefObject<HTMLDivElement>>>>
 >(None());
+
+export const ActionSelectedTypes = ["recurring", "spacing"] as const;
+
+export const ActionSelected = createContext<
+  UseStateReturn<Option<(typeof ActionSelectedTypes)[number]>>
+>([None(), () => {}]);

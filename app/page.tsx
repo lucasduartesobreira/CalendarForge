@@ -21,6 +21,8 @@ import CalendarEditorWeek, {
 } from "@/components/calendar-editor-week-view/calendarEditorWeek";
 import { EditorSideBar } from "@/components/calendar-editor-sidebar/sideBar";
 import {
+  ActionSelected,
+  ActionSelectedTypes,
   CalendarModeContext,
   SelectedEvents,
   SelectedRefs,
@@ -139,6 +141,10 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
     "editor",
   );
 
+  const selectedAction = useState<
+    O.Option<(typeof ActionSelectedTypes)[number]>
+  >(O.Some("recurring"));
+
   return calendarMode
     .map((mode) =>
       mode === "normal" ? (
@@ -161,20 +167,22 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
       ) : mode === "editor" ? (
         <SelectedEvents.Provider value={O.Some(selectedEvents)}>
           <SelectedRefs.Provider value={O.Some(selectedRefs)}>
-            <EditorSideBar
-              viewableCalendarsState={viewableCalendarsState}
-              className="p-1 w-[20%]"
-            />
-            <div className="ml-auto w-[85%] max-h-[100%] bg-white">
-              <CalendarEditorWeek
-                style={
-                  "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
-                }
-                startDate={startDate}
+            <ActionSelected.Provider value={selectedAction}>
+              <EditorSideBar
                 viewableCalendarsState={viewableCalendarsState}
+                className="p-1 w-[20%]"
               />
-            </div>
-            <CreateEventButton />
+              <div className="ml-auto w-[85%] max-h-[100%] bg-white relative">
+                <CalendarEditorWeek
+                  style={
+                    "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+                  }
+                  startDate={startDate}
+                  viewableCalendarsState={viewableCalendarsState}
+                />
+              </div>
+              <CreateEventButton />
+            </ActionSelected.Provider>
           </SelectedRefs.Provider>
         </SelectedEvents.Provider>
       ) : null,

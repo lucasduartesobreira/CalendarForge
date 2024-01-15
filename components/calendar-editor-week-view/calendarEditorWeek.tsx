@@ -16,6 +16,7 @@ import { Actions } from "@/hooks/mapHook";
 import { FlexibleView, ViewSize } from "../shared/flexible-view/flexibleView";
 import { DayViewContent } from "../shared/day-view/dayContent";
 import { Selection } from "../editor-selection-view/editorSelection";
+import { ActionHeader } from "../editor-actions-header/actionsHeader";
 
 const CALENDAR_WEEK_CONTAINER_ID = "calendar-week-container";
 
@@ -188,6 +189,7 @@ const CalendarEditorWeek = ({
         </div>
         <Selection />
       </FlexibleView>
+      <ActionHeader />
       {selectedEvent.mapOrElse(
         () => null,
         (selectedEvent) => (
