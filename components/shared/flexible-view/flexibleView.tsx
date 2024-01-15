@@ -172,6 +172,7 @@ const Selection = () => {
   const DuplicateActionComponent = DuplicateAction();
   const DeleteActionComponent = DeleteAction();
   const SwapActionComponent = SwapAction();
+  const MakeTemplateActionComponent = MakeTemplateAction();
 
   if (
     dimensions.x_start < Number.MAX_SAFE_INTEGER &&
@@ -193,6 +194,7 @@ const Selection = () => {
           <DuplicateActionComponent />
           <DeleteActionComponent />
           <SwapActionComponent />
+          <MakeTemplateActionComponent />
         </div>
       </div>
     );
@@ -353,6 +355,31 @@ const SwapAction = () => {
         });
 
         bulk.commit();
+      });
+    })
+    .build();
+};
+
+const MakeTemplateAction = () => {
+  const { storages } = useContext(StorageContext);
+  return new ButtonBuilder()
+    .visible((selectedEvents) => selectedEvents.size === 1)
+    .text("Template")
+    .action((events) => {
+      storages.map(async ({ eventsTemplateStorage }) => {
+        const [[, event]] = events.entries();
+
+        const {
+          recurring_id,
+          id,
+          todo_id,
+          task_id,
+          startDate,
+          endDate,
+          ...rest
+        } = event;
+
+        eventsTemplateStorage.add(rest);
       });
     })
     .build();
