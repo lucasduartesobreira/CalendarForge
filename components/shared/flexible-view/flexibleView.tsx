@@ -173,6 +173,7 @@ const Selection = () => {
   const DeleteActionComponent = DeleteAction();
   const SwapActionComponent = SwapAction();
   const MakeTemplateActionComponent = MakeTemplateAction();
+  const ToggleTaskEventActionComponent = ToggleTaskEventAction();
 
   if (
     dimensions.x_start < Number.MAX_SAFE_INTEGER &&
@@ -195,6 +196,7 @@ const Selection = () => {
           <DeleteActionComponent />
           <SwapActionComponent />
           <MakeTemplateActionComponent />
+          <ToggleTaskEventActionComponent />
         </div>
       </div>
     );
@@ -380,6 +382,34 @@ const MakeTemplateAction = () => {
         } = event;
 
         eventsTemplateStorage.add(rest);
+      });
+    })
+    .build();
+};
+
+const ToggleTaskEventAction = () => {
+  const { storages } = useContext(StorageContext);
+  return new ButtonBuilder()
+    .visible((selectedEvents) => selectedEvents.size === 1)
+    .text("Toggle")
+    .action((events) => {
+      storages.map(async ({ eventsStorage, tasksStorage }) => {
+        const [[eventId, event]] = events.entries();
+        if (event.task_id != null) {
+          eventsStorage.update(eventId, { task_id: undefined });
+        } else {
+          tasksStorage
+            .add({
+              title: event.title,
+              description: event.description,
+              completed: false,
+            })
+            .then((addResult) =>
+              addResult.map(({ id }) =>
+                eventsStorage.update(eventId, { task_id: id }),
+              ),
+            );
+        }
       });
     })
     .build();
