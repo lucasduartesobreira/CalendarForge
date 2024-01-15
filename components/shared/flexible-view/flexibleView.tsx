@@ -171,6 +171,7 @@ const Selection = () => {
 
   const DuplicateActionComponent = DuplicateAction();
   const DeleteActionComponent = DeleteAction();
+  const SwapActionComponent = SwapAction();
 
   if (
     dimensions.x_start < Number.MAX_SAFE_INTEGER &&
@@ -191,6 +192,7 @@ const Selection = () => {
         <div className="absolute -translate-y-[42px] min-h-fit flex gap-2">
           <DuplicateActionComponent />
           <DeleteActionComponent />
+          <SwapActionComponent />
         </div>
       </div>
     );
@@ -319,6 +321,38 @@ const DeleteAction = () => {
       storages.map(({ eventsStorage }) => {
         const [[eventId]] = events.entries();
         eventsStorage.remove(eventId);
+      });
+    })
+    .build();
+};
+
+const SwapAction = () => {
+  const { storages } = useContext(StorageContext);
+  return new ButtonBuilder()
+    .visible((selectedEvents) => selectedEvents.size === 2)
+    .text("Swap")
+    .action((events) => {
+      storages.map(async ({ eventsStorage }) => {
+        const [[firstEventId, firstEvent], [secondEventId, secondEvent]] =
+          events.entries();
+        const { startDate: firstStartDate, endDate: firstEndDate } = firstEvent;
+        const { startDate: secondStartDate, endDate: secondEndDate } =
+          secondEvent;
+
+        const bulk = eventsStorage.bulk([firstEvent, secondEvent]);
+
+        bulk.update({
+          id: firstEventId,
+          startDate: secondStartDate,
+          endDate: secondEndDate,
+        });
+        bulk.update({
+          id: secondEventId,
+          startDate: firstStartDate,
+          endDate: firstEndDate,
+        });
+
+        bulk.commit();
       });
     })
     .build();
