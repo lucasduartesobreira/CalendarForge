@@ -514,7 +514,7 @@ class IndexedDbStorage<
           ]);
 
           return result
-            .map((result) => (result == null ? Err(NOT_FOUND) : foundValue))
+            .map((result) => (result != null ? Err(NOT_FOUND) : foundValue))
             .flatten();
         }, "readwrite")
       ).flatten();
