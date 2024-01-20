@@ -54,9 +54,9 @@ type CalendarEvent = {
   recurring_id?: string;
 };
 
-type DaysOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type DaysOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-type RecurringSettings = (
+export type RecurringSettings = (
   | {
       frequencyType: "daily";
       frequency: number;
@@ -64,7 +64,7 @@ type RecurringSettings = (
   | { frequencyType: "weekly"; days: DaysOfWeek[] }
 ) & { stop: StopConfig };
 
-type StopConfig =
+export type StopConfig =
   | {
       type: "frequency";
       afterFrequency: number;
