@@ -2,7 +2,7 @@ import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
 import {
   PropsWithChildren,
-  RefObject,
+  ReactNode,
   useContext,
   useEffect,
   useState,
@@ -10,12 +10,6 @@ import {
 import { DayViewContent } from "../day-view/dayContent";
 import { DayDropZone } from "../day-view/dayBackground";
 import { DraggedEvent } from "../day-view/dayEventsContent";
-import {
-  SelectedEvents,
-  SelectedRefs,
-} from "@/components/calendar-editor-week-view/contexts";
-import { Button } from "../button-view/buttons";
-import { StorageContext } from "@/hooks/dataHook";
 
 export const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
 export type ViewSize = (typeof AcceptedDaysValue)[number];
