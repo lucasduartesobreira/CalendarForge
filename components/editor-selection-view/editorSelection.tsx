@@ -2,15 +2,18 @@
 
 import { RefObject, useContext, useEffect, useState } from "react";
 import {
+  ActionSelected,
   SelectedEvents,
   SelectedRefs,
 } from "../calendar-editor-week-view/contexts";
 import { CalendarEvent } from "@/services/events/events";
 import { Button } from "../shared/button-view/buttons";
 import { StorageContext } from "@/hooks/dataHook";
+import { Some } from "@/utils/option";
 
 export const Selection = () => {
   const selectedRefs = useContext(SelectedRefs);
+  const [actionsSelected] = useContext(ActionSelected);
   const [dimensions, setDimensions] = useState({
     x_start: Number.MAX_SAFE_INTEGER,
     x_end: Number.MIN_SAFE_INTEGER,
@@ -70,6 +73,7 @@ export const Selection = () => {
   const SwapActionComponent = SwapAction();
   const MakeTemplateActionComponent = MakeTemplateAction();
   const ToggleTaskEventActionComponent = ToggleTaskEventAction();
+  const RecurringActionComponent = RecurringAction();
 
   if (
     dimensions.x_start < Number.MAX_SAFE_INTEGER &&
@@ -87,13 +91,16 @@ export const Selection = () => {
           height: Math.abs(dimensions.y_start - dimensions.y_end) + 4 + 4,
         }}
       >
-        <div className="absolute -translate-y-[42px] min-h-fit flex gap-2">
-          <DuplicateActionComponent />
-          <DeleteActionComponent />
-          <SwapActionComponent />
-          <MakeTemplateActionComponent />
-          <ToggleTaskEventActionComponent />
-        </div>
+        {!actionsSelected.isSome() && (
+          <div className="absolute -translate-y-[42px] min-h-fit flex gap-2">
+            <DuplicateActionComponent />
+            <DeleteActionComponent />
+            <SwapActionComponent />
+            <MakeTemplateActionComponent />
+            <ToggleTaskEventActionComponent />
+            <RecurringActionComponent />
+          </div>
+        )}
       </div>
     );
 
@@ -110,6 +117,7 @@ class ButtonBuilder {
     selectedEvents: Map<CalendarEvent["id"], CalendarEvent>,
     selectedRefs: Map<CalendarEvent["id"], RefObject<HTMLDivElement>>,
   ) => boolean = () => true;
+  private _deselect: boolean = true;
 
   action(
     a: (
@@ -148,6 +156,11 @@ class ButtonBuilder {
     return this;
   }
 
+  deselect(value: boolean = false) {
+    this._deselect = value;
+    return this;
+  }
+
   build() {
     const Component = () => {
       const selectedRefsCtx = useContext(SelectedRefs);
@@ -176,8 +189,10 @@ class ButtonBuilder {
                     e.stopPropagation();
 
                     this._action(selectedEvents, selectedRefs);
-                    refSet(new Map());
-                    eventSet(new Map());
+                    if (this._deselect) {
+                      refSet(new Map());
+                      eventSet(new Map());
+                    }
                   }}
                   className="pointer-events-auto px-2 py-1"
                 />
@@ -308,5 +323,19 @@ const ToggleTaskEventAction = () => {
         }
       });
     })
+    .build();
+};
+
+const RecurringAction = () => {
+  const [, setSelectedAction] = useContext(ActionSelected);
+  return new ButtonBuilder()
+    .visible((selectedEvents) => selectedEvents.size === 1)
+    .text("Recurring")
+    .action((events) => {
+      const [[, event]] = events.entries();
+
+      setSelectedAction(Some({ type: "recurring", selected: event }));
+    })
+    .deselect()
     .build();
 };

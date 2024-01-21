@@ -17,6 +17,13 @@ export const SelectedRefs = createContext<
 
 export const ActionSelectedTypes = ["recurring", "spacing"] as const;
 
+export type ActionSelected =
+  | {
+      type: "recurring";
+      selected: CalendarEvent;
+    }
+  | { type: "spacing"; selected: CalendarEvent };
+
 export const ActionSelected = createContext<
-  UseStateReturn<Option<(typeof ActionSelectedTypes)[number]>>
+  UseStateReturn<Option<ActionSelected>>
 >([None(), () => {}]);

@@ -22,7 +22,6 @@ import CalendarEditorWeek, {
 import { EditorSideBar } from "@/components/calendar-editor-sidebar/sideBar";
 import {
   ActionSelected,
-  ActionSelectedTypes,
   CalendarModeContext,
   SelectedEvents,
   SelectedRefs,
@@ -83,6 +82,7 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
     ShortcutBuilder.new().build("Escape", () => {
       selectedEvents[1](new Map());
       selectedRefs[1](new Map());
+      selectedAction[1](O.None());
     }),
     "editor",
   );
@@ -141,9 +141,7 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
     "editor",
   );
 
-  const selectedAction = useState<
-    O.Option<(typeof ActionSelectedTypes)[number]>
-  >(O.Some("recurring"));
+  const selectedAction = useState<O.Option<ActionSelected>>(O.None());
 
   return calendarMode
     .map((mode) =>

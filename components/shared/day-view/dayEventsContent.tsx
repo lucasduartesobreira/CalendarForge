@@ -1,4 +1,5 @@
 import {
+  ActionSelected,
   SelectedEvents,
   SelectedRefs,
 } from "@/components/calendar-editor-week-view/contexts";
@@ -310,6 +311,7 @@ const DraggableCalendarEvent = ({
   const [isResizing, newHeight, ResizeDiv] = useResize({ event, day });
   const selectedEventsCtx = useContext(SelectedEvents);
   const selectedRefsCtx = useContext(SelectedRefs);
+  const [, setSelectedAction] = useContext(ActionSelected);
 
   const compRef: DivType["ref"] = useRef(null);
   const dragAndSelectHandler: DivType["onMouseUp"] = (mouseEvent) => {
@@ -332,11 +334,13 @@ const DraggableCalendarEvent = ({
 
             setSelected(selectedEvents);
             setSelectedRefs(selectedRefs);
+            setSelectedAction(O.None());
           } else {
             selectedEvents.clear();
             selectedRefs.clear();
             setSelected(selectedEvents.set(event.id, event));
             setSelectedRefs(selectedRefs.set(event.id, compRef));
+            setSelectedAction(O.None());
           }
 
           return selectedEvents;
