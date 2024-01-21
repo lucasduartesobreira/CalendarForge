@@ -10,6 +10,7 @@ import {
   StopConfig,
 } from "@/services/events/events";
 import { InputText } from "../shared/forms/forms";
+import { twMerge } from "tailwind-merge";
 
 export const ActionHeader = () => {
   const actionHeader = useContext(ActionSelected);
@@ -18,8 +19,8 @@ export const ActionHeader = () => {
     ({ type: header, selected }) => {
       const ActionComponent = actionsComponent[header];
       return (
-        <div className="text-text-primary rounded-xl shadow-xl h-[48px] absolute top-[80px] left-1/2 -translate-y-1/2 -translate-x-1/2 z-[40000] bg-white flex items-center text-center justify-center">
-          <ActionComponent className="px-2 py-1" selected={selected} />
+        <div className="text-text-primary rounded-lg shadow-lg min-w-fit min-h-fit absolute top-[56px] left-1/2 -translate-x-1/2 z-[40000] bg-white flex items-center text-center justify-center">
+          <ActionComponent className="mx-2 my-2" selected={selected} />
         </div>
       );
     },
@@ -43,16 +44,24 @@ const dayOfWeekFirstLetter = {
   6: "S",
 };
 
-const RecurringActionHeader: ActionsComponent["recurring"] = ({ selected }) => {
+const RecurringActionHeader: ActionsComponent["recurring"] = ({
+  selected,
+  className,
+}) => {
   const [form, setForm] = useState<CalendarEvent>(selected);
 
   return (
-    <label className="text-sm px-2 py-1 w-full bg-neutral-200 rounded-md justify-start flex flex-col gap-1">
+    <div
+      className={twMerge(
+        "text-sm w-full bg-white justify-start flex flex-col gap-1",
+        className,
+      )}
+    >
       <div className="flex gap-1">
         <a className="pl-2 py-1">Repeating</a>
         <select
           value={form.recurring_settings?.frequencyType}
-          className="bg-neutral-200 text-center"
+          className=" bg-white text-center"
           onChange={(event) => {
             const value = event.target.value;
             const newSettings: RecurringSettings | undefined =
@@ -165,10 +174,10 @@ const RecurringActionHeader: ActionsComponent["recurring"] = ({ selected }) => {
         }
       </div>
       {form.recurring_settings != null && (
-        <div className="flex gap-1 pb-1">
+        <div className="flex gap-1">
           <a className="pl-2">Stopping after</a>
           <select
-            className="bg-neutral-200"
+            className="bg-white"
             value={form.recurring_settings.stop.type}
             onChange={(e) => {
               const value = e.target.value;
@@ -236,7 +245,7 @@ const RecurringActionHeader: ActionsComponent["recurring"] = ({ selected }) => {
           )}
         </div>
       )}
-    </label>
+    </div>
   );
 };
 
