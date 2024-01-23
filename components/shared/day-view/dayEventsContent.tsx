@@ -60,6 +60,48 @@ export const DraggedEvent = createContext<
   [O.Option<CalendarEvent>, (value: O.Option<CalendarEvent>) => void]
 >([O.None(), () => {}]);
 
+export const FakeEvents = ({
+  day,
+  events,
+}: {
+  day: number;
+  events: CalendarEvent[];
+}) => {
+  const eventsMap = events.sort((a, b) => a.startDate - b.startDate);
+  const conflicts = events.reduce((acc, event, index, array) => {
+    const toSearch = array.slice(index + 1);
+    toSearch.forEach((possibleConflict) => {
+      if (possibleConflict.startDate < event.endDate) {
+        const zIndex = acc.get(possibleConflict.id);
+        if (!zIndex) {
+          acc.set(possibleConflict.id, 1);
+        } else {
+          acc.set(possibleConflict.id, zIndex + 1);
+        }
+      }
+    });
+
+    return acc;
+  }, new Map<string, number>());
+
+  return (
+    <>
+      {eventsMap.map((event, index) => {
+        return (
+          <DraggableCalendarEvent
+            event={event}
+            conflicts={conflicts}
+            day={day}
+            index={index}
+            setSelectedEvent={() => {}}
+            key={event.id}
+          />
+        );
+      })}
+    </>
+  );
+};
+
 export const DayEvents = ({
   day,
   events,
