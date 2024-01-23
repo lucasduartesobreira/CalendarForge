@@ -39,6 +39,7 @@ export const FlexibleView = ({
     day: number;
     isToday: boolean;
     dateAtMidNight: Date;
+    fakeEvents?: CalendarEvent[];
   }[];
   selectEvent: (value: O.Option<CalendarEvent>) => void;
   id: string;
@@ -74,7 +75,10 @@ export const FlexibleView = ({
       {children}
       <DayViewContent.HoursBackground column={0 + hasChildren} />
       {days.map(
-        ({ dayOfWeek, day, isToday, events, dateAtMidNight }, index) => (
+        (
+          { dayOfWeek, day, isToday, events, dateAtMidNight, fakeEvents },
+          index,
+        ) => (
           <DayViewContent.DayContainer
             column={index + hasChildren}
             key={`${index}${dayOfWeek}${day}`}
@@ -91,6 +95,9 @@ export const FlexibleView = ({
                 setSelectedEvent={setSelectedEvent}
                 events={events}
               />
+            )}
+            {fakeEvents != null && (
+              <DayViewContent.FakeEvents day={day} events={fakeEvents} />
             )}
             {dragged.isSome() && (
               <DayDropZone
