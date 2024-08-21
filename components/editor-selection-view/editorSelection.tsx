@@ -216,12 +216,7 @@ const DuplicateAction = () => {
     .action((events) => {
       storages.map(({ eventsStorage }) => {
         const [[, event]] = events.entries();
-        const {
-          id: _id,
-          task_id: _task_id,
-          recurring_id: _recurring_id,
-          ...rest
-        } = event;
+        const { id: _id, recurring_id: _recurring_id, ...rest } = event;
         eventsStorage.add(rest);
       });
     })
