@@ -254,17 +254,20 @@ const SwapAction = () => {
         const { startDate: secondStartDate, endDate: secondEndDate } =
           secondEvent;
 
+        const firstEventDuration = Math.abs(firstEndDate - firstStartDate);
+        const secondEventDuration = Math.abs(secondEndDate - secondStartDate);
+
         const bulk = eventsStorage.bulk([firstEvent, secondEvent]);
 
         bulk.update({
           id: firstEventId,
           startDate: secondStartDate,
-          endDate: secondEndDate,
+          endDate: secondStartDate + firstEventDuration,
         });
         bulk.update({
           id: secondEventId,
           startDate: firstStartDate,
-          endDate: firstEndDate,
+          endDate: firstStartDate + secondEventDuration,
         });
 
         bulk.commit();
