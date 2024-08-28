@@ -25,13 +25,10 @@ const submitHandlers = {
     },
   ) => {
     const { setUpdatedForm, setOpen } = setters;
-    if (originalEvent.task_id != null) {
-      setOpen(false);
-      return;
-    }
-
     const { id } = originalEvent;
     const { eventsStorage, recurringEventsManager } = storages;
+
+    const newUpdatedEventValue = { ...updatedEventValue, task_id: undefined };
 
     const addingRecurring =
       updatedEventValue.recurring_settings != null &&
@@ -44,12 +41,14 @@ const submitHandlers = {
       originalEvent.recurring_settings != null;
 
     if (changingARecurringEvent && !addingRecurring && !removingRecurring) {
-      return setUpdatedForm(O.Some({ ...originalEvent, ...updatedEventValue }));
+      return setUpdatedForm(
+        O.Some({ ...originalEvent, ...newUpdatedEventValue }),
+      );
     } else if (removingRecurring || addingRecurring) {
-      await recurringEventsManager.updateForward(id, updatedEventValue);
+      await recurringEventsManager.updateForward(id, newUpdatedEventValue);
       return setOpen(false);
     }
-    await eventsStorage.update(id, updatedEventValue);
+    await eventsStorage.update(id, newUpdatedEventValue);
     return setOpen(false);
   },
   task: async (
@@ -63,15 +62,30 @@ const submitHandlers = {
       recurringEventsManager: RecurringEventsManager;
     },
   ) => {
-    const { task_id: taskId } = originalEvent;
+    const { id, task_id: originalTaskId } = originalEvent;
     const { setOpen } = setters;
-
-    if (taskId == null) {
-      setOpen(false);
-      return;
-    }
-
     const { eventsStorage, tasksStorage } = storages;
+
+    let eventTaskId = originalTaskId ?? "";
+
+    if (originalTaskId == null) {
+      const result = await (
+        await tasksStorage.add({
+          title: updatedEventValue.title ?? originalEvent.title,
+          description:
+            updatedEventValue.description ?? originalEvent.description,
+          completed: false,
+        })
+      )
+        .map(({ id: taskId }) => eventsStorage.update(id, { task_id: taskId }))
+        .asyncFlatten();
+
+      if (!result.isOk()) {
+        return;
+      }
+
+      eventTaskId = result.unwrap().task_id ?? "";
+    }
 
     const allRelatedToTask = await eventsStorage.findAll({
       task_id: originalEvent.task_id,
@@ -89,7 +103,7 @@ const submitHandlers = {
     );
     bulk.update({ id: originalEvent.id, ...rest });
     (await bulk.commit()).map(() =>
-      tasksStorage.update(taskId, { title, description }),
+      tasksStorage.update(eventTaskId, { title, description }),
     );
     return setOpen(false);
   },
@@ -130,7 +144,7 @@ const UpdateEventForm = ({
         return (
           <>
             <EventForm
-              ChangeEventTypeSwitch={EventTypeSwitch(true)}
+              ChangeEventTypeSwitch={EventTypeSwitch(false)}
               closeOnSubmit={false}
               onSubmit={(updatedForm, type) => {
                 const { id } = updatedForm;

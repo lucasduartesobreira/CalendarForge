@@ -1,3 +1,8 @@
+import {
+  ActionSelected,
+  SelectedEvents,
+  SelectedRefs,
+} from "@/components/calendar-editor-week-view/contexts";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent, EventColors } from "@/services/events/events";
 import * as O from "@/utils/option";
@@ -54,6 +59,48 @@ const startAndHeight = (startDate: Date, endDate: Date, day: number) => {
 export const DraggedEvent = createContext<
   [O.Option<CalendarEvent>, (value: O.Option<CalendarEvent>) => void]
 >([O.None(), () => {}]);
+
+export const FakeEvents = ({
+  day,
+  events,
+}: {
+  day: number;
+  events: CalendarEvent[];
+}) => {
+  const eventsMap = events.sort((a, b) => a.startDate - b.startDate);
+  const conflicts = events.reduce((acc, event, index, array) => {
+    const toSearch = array.slice(index + 1);
+    toSearch.forEach((possibleConflict) => {
+      if (possibleConflict.startDate < event.endDate) {
+        const zIndex = acc.get(possibleConflict.id);
+        if (!zIndex) {
+          acc.set(possibleConflict.id, 1);
+        } else {
+          acc.set(possibleConflict.id, zIndex + 1);
+        }
+      }
+    });
+
+    return acc;
+  }, new Map<string, number>());
+
+  return (
+    <>
+      {eventsMap.map((event, index) => {
+        return (
+          <DraggableCalendarEvent
+            event={event}
+            conflicts={conflicts}
+            day={day}
+            index={index}
+            setSelectedEvent={() => {}}
+            key={event.id}
+          />
+        );
+      })}
+    </>
+  );
+};
 
 export const DayEvents = ({
   day,
@@ -288,15 +335,12 @@ const DraggableCalendarEvent = ({
 }) => {
   const [, setDragged] = useContext(DraggedEvent);
 
-  const [Checkbox, completedTask, ref] = (() => {
-    const { task_id } = event;
-    if (task_id) {
-      return TaskCompleteCheckboxFactory(false, task_id);
-    }
-    return [undefined, undefined, undefined] as const;
-  })();
+  const [Checkbox, completedTask, ref] = TaskCompleteCheckboxFactory(
+    false,
+    event.task_id,
+  );
 
-  const { isDragging, ...dragAndDropHandlers } = useDragAndDrop({
+  const { isDragging, onMouseUp, ...dragAndDropHandlers } = useDragAndDrop({
     onDrag: () => {
       setDragged(O.Some(event));
     },
@@ -307,6 +351,47 @@ const DraggableCalendarEvent = ({
   });
 
   const [isResizing, newHeight, ResizeDiv] = useResize({ event, day });
+  const selectedEventsCtx = useContext(SelectedEvents);
+  const selectedRefsCtx = useContext(SelectedRefs);
+  const [, setSelectedAction] = useContext(ActionSelected);
+
+  const compRef: DivType["ref"] = useRef(null);
+  const dragAndSelectHandler: DivType["onMouseUp"] = (mouseEvent) => {
+    selectedEventsCtx
+      .flatMap((selectedEvents) =>
+        selectedRefsCtx.map(
+          (selectedRefs) => [selectedEvents, selectedRefs] as const,
+        ),
+      )
+      .map(
+        ([[selectedEvents, setSelected], [selectedRefs, setSelectedRefs]]) => {
+          if (mouseEvent.ctrlKey) {
+            if (selectedEvents.has(event.id)) {
+              selectedEvents.delete(event.id);
+              selectedRefs.delete(event.id);
+            } else {
+              selectedEvents.set(event.id, event);
+              selectedRefs.set(event.id, compRef);
+            }
+
+            setSelected(selectedEvents);
+            setSelectedRefs(selectedRefs);
+            setSelectedAction(O.None());
+          } else {
+            selectedEvents.clear();
+            selectedRefs.clear();
+            setSelected(selectedEvents.set(event.id, event));
+            setSelectedRefs(selectedRefs.set(event.id, compRef));
+            setSelectedAction(O.None());
+          }
+
+          return selectedEvents;
+        },
+      );
+
+    onMouseUp(mouseEvent);
+  };
+
   return (
     <ShowCalendarEvent
       event={event}
@@ -322,12 +407,17 @@ const DraggableCalendarEvent = ({
       TaskCompleteCheckbox={Checkbox}
       ResizeDiv={ResizeDiv}
       completed={completedTask}
+      onMouseUp={dragAndSelectHandler}
+      componentRef={compRef}
       {...dragAndDropHandlers}
     />
   );
 };
 
-const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
+const TaskCompleteCheckboxFactory = (
+  locked: boolean,
+  taskId: string | undefined,
+) => {
   const { storages, listeners } = useContext(StorageContext);
   const [completed, setCompleted] = useState<boolean>();
   const [controller, setController] = useReducer(
@@ -357,6 +447,8 @@ const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
   );
 
   useEffect(() => {
+    if (taskId == null) return;
+
     if (controller.stage === 2) {
       storages.map(({ tasksStorage }) => {
         tasksStorage.update(taskId, { completed: completed });
@@ -366,17 +458,21 @@ const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
     if (controller.stage === 1 && completed === controller.value) {
       setController({ type: "allow_update" });
     }
-  }, [completed]);
+  }, [taskId, completed, controller.value]);
 
   useEffect(() => {
+    if (taskId == null) return;
+
     storages.map(({ tasksStorage }) =>
       tasksStorage
         .findById(taskId)
         .then((found) => found.map((task) => setCompleted(task.completed))),
     );
-  }, [storages, listeners.tasksStorageListener]);
+  }, [taskId, storages, listeners.tasksStorageListener]);
 
   useEffect(() => {
+    if (taskId == null) return;
+
     storages.map(({ tasksStorage }) => {
       setController({ type: "start_fetching" });
       tasksStorage.findById(taskId).then((found) => {
@@ -389,30 +485,34 @@ const TaskCompleteCheckboxFactory = (locked: boolean, taskId: string) => {
         });
       });
     });
-  }, [storages]);
+  }, [taskId, storages]);
 
   const ref = useRef(null);
 
-  const CreateComponent = ({
-    backgroundColor,
-  }: {
-    backgroundColor: string;
-  }) => {
-    return (
-      <input
-        ref={ref}
-        className={`align-center ml-auto mr-1 appearance-none w-[16px] h-[16px] border-2 border-gray-300 rounded-full ${backgroundColor} checked:bg-blue-500 checked:border-transparent focus:outline-none`}
-        type="checkbox"
-        checked={completed}
-        onChange={() => {
-          setCompleted(!completed);
-        }}
-        disabled={locked}
-      />
-    );
-  };
-
-  return [CreateComponent, completed, ref] as const;
+  return useMemo(() => {
+    if (taskId != null) {
+      const CreateComponent = ({
+        backgroundColor,
+      }: {
+        backgroundColor: string;
+      }) => {
+        return (
+          <input
+            ref={ref}
+            className={`align-center ml-auto mr-1 appearance-none w-[16px] h-[16px] border-2 border-gray-300 rounded-full ${backgroundColor} checked:bg-blue-500 checked:border-transparent focus:outline-none`}
+            type="checkbox"
+            checked={completed}
+            onChange={() => {
+              setCompleted(!completed);
+            }}
+            disabled={locked}
+          />
+        );
+      };
+      return [CreateComponent, completed, ref] as const;
+    }
+    return [undefined, undefined, undefined];
+  }, [taskId, completed, locked]);
 };
 
 const backgroundColor = {
@@ -441,6 +541,7 @@ export const ShowCalendarEvent = ({
   onMouseUp,
   TaskCompleteCheckbox,
   completed,
+  componentRef,
   ...props
 }: HTMLDivExtended<
   HTMLDivElement,
@@ -453,6 +554,7 @@ export const ShowCalendarEvent = ({
     TaskCompleteCheckbox?: JSXElementConstructor<{ backgroundColor: string }>;
     completed?: boolean;
     ResizeDiv?: JSXElementConstructor<{}>;
+    componentRef?: DivType["ref"];
   }
 >) => {
   const conflictNumber = conflicts.get(event.id);
@@ -463,6 +565,7 @@ export const ShowCalendarEvent = ({
   return (
     <div
       {...props}
+      ref={componentRef}
       className={`${className ?? ""} ${
         backgroundColor[eventColor]
       } absolute w-full flex p-1 rounded-md absolute bottom-0 justify-start items-start`}

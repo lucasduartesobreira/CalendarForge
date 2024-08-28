@@ -54,9 +54,9 @@ type CalendarEvent = {
   recurring_id?: string;
 };
 
-type DaysOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type DaysOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-type RecurringSettings = (
+export type RecurringSettings = (
   | {
       frequencyType: "daily";
       frequency: number;
@@ -64,7 +64,7 @@ type RecurringSettings = (
   | { frequencyType: "weekly"; days: DaysOfWeek[] }
 ) & { stop: StopConfig };
 
-type StopConfig =
+export type StopConfig =
   | {
       type: "frequency";
       afterFrequency: number;
@@ -405,13 +405,14 @@ export class EventStorageIndexedDb
     return resultAsync();
   }
 
-  update(eventId: string, event: UpdateEvent) {
-    const resultAsync = async () =>
-      (await this.map.findAndUpdate({ id: eventId }, event))
-        .map((value) => value.at(0))
-        .andThen((value) => (value != null ? R.Ok(value) : R.Err(NOT_FOUND)));
+  async update(eventId: string, event: UpdateEvent) {
+    const found = await this.map.findById(eventId);
+    const result = (await this.map.findAndUpdate({ id: eventId }, event))
+      .map((value) => value.at(0))
+      .andThen((value) => (value != null ? R.Ok(value) : R.Err(NOT_FOUND)));
 
-    return resultAsync();
+    this.emit("update", { args: [eventId, event], result, opsSpecific: found });
+    return result;
   }
 
   values() {
@@ -481,9 +482,10 @@ export class RecurringEventsManager {
     const changedWeekDays =
       oldRecurringSettings?.frequencyType === "weekly" &&
       newRecurringSettings?.frequencyType === "weekly" &&
-      oldRecurringSettings.days.find(
-        (value, index) => newRecurringSettings.days.at(index) !== value,
-      ) != null;
+      (newRecurringSettings.days.length !== oldRecurringSettings.days.length ||
+        oldRecurringSettings.days.find(
+          (value, index) => newRecurringSettings.days.at(index) !== value,
+        ) != null);
 
     const changedStopFrequency =
       oldRecurringSettings?.stop.type === "frequency" &&
@@ -765,6 +767,7 @@ export class RecurringEventsManager {
       });
 
       const baseBulk = this.map.bulk(allEvents);
+      console.log(baseBulk);
       if (
         !changedStartDate &&
         !changedEndDate &&

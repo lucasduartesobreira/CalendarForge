@@ -131,6 +131,88 @@ export function useDataStorage(): StorageContext {
           },
         );
 
+        eventsUnwrapped.on("update", ({ result, opsSpecific }) => {
+          const found = opsSpecific as O.Option<CalendarEvent>;
+          result
+            .option()
+            .flatMap((updatedEvent) =>
+              found.map((foundEvent) => [updatedEvent, foundEvent] as const),
+            )
+            .map(([updatedEvent, foundEvent]) => {
+              const { task_id: updatedTaskId } = updatedEvent;
+              const { task_id: foundTaskId } = foundEvent;
+              const wasTurnedIntoEvent =
+                updatedTaskId == null && foundTaskId != null;
+
+              if (wasTurnedIntoEvent) {
+                const taskId = foundTaskId;
+                return eventsUnwrapped
+                  .find({ task_id: taskId })
+                  .then((result) => {
+                    result.mapOrElse(
+                      () => {
+                        tasksUnwraped.remove(taskId);
+                      },
+                      () => {},
+                    );
+                  });
+              }
+            });
+        });
+
+        eventsUnwrapped.on("remove", ({ result }) => {
+          result.map(({ task_id }) => {
+            eventsUnwrapped.find({ task_id }).then((findResult) =>
+              findResult.mapOrElse(
+                () => {
+                  task_id != null && tasksUnwraped.remove(task_id);
+                },
+                () => {},
+              ),
+            );
+          });
+        });
+
+        eventsUnwrapped.on("removeWithFilter", ({ result }) => {
+          result.map((event) => {
+            eventsUnwrapped
+              .find({ task_id: event.task_id })
+              .then((findResult) =>
+                findResult.mapOrElse(
+                  () => {
+                    event.task_id != null &&
+                      tasksUnwraped.remove(event.task_id);
+                  },
+                  () => {},
+                ),
+              );
+          });
+        });
+
+        eventsUnwrapped.on("removeAll", ({ result }) => {
+          result.map(([, event]) => {
+            eventsUnwrapped
+              .find({ task_id: event.task_id })
+              .then((findResult) =>
+                findResult.mapOrElse(
+                  () => {
+                    event.task_id != null &&
+                      tasksUnwraped.remove(event.task_id);
+                  },
+                  () => {},
+                ),
+              );
+          });
+        });
+
+        eventsUnwrapped.on("remove", ({ result }) => {
+          result.map(({ notifications }) => {
+            notifications.forEach((notification) => {
+              notificationManager.remove(notification.id);
+            });
+          });
+        });
+
         eventsUnwrapped.on("removeWithFilter", ({ result: output }) => {
           const deletedEvents = output;
           if (deletedEvents) {
@@ -140,6 +222,14 @@ export function useDataStorage(): StorageContext {
               });
             });
           }
+        });
+
+        eventsUnwrapped.on("removeAll", ({ result }) => {
+          result.map(([, event]) => {
+            event.notifications.forEach((notification) => {
+              notificationManager.remove(notification.id);
+            });
+          });
         });
 
         calendarsUnwrapped.on("remove", ({ result }) => {

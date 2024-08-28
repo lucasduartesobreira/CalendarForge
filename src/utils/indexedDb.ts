@@ -514,7 +514,7 @@ class IndexedDbStorage<
           ]);
 
           return result
-            .map((result) => (result == null ? Err(NOT_FOUND) : foundValue))
+            .map((result) => (result != null ? Err(NOT_FOUND) : foundValue))
             .flatten();
         }, "readwrite")
       ).flatten();
@@ -595,7 +595,7 @@ class IndexedDbStorage<
             if (matches) {
               const updatedValue = { ...value, ...updated };
               requestIntoResult(cursor.update(updatedValue)).then(() => {
-                acc.push(value);
+                acc.push(updatedValue);
               });
             }
 

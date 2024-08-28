@@ -1,6 +1,12 @@
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
-import { useContext, useEffect, useState } from "react";
+import {
+  PropsWithChildren,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { DayViewContent } from "../day-view/dayContent";
 import { DayDropZone } from "../day-view/dayBackground";
 import { DraggedEvent } from "../day-view/dayEventsContent";
@@ -16,6 +22,7 @@ const weekGridClasses = [
   "grid-cols-[50px_repeat(5,minmax(128px,1fr))]",
   "grid-cols-[50px_repeat(6,minmax(128px,1fr))]",
   "grid-cols-[50px_repeat(7,minmax(128px,1fr))]",
+  "grid-cols-[auto_50px_repeat(7,minmax(128px,1fr))]",
 ] as const;
 
 export const FlexibleView = ({
@@ -23,7 +30,8 @@ export const FlexibleView = ({
   selectEvent: setSelectedEvent,
   style,
   id,
-}: {
+  children,
+}: PropsWithChildren<{
   style: string;
   days: {
     events: CalendarEvent[];
@@ -31,10 +39,11 @@ export const FlexibleView = ({
     day: number;
     isToday: boolean;
     dateAtMidNight: Date;
+    fakeEvents?: CalendarEvent[];
   }[];
   selectEvent: (value: O.Option<CalendarEvent>) => void;
   id: string;
-}) => {
+}> & { children?: ReactNode | ReactNode[] }) => {
   useEffect(() => {
     const calendarWeekContainer = document.getElementById(id);
     if (calendarWeekContainer) {
@@ -53,23 +62,29 @@ export const FlexibleView = ({
     days.splice(weekGridClasses.length, days.length - weekGridClasses.length);
   }
 
-  const weekGridClass = weekGridClasses.at(days.length - 1);
+  const hasChildren = children != null ? 1 : 0;
+
+  const weekGridClass = weekGridClasses.at(days.length + hasChildren - 1);
   const [dragged] = useContext(DraggedEvent);
 
   return (
     <div
-      className={`${style} grid ${weekGridClass} grid-row-1 overflow-scroll`}
+      className={`${style} grid ${weekGridClass} grid-row-1 overflow-scroll relative`}
       id={id}
     >
-      <DayViewContent.HoursBackground />
+      {children}
+      <DayViewContent.HoursBackground column={0 + hasChildren} />
       {days.map(
-        ({ dayOfWeek, day, isToday, events, dateAtMidNight }, index) => (
+        (
+          { dayOfWeek, day, isToday, events, dateAtMidNight, fakeEvents },
+          index,
+        ) => (
           <DayViewContent.DayContainer
-            column={index}
+            column={index + hasChildren}
             key={`${index}${dayOfWeek}${day}`}
           >
             <DayViewContent.DayBackground
-              key={index}
+              key={`${index + hasChildren}-background`}
               dayOfWeek={dayOfWeek}
               day={day}
               isToday={isToday}
@@ -80,6 +95,9 @@ export const FlexibleView = ({
                 setSelectedEvent={setSelectedEvent}
                 events={events}
               />
+            )}
+            {fakeEvents != null && (
+              <DayViewContent.FakeEvents day={day} events={fakeEvents} />
             )}
             {dragged.isSome() && (
               <DayDropZone

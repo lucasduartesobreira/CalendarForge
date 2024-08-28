@@ -12,15 +12,15 @@ import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { Button } from "../shared/button-view/buttons";
 import { EventForm, EventTypeSwitch } from "../shared/event-forms/eventForm";
-
-const OWN_CALENDAR_ID = Buffer.from("own_calendar").toString("base64");
+import { useShortcut } from "@/hooks/useShortcut";
+import { ShortcutBuilder } from "@/utils/shortcuts";
 
 const initialFormState: CreateEvent = {
   title: "",
   endDate: Date.now() + 60 * 60 * 1000,
   startDate: Date.now(),
   description: "",
-  calendar_id: OWN_CALENDAR_ID,
+  calendar_id: "",
   notifications: [],
   color: "#7a5195",
 };
@@ -40,6 +40,12 @@ const CreateEventForm = ({
   initialEndDate.setSeconds(0, 0);
 
   const { storages } = useContext(StorageContext);
+  useShortcut(
+    ShortcutBuilder.new().build("Escape", () => {
+      setOpen(false);
+    }),
+    "all",
+  );
 
   return storages.mapOrElse(
     () => null,
@@ -136,6 +142,12 @@ const TemplateSelector = ({
 
 const CreateEventButton = () => {
   const [open, setOpen] = useState(false);
+  useShortcut(
+    ShortcutBuilder.new().build("n", () => {
+      if (!open) setOpen(true);
+    }),
+    "all",
+  );
   const buttonRef = useRef(null);
   return (
     <div className="">
