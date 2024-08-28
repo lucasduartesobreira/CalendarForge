@@ -482,9 +482,10 @@ export class RecurringEventsManager {
     const changedWeekDays =
       oldRecurringSettings?.frequencyType === "weekly" &&
       newRecurringSettings?.frequencyType === "weekly" &&
-      oldRecurringSettings.days.find(
-        (value, index) => newRecurringSettings.days.at(index) !== value,
-      ) != null;
+      (newRecurringSettings.days.length !== oldRecurringSettings.days.length ||
+        oldRecurringSettings.days.find(
+          (value, index) => newRecurringSettings.days.at(index) !== value,
+        ) != null);
 
     const changedStopFrequency =
       oldRecurringSettings?.stop.type === "frequency" &&
@@ -766,6 +767,7 @@ export class RecurringEventsManager {
       });
 
       const baseBulk = this.map.bulk(allEvents);
+      console.log(baseBulk);
       if (
         !changedStartDate &&
         !changedEndDate &&
