@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { twMerge } from "tailwind-merge";
 
 const DAY_HEADER_HEIGHT = 48;
 const HOUR_BLOCK_HEIGHT = 64;
@@ -299,11 +300,23 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
     };
   }, [onMouseUp, onMouseMove, isResizing]);
 
+  const cursorMode = useMemo(
+    () =>
+      twMerge(
+        "absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2",
+        isResizing ? "cursor-grabbing" : "cursor-grab",
+      ),
+    [isResizing],
+  );
+
   const ResizeDiv = useMemo(() => {
     const Component = () => {
       return (
         <div
-          className="absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2"
+          className={twMerge(
+            "absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2",
+            cursorMode,
+          )}
           onMouseDown={() => {
             setResizing(true);
           }}
@@ -311,7 +324,7 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
       );
     };
     return Component;
-  }, []);
+  }, [cursorMode]);
 
   return [
     isResizing,
