@@ -10,6 +10,7 @@ import {
 import { DayViewContent } from "../day-view/dayContent";
 import { DayDropZone } from "../day-view/dayBackground";
 import { DraggedEvent } from "../day-view/dayEventsContent";
+import { CreateEventFormOpenCtx } from "@/components/event-create-form/createEvent";
 
 export const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
 export type ViewSize = (typeof AcceptedDaysValue)[number];
@@ -37,6 +38,7 @@ export const FlexibleView = ({
     events: CalendarEvent[];
     dayOfWeek: ViewSize;
     day: number;
+    dayInMilliseconds: number;
     isToday: boolean;
     dateAtMidNight: Date;
     fakeEvents?: CalendarEvent[];
@@ -67,6 +69,7 @@ export const FlexibleView = ({
   const weekGridClass = weekGridClasses.at(days.length + hasChildren - 1);
   const [dragged] = useContext(DraggedEvent);
 
+  const [, setCreateEventFormOpen] = useContext(CreateEventFormOpenCtx);
   return (
     <div
       className={`${style} grid ${weekGridClass} grid-row-1 overflow-scroll relative`}
@@ -76,7 +79,15 @@ export const FlexibleView = ({
       <DayViewContent.HoursBackground column={0 + hasChildren} />
       {days.map(
         (
-          { dayOfWeek, day, isToday, events, dateAtMidNight, fakeEvents },
+          {
+            dayOfWeek,
+            day,
+            dayInMilliseconds,
+            isToday,
+            events,
+            dateAtMidNight,
+            fakeEvents,
+          },
           index,
         ) => (
           <DayViewContent.DayContainer
@@ -88,6 +99,17 @@ export const FlexibleView = ({
               dayOfWeek={dayOfWeek}
               day={day}
               isToday={isToday}
+              onMouseDown={(hour, quarter) => {
+                const start =
+                  dayInMilliseconds +
+                  hour * 60 * 60 * 1000 +
+                  quarter * 15 * 60 * 1000;
+
+                const end = start + 3600 * 1000;
+                setCreateEventFormOpen(
+                  O.Some({ startDate: start, endDate: end }),
+                );
+              }}
             />
             {clientSide && (
               <DayViewContent.DayEvents

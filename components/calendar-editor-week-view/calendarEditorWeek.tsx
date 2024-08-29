@@ -158,6 +158,7 @@ const CalendarEditorWeek = ({
         return {
           dayOfWeek: (date.getDay() + 1) as ViewSize,
           day: date.getDate(),
+          dayInMilliseconds: date.getTime(),
           isToday: date.getTime() === dateNow.getTime(),
           dateAtMidNight: date,
         };

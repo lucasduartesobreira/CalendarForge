@@ -1,7 +1,9 @@
 "use client";
 import { RefObject, useContext, useEffect, useState } from "react";
 import CalendarWeek from "@/components/calendar-week-view/calendarWeek";
-import CreateEventButton from "@/components/event-create-form/createEvent";
+import CreateEventButton, {
+  CreateEventFormOpenCtx,
+} from "@/components/event-create-form/createEvent";
 import SideBar from "@/components/sidebar/sideBar";
 import {
   RecurringEventsHandler,
@@ -13,6 +15,7 @@ import { WeekNavigation } from "@/components/calendar-navbar/navBar";
 import * as O from "@/utils/option";
 import {
   CalendarEvent,
+  CreateEvent,
   RecurringEventsManager,
 } from "@/services/events/events";
 import { DraggedEvent } from "@/components/shared/day-view/dayEventsContent";
@@ -142,44 +145,51 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
   );
 
   const selectedAction = useState<O.Option<ActionSelected>>(O.None());
+  const openCreateFormState = useState<O.Option<Partial<CreateEvent>>>(
+    O.None(),
+  );
 
   return calendarMode
     .map((mode) =>
       mode === "normal" ? (
         <>
-          <SideBar
-            viewableCalendarsState={viewableCalendarsState}
-            className="p-1 w-[15%]"
-          />
-          <div className="ml-auto w-[85%] max-h-[100%] bg-white">
-            <CalendarWeek
-              style={
-                "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
-              }
-              startDate={startDate}
+          <CreateEventFormOpenCtx.Provider value={openCreateFormState}>
+            <SideBar
               viewableCalendarsState={viewableCalendarsState}
+              className="p-1 w-[15%]"
             />
-          </div>
-          <CreateEventButton />
+            <div className="ml-auto w-[85%] max-h-[100%] bg-white">
+              <CalendarWeek
+                style={
+                  "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+                }
+                startDate={startDate}
+                viewableCalendarsState={viewableCalendarsState}
+              />
+            </div>
+            <CreateEventButton />
+          </CreateEventFormOpenCtx.Provider>
         </>
       ) : mode === "editor" ? (
         <SelectedEvents.Provider value={O.Some(selectedEvents)}>
           <SelectedRefs.Provider value={O.Some(selectedRefs)}>
             <ActionSelected.Provider value={selectedAction}>
-              <EditorSideBar
-                viewableCalendarsState={viewableCalendarsState}
-                className="p-1 w-[20%]"
-              />
-              <div className="ml-auto w-[85%] max-h-[100%] bg-white relative">
-                <CalendarEditorWeek
-                  style={
-                    "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
-                  }
-                  startDate={startDate}
+              <CreateEventFormOpenCtx.Provider value={openCreateFormState}>
+                <EditorSideBar
                   viewableCalendarsState={viewableCalendarsState}
+                  className="p-1 w-[20%]"
                 />
-              </div>
-              <CreateEventButton />
+                <div className="ml-auto w-[85%] max-h-[100%] bg-white relative">
+                  <CalendarEditorWeek
+                    style={
+                      "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+                    }
+                    startDate={startDate}
+                    viewableCalendarsState={viewableCalendarsState}
+                  />
+                </div>
+                <CreateEventButton />
+              </CreateEventFormOpenCtx.Provider>
             </ActionSelected.Provider>
           </SelectedRefs.Provider>
         </SelectedEvents.Provider>
