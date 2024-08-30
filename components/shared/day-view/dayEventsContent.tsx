@@ -255,6 +255,7 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
   const onMouseMove = useMemo(
     () => (e: { clientY: number }) => {
       if (isResizing) {
+        document.body.style.cursor = "grabbing";
         const container = document.getElementById("calendar-week-container");
         const pointerPosition = computeMousePosition(e.clientY, container, 0);
         const minBottom = Math.max(
@@ -284,6 +285,7 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
       });
       setResizing(false);
       window.removeEventListener("mousemove", onMouseMove);
+      document.body.style.cursor = "";
     },
     [onMouseMove, bottom, endDate, event.id, storages],
   );
@@ -304,7 +306,7 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
     () =>
       twMerge(
         "absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2",
-        isResizing ? "cursor-grabbing" : "cursor-grab",
+        isResizing ? "focus:cursor-grabbing" : "cursor-grab",
       ),
     [isResizing],
   );
@@ -313,10 +315,7 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
     const Component = () => {
       return (
         <div
-          className={twMerge(
-            "absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2",
-            cursorMode,
-          )}
+          className={cursorMode}
           onMouseDown={() => {
             setResizing(true);
           }}
