@@ -165,6 +165,7 @@ const useDragAndDrop = ({
       (ref) => ref.current != null && !ref.current.contains(e.target),
     );
     if (isChild.unwrapOrElse(() => true)) {
+      document.body.style.cursor = "move";
       window.addEventListener(
         "mouseup",
         () => {
@@ -175,6 +176,7 @@ const useDragAndDrop = ({
           setTout(O.None());
           setIsDragging(false);
           onDragEnd();
+          document.body.style.cursor = "";
         },
         { once: true },
       );
