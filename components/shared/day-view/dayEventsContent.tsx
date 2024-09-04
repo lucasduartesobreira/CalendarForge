@@ -20,10 +20,10 @@ import {
 } from "react";
 import { twMerge } from "tailwind-merge";
 
-const DAY_HEADER_HEIGHT = 48;
-const HOUR_BLOCK_HEIGHT = 64;
-const HOUR_DIVISION = 4;
-const MINUTES_OF_A_DIVISION = 60 / HOUR_DIVISION;
+export const DAY_HEADER_HEIGHT = 48;
+export const HOUR_BLOCK_HEIGHT = 64;
+export const HOUR_DIVISION = 4;
+export const MINUTES_OF_A_DIVISION = 60 / HOUR_DIVISION;
 
 const calcOffset = (
   hour: number,
@@ -34,7 +34,7 @@ const calcOffset = (
   hour * HOUR_BLOCK_HEIGHT +
   rounder(minute / MINUTES_OF_A_DIVISION) * (HOUR_BLOCK_HEIGHT / HOUR_DIVISION);
 
-const startAndHeight = (startDate: Date, endDate: Date, day: number) => {
+export const startAndHeight = (startDate: Date, endDate: Date, day: number) => {
   const startsSameDay = startDate.getDate() === day;
 
   const [startHour, startMinute] = startsSameDay
@@ -218,7 +218,7 @@ const useDragAndDrop = ({
   };
 };
 
-const computeMousePosition = (
+export const computeMousePosition = (
   y: number,
   container?: HTMLElement | null,
   offset: number = -DAY_HEADER_HEIGHT,
