@@ -41,7 +41,7 @@ const MiniCalendar = ({ startDate }: { startDate: number }) => {
       {daysHeader.map((_n, index) => (
         <div
           key={index}
-          className="text-neutral-600 text-center hover:bg-primary-500 cursor-pointer hover:text-text-inverse hover:border-neutral-200 border-transparent p-[2px] border-[1px] rounded-md"
+          className="text-neutral-600 select-none text-center hover:bg-primary-500 cursor-pointer hover:text-text-inverse hover:border-neutral-200 border-transparent p-[2px] border-[1px] rounded-md"
         >
           {dayToName[(index + 1) as keyof typeof dayToName]}
         </div>
@@ -49,7 +49,7 @@ const MiniCalendar = ({ startDate }: { startDate: number }) => {
       {daysOnMiniCalendar.map((_n, index) => (
         <div
           key={index}
-          className="text-neutral-600 text-center hover:bg-primary-500 cursor-pointer hover:text-text-inverse hover:border-neutral-200 border-transparent p-[2px] border-[1px] rounded-md"
+          className="text-neutral-600 select-none text-center hover:bg-primary-500 cursor-pointer hover:text-text-inverse hover:border-neutral-200 border-transparent p-[2px] border-[1px] rounded-md"
         >
           {_n}
         </div>
