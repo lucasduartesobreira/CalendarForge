@@ -62,7 +62,9 @@ const SideBar = (
     <div {...arg} className={`${arg.className} flex flex-col`}>
       {storages.isSome() && calendars.isSome() && actions.isSome() && (
         <>
-          <MiniCalendarContainer />
+          <MiniCalendarContainer
+            className="p-1 first:mb-1"
+          />
           <ListContainer
             titleSection={<Titles.Normal name="Calendars" />}
             buttonSection={
