@@ -63,6 +63,11 @@ const MiniCalendar = ({}: { startDate: number }) => {
             className={`${
               isHighlighted ? "bg-primary-300 text-text-inverse" : ""
             } text-neutral-600 select-none text-center hover:bg-primary-500 cursor-pointer hover:text-text-inverse hover:border-neutral-200 border-transparent p-[2px] border-[1px] rounded-md`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setStartDate(new Date(startDateOriginal.setDate(day)));
+            }}
           >
             {day}
           </div>
