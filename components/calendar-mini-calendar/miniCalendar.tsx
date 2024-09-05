@@ -1,5 +1,6 @@
 import { HTMLDivExtended } from "@/utils/types";
 import { Titles } from "../shared/title-view/titles";
+import { useMemo } from "react";
 
 const daysOnMiniCalendarRange = Array.from(new Array(7 * 5));
 const daysHeader = Array.from(new Array(1 * 7));
@@ -59,15 +60,16 @@ const MiniCalendar = ({ startDate }: { startDate: number }) => {
 };
 
 export const MiniCalendarContainer = (
-  args: HTMLDivExtended<HTMLDivElement, {}>,
+  args: HTMLDivExtended<HTMLDivElement, { startDate: Date }>,
 ) => {
+  const startDate = useMemo(() => args.startDate, [args.startDate]);
   return (
     <div
       {...args}
       className={`${args.className} min-w-fit bg-white rounded-xl shadow-lg border-[1px] border-neutral-200 overflow-hidden`}
     >
       <Titles.Normal name="Mini Calendar" />
-      <MiniCalendar startDate={Date.now()} />
+      <MiniCalendar startDate={startDate.getTime()} />
     </div>
   );
 };

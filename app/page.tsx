@@ -156,6 +156,7 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
           <CreateEventFormOpenCtx.Provider value={openCreateFormState}>
             <SideBar
               viewableCalendarsState={viewableCalendarsState}
+              startDate={startDate}
               className="p-1 w-[15%]"
             />
             <div className="ml-auto w-[85%] max-h-[100%] bg-white">

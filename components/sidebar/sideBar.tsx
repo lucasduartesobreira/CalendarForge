@@ -21,10 +21,11 @@ const SideBar = (
           Actions<string, boolean>,
         ]
       >;
+      startDate: Date;
     }
   >,
 ) => {
-  const { viewableCalendarsState, ...arg } = args;
+  const { viewableCalendarsState, startDate, ...arg } = args;
   const [calendars, setCalendars] = useState<O.Option<Map<string, boolean>>>(
     O.None(),
   );
@@ -59,10 +60,11 @@ const SideBar = (
   const refButton = useRef(null);
 
   return (
-    <div {...arg} className={`${arg.className} flex flex-col`}>
+    <div {...arg} className={`${arg.className} flex flex-col min-w-fit`}>
       {storages.isSome() && calendars.isSome() && actions.isSome() && (
         <>
           <MiniCalendarContainer
+            startDate={startDate}
             className="p-1 first:mb-1"
           />
           <ListContainer
