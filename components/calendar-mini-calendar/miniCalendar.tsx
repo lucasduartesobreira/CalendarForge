@@ -78,7 +78,7 @@ const MiniCalendar = ({}: { startDate: number }) => {
   );
 
   return (
-    <div className="bg-neutral-100 rounded-lg grid grid-cols-7 grid-rows-7 p-1 m-1 min-w-max">
+    <div className="rounded-lg grid grid-cols-7 grid-rows-7 p-1 m-1 min-w-max">
       <div className="grid grid-cols-[subgrid] grid-rows-[subgrid] row-start-1 row-end-[2] col-start-1 col-end-[8]">
         {daysHeader.map((_n, index) => (
           <div
