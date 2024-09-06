@@ -1,9 +1,9 @@
 import { HTMLDivExtended } from "@/utils/types";
 import { Titles } from "../shared/title-view/titles";
-import { useContext, useMemo } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { SelectedDateContext } from "../calendar-navbar/selectedDateContext";
 
-const daysOnMiniCalendarRange = Array.from(new Array(7 * 5));
+const daysOnMiniCalendarRange = Array.from(new Array(7 * 6));
 const daysHeader = Array.from(new Array(1 * 7));
 
 const dayToName = {
@@ -17,32 +17,55 @@ const dayToName = {
 };
 
 const MiniCalendar = ({}: { startDate: number }) => {
-  const [startDate, setStartDate] = useContext(SelectedDateContext);
-  const startDateAsDate = new Date(startDate);
-  const firstDayOfTheMonth = new Date(startDateAsDate.setDate(1));
-  const lastDayOfTheMonth = new Date(
-    new Date(startDateAsDate.setMonth(startDateAsDate.getMonth() + 1)).setDate(
-      0,
-    ),
+  const [selectedStartDate, setSelectedStartDate] =
+    useContext(SelectedDateContext);
+  const [startDate, setStartDate] = useState(selectedStartDate);
+
+  useEffect(() => {
+    setStartDate(selectedStartDate);
+  }, [selectedStartDate]);
+
+  const selectedStartDateAtMidnight = useMemo(
+    () => new Date(selectedStartDate).setHours(0, 0, 0, 0),
+    [selectedStartDate],
+  );
+  const selectedStartDatePlusSeven = useMemo(
+    () => selectedStartDateAtMidnight + 7 * 24 * 60 * 60 * 1000 - 1,
+    [selectedStartDateAtMidnight],
   );
 
-  const dayOfWeekOfFirstDay = firstDayOfTheMonth.getDay();
-  const firstDayFromLastMonthToShow = new Date(
-    new Date(firstDayOfTheMonth).setDate(1 - dayOfWeekOfFirstDay),
-  );
+  const firstDayFromLastMonthToShow = useMemo(() => {
+    const startDateAsDate = new Date(startDate);
+    const firstDayOfTheMonth = new Date(startDateAsDate.setDate(1));
 
-  const daysOnMiniCalendar = daysOnMiniCalendarRange.map((_v, index) =>
-    index - dayOfWeekOfFirstDay < 0
-      ? firstDayFromLastMonthToShow.getDate() + index - 1
-      : index < lastDayOfTheMonth.getDate() + dayOfWeekOfFirstDay
-      ? index + 1 - dayOfWeekOfFirstDay
-      : 1 + index - lastDayOfTheMonth.getDate(),
-  );
+    const dayOfWeekOfFirstDay = firstDayOfTheMonth.getDay();
+    const firstDayFromLastMonthToShow = new Date(
+      new Date(firstDayOfTheMonth).setDate(1 - dayOfWeekOfFirstDay),
+    );
 
-  const startDateOriginal = new Date(startDate);
+    return firstDayFromLastMonthToShow;
+  }, [startDate]);
+
+  const daysOnMiniCalendar = useMemo(
+    () =>
+      daysOnMiniCalendarRange.map((_v, index) => {
+        const day = new Date(
+          firstDayFromLastMonthToShow.getTime() + index * 24 * 60 * 60 * 1000,
+        );
+
+        return {
+          date: day,
+          day: day.getDate(),
+          highlighted:
+            day.getTime() >= selectedStartDateAtMidnight &&
+            day.getTime() <= selectedStartDatePlusSeven,
+        };
+      }),
+    [startDate],
+  );
 
   return (
-    <div className="bg-neutral-100 rounded-lg grid grid-cols-7 grid-rows-6 p-1 m-1 min-w-max">
+    <div className="bg-neutral-100 rounded-lg grid grid-cols-7 grid-rows-7 p-1 m-1 min-w-max">
       {daysHeader.map((_n, index) => (
         <div
           key={index}
@@ -51,22 +74,17 @@ const MiniCalendar = ({}: { startDate: number }) => {
           {dayToName[(index + 1) as keyof typeof dayToName]}
         </div>
       ))}
-      {daysOnMiniCalendar.map((day, index) => {
-        const highlightedStartIndex =
-          startDateOriginal.getDate() + dayOfWeekOfFirstDay - 1;
-        const highlightedEndIndex = highlightedStartIndex + 6;
-        const isHighlighted =
-          index >= highlightedStartIndex && index <= highlightedEndIndex;
+      {daysOnMiniCalendar.map(({ day, date, highlighted }, index) => {
         return (
           <div
             key={index}
             className={`${
-              isHighlighted ? "bg-primary-300 text-text-inverse" : ""
+              highlighted ? "bg-primary-300 text-text-inverse" : ""
             } text-neutral-600 select-none text-center hover:bg-primary-500 cursor-pointer hover:text-text-inverse hover:border-neutral-200 border-transparent p-[2px] border-[1px] rounded-md`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setStartDate(new Date(startDateOriginal.setDate(day)));
+              setSelectedStartDate(new Date(date));
             }}
           >
             {day}
