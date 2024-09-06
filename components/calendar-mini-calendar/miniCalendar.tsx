@@ -2,18 +2,19 @@ import { HTMLDivExtended } from "@/utils/types";
 import { Titles } from "../shared/title-view/titles";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { SelectedDateContext } from "../calendar-navbar/selectedDateContext";
+import { twMerge } from "tailwind-merge";
 
 const daysOnMiniCalendarRange = Array.from(new Array(7 * 6));
 const daysHeader = Array.from(new Array(1 * 7));
 
 const dayToName = {
-  1: "S",
-  2: "M",
-  3: "T",
-  4: "W",
-  5: "T",
-  6: "F",
-  7: "S",
+  1: "Su",
+  2: "Mo",
+  3: "Tu",
+  4: "We",
+  5: "Th",
+  6: "Fr",
+  7: "Sa",
 };
 
 const MiniCalendar = ({}: { startDate: number }) => {
@@ -53,12 +54,24 @@ const MiniCalendar = ({}: { startDate: number }) => {
           firstDayFromLastMonthToShow.getTime() + index * 24 * 60 * 60 * 1000,
         );
 
+        const midnightStartDate = new Date(selectedStartDateAtMidnight);
+        const midnightStartDatePlusSeven = new Date(selectedStartDatePlusSeven);
+
         return {
           date: day,
           day: day.getDate(),
           highlighted:
             day.getTime() >= selectedStartDateAtMidnight &&
             day.getTime() <= selectedStartDatePlusSeven,
+          firstHighlighted:
+            midnightStartDate.getDate() === day.getDate() &&
+            midnightStartDate.getMonth() === day.getMonth() &&
+            midnightStartDate.getFullYear() === day.getFullYear(),
+          lastHighilighted:
+            midnightStartDatePlusSeven.getDate() === day.getDate() &&
+            midnightStartDatePlusSeven.getMonth() === day.getMonth() &&
+            midnightStartDatePlusSeven.getFullYear() === day.getFullYear(),
+          isInTheMonth: day.getMonth() === startDate.getMonth(),
         };
       }),
     [startDate],
@@ -66,31 +79,70 @@ const MiniCalendar = ({}: { startDate: number }) => {
 
   return (
     <div className="bg-neutral-100 rounded-lg grid grid-cols-7 grid-rows-7 p-1 m-1 min-w-max">
-      {daysHeader.map((_n, index) => (
-        <div
-          key={index}
-          className="text-neutral-600 select-none text-center hover:bg-primary-500 cursor-pointer hover:text-text-inverse hover:border-neutral-200 border-transparent p-[2px] border-[1px] rounded-md"
-        >
-          {dayToName[(index + 1) as keyof typeof dayToName]}
-        </div>
-      ))}
-      {daysOnMiniCalendar.map(({ day, date, highlighted }, index) => {
-        return (
+      <div className="grid grid-cols-[subgrid] grid-rows-[subgrid] row-start-1 row-end-[2] col-start-1 col-end-[8]">
+        {daysHeader.map((_n, index) => (
           <div
             key={index}
-            className={`${
-              highlighted ? "bg-primary-300 text-text-inverse" : ""
-            } text-neutral-600 select-none text-center hover:bg-primary-500 cursor-pointer hover:text-text-inverse hover:border-neutral-200 border-transparent p-[2px] border-[1px] rounded-md`}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setSelectedStartDate(new Date(date));
-            }}
+            className="text-neutral-600 text-xs select-none text-center border-transparent p-[2px] border-[1px] rounded-md ml-[1px] mr-[1px] aspect-[1/1]"
           >
-            {day}
+            {dayToName[(index + 1) as keyof typeof dayToName]}
           </div>
-        );
-      })}
+        ))}
+      </div>
+      <div className="grid grid-cols-[subgrid] grid-rows-[subgrid] row-start-2 row-end-[9] col-start-1 col-end-8">
+        {daysOnMiniCalendar.map(
+          (
+            {
+              day,
+              date,
+              highlighted,
+              firstHighlighted,
+              lastHighilighted,
+              isInTheMonth,
+            },
+            index,
+          ) => {
+            const highlightedClassName = highlighted
+              ? "bg-primary-300 text-text-inverse font-semibold"
+              : "";
+            const firstHighlightedClassName = firstHighlighted
+              ? "rounded-l-md "
+              : "";
+            const lastHighilightedClassName = lastHighilighted
+              ? "rounded-r-md "
+              : "";
+
+            const textColor =
+              isInTheMonth || highlighted
+                ? "text-neutral-600 text-sm"
+                : "text-neutral-400 font-bold text-xs";
+
+            return (
+              <div
+                key={index}
+                className={twMerge(
+                  textColor,
+                  highlightedClassName,
+                  firstHighlightedClassName,
+                  lastHighilightedClassName,
+                  "p-[1px]",
+                )}
+              >
+                <div
+                  className={`flex text-center items-center justify-center aspect-[1/1] select-none text-center hover:bg-primary-500 hover:font-bold cursor-pointer hover:text-text-inverse p-[2px] rounded-md ml-[1px] mr-[1px]`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedStartDate(new Date(date));
+                  }}
+                >
+                  {day}
+                </div>
+              </div>
+            );
+          },
+        )}
+      </div>
     </div>
   );
 };
