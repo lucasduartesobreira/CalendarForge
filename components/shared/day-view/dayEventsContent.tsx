@@ -18,11 +18,12 @@ import {
   useRef,
   useState,
 } from "react";
+import { twMerge } from "tailwind-merge";
 
-const DAY_HEADER_HEIGHT = 48;
-const HOUR_BLOCK_HEIGHT = 64;
-const HOUR_DIVISION = 4;
-const MINUTES_OF_A_DIVISION = 60 / HOUR_DIVISION;
+export const DAY_HEADER_HEIGHT = 48;
+export const HOUR_BLOCK_HEIGHT = 64;
+export const HOUR_DIVISION = 4;
+export const MINUTES_OF_A_DIVISION = 60 / HOUR_DIVISION;
 
 const calcOffset = (
   hour: number,
@@ -33,7 +34,7 @@ const calcOffset = (
   hour * HOUR_BLOCK_HEIGHT +
   rounder(minute / MINUTES_OF_A_DIVISION) * (HOUR_BLOCK_HEIGHT / HOUR_DIVISION);
 
-const startAndHeight = (startDate: Date, endDate: Date, day: number) => {
+export const startAndHeight = (startDate: Date, endDate: Date, day: number) => {
   const startsSameDay = startDate.getDate() === day;
 
   const [startHour, startMinute] = startsSameDay
@@ -164,6 +165,7 @@ const useDragAndDrop = ({
       (ref) => ref.current != null && !ref.current.contains(e.target),
     );
     if (isChild.unwrapOrElse(() => true)) {
+      document.body.style.cursor = "move";
       window.addEventListener(
         "mouseup",
         () => {
@@ -174,6 +176,7 @@ const useDragAndDrop = ({
           setTout(O.None());
           setIsDragging(false);
           onDragEnd();
+          document.body.style.cursor = "";
         },
         { once: true },
       );
@@ -215,7 +218,7 @@ const useDragAndDrop = ({
   };
 };
 
-const computeMousePosition = (
+export const computeMousePosition = (
   y: number,
   container?: HTMLElement | null,
   offset: number = -DAY_HEADER_HEIGHT,
@@ -254,6 +257,7 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
   const onMouseMove = useMemo(
     () => (e: { clientY: number }) => {
       if (isResizing) {
+        document.body.style.cursor = "grabbing";
         const container = document.getElementById("calendar-week-container");
         const pointerPosition = computeMousePosition(e.clientY, container, 0);
         const minBottom = Math.max(
@@ -283,6 +287,7 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
       });
       setResizing(false);
       window.removeEventListener("mousemove", onMouseMove);
+      document.body.style.cursor = "";
     },
     [onMouseMove, bottom, endDate, event.id, storages],
   );
@@ -299,11 +304,20 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
     };
   }, [onMouseUp, onMouseMove, isResizing]);
 
+  const cursorMode = useMemo(
+    () =>
+      twMerge(
+        "absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2",
+        isResizing ? "focus:cursor-grabbing" : "cursor-grab",
+      ),
+    [isResizing],
+  );
+
   const ResizeDiv = useMemo(() => {
     const Component = () => {
       return (
         <div
-          className="absolute h-[8px] bottom-0 w-full left-1/2 -translate-x-1/2"
+          className={cursorMode}
           onMouseDown={() => {
             setResizing(true);
           }}
@@ -311,7 +325,7 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
       );
     };
     return Component;
-  }, []);
+  }, [cursorMode]);
 
   return [
     isResizing,

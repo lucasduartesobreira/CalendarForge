@@ -127,10 +127,12 @@ export const DayBackground = ({
   dayOfWeek,
   day,
   isToday,
+  onMouseDown,
 }: {
   dayOfWeek: ViewSize;
   day: number;
   isToday: boolean;
+  onMouseDown?: (hour: number, quarterOfAnHour: number) => void;
 }) => {
   const color = isToday ? "bg-primary-50" : "bg-white";
 
@@ -144,6 +146,17 @@ export const DayBackground = ({
           <SquareBG
             key={index}
             className={`${rowStartClass[index + 1]} col-start-[1] row-span-1`}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              const currentTarget = e.currentTarget;
+              const bounding = currentTarget.getBoundingClientRect();
+              const height = bounding.height;
+              const y = e.clientY - bounding.y;
+              const percentageFromTop = (y / height) * 60;
+              const quarterOfHour = Math.floor(percentageFromTop / 15);
+              onMouseDown?.call(undefined, index, quarterOfHour);
+            }}
           />
         );
       })}
@@ -332,10 +345,12 @@ export const Background = ({
 const SquareBG = ({
   children: childrens,
   className,
+  onMouseDown,
 }: HTMLDivExtended<HTMLDivElement, PropsWithChildren>) => {
   return (
     <div
       className={`${className} border-[1px] border-t-0 border-l-0 border-neutral-300 select-none`}
+      onMouseDown={onMouseDown}
     >
       {childrens}
     </div>

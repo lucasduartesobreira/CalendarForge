@@ -9,7 +9,8 @@ import {
 } from "react";
 import { DayViewContent } from "../day-view/dayContent";
 import { DayDropZone } from "../day-view/dayBackground";
-import { DraggedEvent } from "../day-view/dayEventsContent";
+import { DraggedEvent, ShowCalendarEvent } from "../day-view/dayEventsContent";
+import { useSelectHours } from "./useSelectHourHook";
 
 export const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
 export type ViewSize = (typeof AcceptedDaysValue)[number];
@@ -37,6 +38,7 @@ export const FlexibleView = ({
     events: CalendarEvent[];
     dayOfWeek: ViewSize;
     day: number;
+    dayInMilliseconds: number;
     isToday: boolean;
     dateAtMidNight: Date;
     fakeEvents?: CalendarEvent[];
@@ -58,6 +60,8 @@ export const FlexibleView = ({
     return () => setClientSide(false);
   }, []);
 
+  const { onMouseDownFactory, createNewEventData } = useSelectHours();
+
   if (!weekGridClasses.at(days.length - 1)) {
     days.splice(weekGridClasses.length, days.length - weekGridClasses.length);
   }
@@ -76,7 +80,15 @@ export const FlexibleView = ({
       <DayViewContent.HoursBackground column={0 + hasChildren} />
       {days.map(
         (
-          { dayOfWeek, day, isToday, events, dateAtMidNight, fakeEvents },
+          {
+            dayOfWeek,
+            day,
+            dayInMilliseconds,
+            isToday,
+            events,
+            dateAtMidNight,
+            fakeEvents,
+          },
           index,
         ) => (
           <DayViewContent.DayContainer
@@ -88,6 +100,7 @@ export const FlexibleView = ({
               dayOfWeek={dayOfWeek}
               day={day}
               isToday={isToday}
+              onMouseDown={onMouseDownFactory(dayInMilliseconds, day)}
             />
             {clientSide && (
               <DayViewContent.DayEvents
@@ -105,6 +118,32 @@ export const FlexibleView = ({
                 day={day}
                 dayOfWeek={dayOfWeek}
               />
+            )}
+            {createNewEventData.mapOrElse(
+              () => null,
+              ({ startDate, endDate }) => {
+                if (new Date(startDate).getDay() === dayOfWeek - 1)
+                  return (
+                    <ShowCalendarEvent
+                      event={{
+                        title: "",
+                        id: "",
+                        color: "#7a5195",
+                        startDate: startDate,
+                        endDate: endDate,
+                        description: "",
+                        calendar_id: "",
+                        notifications: [],
+                      }}
+                      conflicts={new Map()}
+                      day={day}
+                      index={0}
+                      setSelectedEvent={() => {}}
+                    />
+                  );
+
+                return null;
+              },
             )}
           </DayViewContent.DayContainer>
         ),

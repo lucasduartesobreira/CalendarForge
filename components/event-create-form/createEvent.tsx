@@ -1,13 +1,19 @@
 "use client";
 import React, {
   RefObject,
+  createContext,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { StorageContext } from "@/hooks/dataHook";
-import { CalendarEvent, CreateEvent } from "@/services/events/events";
+import {
+  CalendarEvent,
+  CreateEvent,
+  UpdateEvent,
+} from "@/services/events/events";
 import * as O from "@/utils/option";
 import { EventTemplate } from "@/services/events/eventTemplates";
 import { Button } from "../shared/button-view/buttons";
@@ -140,28 +146,45 @@ const TemplateSelector = ({
   );
 };
 
+type State<V> = [V, React.Dispatch<React.SetStateAction<V>>];
+
+export const CreateEventFormOpenCtx = createContext<
+  State<O.Option<UpdateEvent>>
+>([O.None(), () => {}]);
+
 const CreateEventButton = () => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useContext(CreateEventFormOpenCtx);
   useShortcut(
     ShortcutBuilder.new().build("n", () => {
-      if (!open) setOpen(true);
+      setOpen(!open.isSome() ? O.Some({}) : open);
     }),
     "all",
   );
   const buttonRef = useRef(null);
+  const updates = useMemo(() => open.unwrapOrElse(() => ({})), [open]);
+  const initialFormUpdated: CreateEvent = useMemo(
+    () => ({
+      ...initialFormState,
+      startDate: Date.now(),
+      endDate: Date.now() + 3600 * 1000,
+      ...updates,
+    }),
+    [updates],
+  );
+
   return (
     <div className="">
       <Button.Primary
         innerRef={buttonRef}
         sizeType="xl"
         className="absolute bottom-8 right-8 w-24 h-24 z-[1000] rounded-s-full rounded-e-full bg-primary-500"
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen(open.isSome() ? O.None() : O.Some({}))}
         value="Create Event"
       />
-      {open && (
+      {open.isSome() && (
         <CreateEventForm
-          setOpen={setOpen}
-          initialForm={initialFormState}
+          setOpen={(open) => setOpen(!open ? O.None() : O.Some({}))}
+          initialForm={initialFormUpdated}
           blockdRefs={O.Some([buttonRef])}
         />
       )}
