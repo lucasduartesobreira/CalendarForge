@@ -78,12 +78,12 @@ const MiniCalendar = ({}: { startDate: number }) => {
   );
 
   return (
-    <div className="rounded-lg grid grid-cols-7 grid-rows-7 p-1 m-1 min-w-max">
+    <div className="rounded-lg grid grid-cols-7 text-xs grid-rows-7 p-1 m-1 min-w-max">
       <div className="grid grid-cols-[subgrid] grid-rows-[subgrid] row-start-1 row-end-[2] col-start-1 col-end-[8]">
         {daysHeader.map((_n, index) => (
           <div
             key={index}
-            className="text-neutral-600 text-xs select-none text-center border-transparent p-[2px] border-[1px] rounded-md ml-[1px] mr-[1px] aspect-[1/1]"
+            className="text-neutral-600 select-none text-center border-transparent p-[2px] border-[1px] rounded-md ml-[1px] mr-[1px] aspect-[1/1]"
           >
             {dayToName[(index + 1) as keyof typeof dayToName]}
           </div>
@@ -114,8 +114,8 @@ const MiniCalendar = ({}: { startDate: number }) => {
 
             const textColor =
               isInTheMonth || highlighted
-                ? "text-neutral-600 text-sm"
-                : "text-neutral-400 font-bold text-xs";
+                ? "text-neutral-600"
+                : "text-neutral-400 font-bold";
 
             return (
               <div
