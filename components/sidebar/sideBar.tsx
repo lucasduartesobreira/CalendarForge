@@ -9,6 +9,7 @@ import { HTMLDivExtended } from "@/utils/types";
 import { ListContainer } from "../shared/list-view/list";
 import { Button } from "../shared/button-view/buttons";
 import { Titles } from "../shared/title-view/titles";
+import { MiniCalendar } from "../calendar-mini-calendar/miniCalendar";
 
 const SideBar = (
   args: HTMLDivExtended<
@@ -20,10 +21,11 @@ const SideBar = (
           Actions<string, boolean>,
         ]
       >;
+      startDate: Date;
     }
   >,
 ) => {
-  const { viewableCalendarsState, ...arg } = args;
+  const { viewableCalendarsState, startDate, ...arg } = args;
   const [calendars, setCalendars] = useState<O.Option<Map<string, boolean>>>(
     O.None(),
   );
@@ -58,37 +60,43 @@ const SideBar = (
   const refButton = useRef(null);
 
   return (
-    <div {...arg} className={`${arg.className}`}>
+    <div
+      {...arg}
+      className={`${arg.className} flex flex-col min-w-fit flex-none`}
+    >
       {storages.isSome() && calendars.isSome() && actions.isSome() && (
-        <ListContainer
-          titleSection={<Titles.Normal name="Calendars" />}
-          buttonSection={
-            <Button.Primary
-              className="w-full p-1 sticky bottom-0"
-              innerRef={refButton}
-              onClick={() => setOpen(!open)}
-              value="New"
-              sizeType="xl"
-            />
-          }
-          className="p-1"
-        >
-          {calendarsFound.map((calendar) => {
-            const viewableCalendars = calendars.unwrap();
-
-            const defaultChecked = viewableCalendars.get(calendar.id) ?? true;
-
-            return (
-              <CalendarSidebarView
-                key={calendar.id}
-                actions={actions}
-                calendar={calendar}
-                defaultChecked={defaultChecked}
-                selectCalendar={setSelectedCalendar}
+        <>
+          <MiniCalendar className="p-1 first:mb-1" />
+          <ListContainer
+            titleSection={<Titles.Normal name="Calendars" />}
+            buttonSection={
+              <Button.Primary
+                className="w-full p-1 sticky bottom-0"
+                innerRef={refButton}
+                onClick={() => setOpen(!open)}
+                value="New"
+                sizeType="xl"
               />
-            );
-          })}
-        </ListContainer>
+            }
+            className="p-1"
+          >
+            {calendarsFound.map((calendar) => {
+              const viewableCalendars = calendars.unwrap();
+
+              const defaultChecked = viewableCalendars.get(calendar.id) ?? true;
+
+              return (
+                <CalendarSidebarView
+                  key={calendar.id}
+                  actions={actions}
+                  calendar={calendar}
+                  defaultChecked={defaultChecked}
+                  selectCalendar={setSelectedCalendar}
+                />
+              );
+            })}
+          </ListContainer>
+        </>
       )}
       {open && (
         <CreateCalendarForm setOpen={setOpen} refs={O.Some([refButton])} />
