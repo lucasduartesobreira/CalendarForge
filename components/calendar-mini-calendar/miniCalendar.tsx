@@ -57,7 +57,7 @@ const Nav = ({
   );
 
   return (
-    <nav className="pl-2 pr-2 ml-1 mr-1 pt-1 mt-1 flex w-full gap-1 items-center text-neutral-400 ">
+    <nav className="pl-2 pr-2 ml-1 mr-1 pt-1 mt-1 flex w-full gap-1 items-center text-neutral-400 select-none">
       <a className="mr-auto font-medium text-neutral-600 ">
         {monthName[month]}
       </a>
@@ -155,6 +155,10 @@ const MiniCalendarContent = () => {
             midnightStartDatePlusSeven.getMonth() === day.getMonth() &&
             midnightStartDatePlusSeven.getFullYear() === day.getFullYear(),
           isInTheMonth: day.getMonth() === startDate.getMonth(),
+          isToday:
+            today.getDate() === day.getDate() &&
+            today.getMonth() === day.getMonth() &&
+            today.getFullYear() === day.getFullYear(),
         };
       }),
     [startDate],
@@ -184,6 +188,7 @@ const MiniCalendarContent = () => {
                 firstHighlighted,
                 lastHighilighted,
                 isInTheMonth,
+                isToday,
               },
               index,
             ) => {
@@ -202,6 +207,10 @@ const MiniCalendarContent = () => {
                   ? "text-neutral-600"
                   : "text-neutral-400 font-bold";
 
+              const todayHighlight = isToday
+                ? "bg-primary-500 text-text-inverse"
+                : "";
+
               return (
                 <div
                   key={index}
@@ -214,7 +223,10 @@ const MiniCalendarContent = () => {
                   )}
                 >
                   <div
-                    className={`flex text-center items-center justify-center aspect-[1/1] select-none text-center hover:bg-primary-500 hover:font-bold cursor-pointer hover:text-text-inverse p-[2px] rounded-md ml-[1px] mr-[1px]`}
+                    className={twMerge(
+                      `flex text-center items-center justify-center aspect-[1/1] select-none text-center hover:bg-primary-500 hover:font-bold cursor-pointer hover:text-text-inverse p-[2px] rounded-md ml-[1px] mr-[1px]`,
+                      todayHighlight,
+                    )}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
