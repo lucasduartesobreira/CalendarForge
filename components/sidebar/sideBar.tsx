@@ -9,7 +9,7 @@ import { HTMLDivExtended } from "@/utils/types";
 import { ListContainer } from "../shared/list-view/list";
 import { Button } from "../shared/button-view/buttons";
 import { Titles } from "../shared/title-view/titles";
-import { MiniCalendarContainer } from "../calendar-mini-calendar/miniCalendar";
+import { MiniCalendar } from "../calendar-mini-calendar/miniCalendar";
 
 const SideBar = (
   args: HTMLDivExtended<
@@ -63,10 +63,7 @@ const SideBar = (
     <div {...arg} className={`${arg.className} flex flex-col min-w-fit`}>
       {storages.isSome() && calendars.isSome() && actions.isSome() && (
         <>
-          <MiniCalendarContainer
-            startDate={startDate}
-            className="p-1 first:mb-1"
-          />
+          <MiniCalendar className="p-1 first:mb-1" />
           <ListContainer
             titleSection={<Titles.Normal name="Calendars" />}
             buttonSection={
