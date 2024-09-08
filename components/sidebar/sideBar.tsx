@@ -60,7 +60,10 @@ const SideBar = (
   const refButton = useRef(null);
 
   return (
-    <div {...arg} className={`${arg.className} flex flex-col min-w-fit`}>
+    <div
+      {...arg}
+      className={`${arg.className} flex flex-col min-w-fit flex-none`}
+    >
       {storages.isSome() && calendars.isSome() && actions.isSome() && (
         <>
           <MiniCalendar className="p-1 first:mb-1" />

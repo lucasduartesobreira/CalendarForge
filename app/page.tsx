@@ -158,9 +158,9 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
             <SideBar
               viewableCalendarsState={viewableCalendarsState}
               startDate={startDate}
-              className="p-1 w-[15%]"
+              className="p-1 max-w-min"
             />
-            <div className="ml-auto w-[85%] max-h-[100%] bg-white">
+            <div className="ml-1 w-full max-h-[100%] bg-white">
               <CalendarWeek
                 style={
                   "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
