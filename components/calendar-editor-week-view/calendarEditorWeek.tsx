@@ -189,10 +189,10 @@ const CalendarEditorWeek = ({
         }))}
         id={CALENDAR_WEEK_CONTAINER_ID}
       >
-        <div className="col-start-1 relative w-[128px] h-full">
+        <div className="col-start-1 relative w-[4rem] h-full">
           <DayViewContent.Background
             hourContent={({ hour }) => (
-              <div className="w-full h-full text-text-primary override-hidden">
+              <div className="px-1 py-1 max-w-[4rem] h-full text-text-primary truncate">
                 {hourlyCalendarPredominance.get(hour - 1)}
               </div>
             )}
