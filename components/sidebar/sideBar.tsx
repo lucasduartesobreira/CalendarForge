@@ -10,6 +10,7 @@ import { ListContainer } from "../shared/list-view/list";
 import { Button } from "../shared/button-view/buttons";
 import { Titles } from "../shared/title-view/titles";
 import { MiniCalendar } from "../calendar-mini-calendar/miniCalendar";
+import { CalendarModeContext } from "../calendar-editor-week-view/contexts";
 
 const SideBar = (
   args: HTMLDivExtended<
@@ -59,64 +60,71 @@ const SideBar = (
 
   const refButton = useRef(null);
 
+  const [calendarMode, setCalendarMode] = useContext(CalendarModeContext);
   return (
     <div
       {...arg}
       className={`${arg.className} flex flex-col gap-1 min-w-fit flex-none`}
     >
-      {storages.isSome() && calendars.isSome() && actions.isSome() && (
-        <>
-          <div
-            className={`inline-flex items-center justify-center w-full p-1 min-w-fit bg-white rounded-xl shadow-lg border-[1px] border-neutral-200 overflow-hidden text-neutral-600`}
-          >
-            <span className="m-2 text-lg text-neutral-600 select-none">
-              {"Mode"}
-            </span>
-            <label className="relative inline-flex items-center cursor-pointer ml-auto mr-2">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={false}
-                onChange={() => {}}
-              />
-              <div className="w-10 h-5 border-primary-100 border-[2px] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-primary-300 peer-checked:after:bg-primary-300 after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-primary-200 after:border-primary-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-200" />
-              <span className="ml-1 text-sm text-neutral-600 select-none">
-                {"Normal"}
+      {storages.isSome() &&
+        calendars.isSome() &&
+        actions.isSome() &&
+        calendarMode.isSome() && (
+          <>
+            <div
+              className={`inline-flex items-center justify-center w-full p-1 min-w-fit bg-white rounded-xl shadow-lg border-[1px] border-neutral-200 overflow-hidden text-neutral-600`}
+            >
+              <span className="m-2 text-lg text-neutral-600 select-none">
+                {"Mode"}
               </span>
-            </label>
-          </div>
-          <MiniCalendar className="p-1" />
-          <ListContainer
-            titleSection={<Titles.Normal name="Calendars" />}
-            buttonSection={
-              <Button.Primary
-                className="w-full p-1 sticky bottom-0"
-                innerRef={refButton}
-                onClick={() => setOpen(!open)}
-                value="New"
-                sizeType="xl"
-              />
-            }
-            className="p-1"
-          >
-            {calendarsFound.map((calendar) => {
-              const viewableCalendars = calendars.unwrap();
-
-              const defaultChecked = viewableCalendars.get(calendar.id) ?? true;
-
-              return (
-                <CalendarSidebarView
-                  key={calendar.id}
-                  actions={actions}
-                  calendar={calendar}
-                  defaultChecked={defaultChecked}
-                  selectCalendar={setSelectedCalendar}
+              <label className="relative inline-flex items-center cursor-pointer ml-auto mr-2">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={false}
+                  onChange={() => {
+                    setCalendarMode(O.Some("editor"));
+                  }}
                 />
-              );
-            })}
-          </ListContainer>
-        </>
-      )}
+                <div className="w-10 h-5 border-primary-100 border-[2px] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-primary-300 peer-checked:after:bg-primary-300 after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-primary-200 after:border-primary-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-200" />
+                <span className="ml-1 text-sm text-neutral-600 select-none">
+                  {"Normal"}
+                </span>
+              </label>
+            </div>
+            <MiniCalendar className="p-1" />
+            <ListContainer
+              titleSection={<Titles.Normal name="Calendars" />}
+              buttonSection={
+                <Button.Primary
+                  className="w-full p-1 sticky bottom-0"
+                  innerRef={refButton}
+                  onClick={() => setOpen(!open)}
+                  value="New"
+                  sizeType="xl"
+                />
+              }
+              className="p-1"
+            >
+              {calendarsFound.map((calendar) => {
+                const viewableCalendars = calendars.unwrap();
+
+                const defaultChecked =
+                  viewableCalendars.get(calendar.id) ?? true;
+
+                return (
+                  <CalendarSidebarView
+                    key={calendar.id}
+                    actions={actions}
+                    calendar={calendar}
+                    defaultChecked={defaultChecked}
+                    selectCalendar={setSelectedCalendar}
+                  />
+                );
+              })}
+            </ListContainer>
+          </>
+        )}
       {open && (
         <CreateCalendarForm setOpen={setOpen} refs={O.Some([refButton])} />
       )}
