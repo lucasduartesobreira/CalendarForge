@@ -3,9 +3,9 @@ import { None, Option } from "@/utils/option";
 import { UseStateReturn } from "@/utils/types";
 import { RefObject, createContext } from "react";
 
-export const CalendarModeContext = createContext<Option<"editor" | "normal">>(
-  None(),
-);
+export const CalendarModeContext = createContext<
+  UseStateReturn<Option<"editor" | "normal">>
+>([None(), () => {}]);
 
 export const SelectedEvents = createContext<
   Option<UseStateReturn<Map<CalendarEvent["id"], CalendarEvent>>>
