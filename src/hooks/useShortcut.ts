@@ -6,7 +6,7 @@ export const useShortcut = (
   shortcut: Shortcut,
   mode: "editor" | "normal" | "all",
 ) => {
-  const calendarMode = useContext(CalendarModeContext);
+  const [calendarMode] = useContext(CalendarModeContext);
   useEffect(() => {
     return calendarMode
       .map((calendarMode) => {
