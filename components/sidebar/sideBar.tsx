@@ -124,7 +124,7 @@ const CalendarSidebarView = ({
   selectCalendar: (value: O.Option<Calendar>) => void;
 }) => {
   return (
-    <li className="flex items-center gap-2 w-full relative">
+    <li className="flex items-center w-full relative max-w-[12rem]">
       <input
         type="checkbox"
         onChange={(event) => {
@@ -133,14 +133,14 @@ const CalendarSidebarView = ({
         defaultChecked={defaultChecked}
         className="px-[2px]"
       />
-      <div className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
+      <div className="text-neutral-600 p-1 whitespace-nowrap overflow-hidden truncate">
         {calendar.name}
       </div>
       <Button.Secondary
         onClick={() => {
           setSelectedCalendar(O.Some(calendar));
         }}
-        className="p-1 flex-none"
+        className="ml-auto p-1 flex-none"
         value="Edit"
         sizeType="ml"
       />
