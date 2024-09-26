@@ -179,9 +179,9 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
               <CreateEventFormOpenCtx.Provider value={openCreateFormState}>
                 <EditorSideBar
                   viewableCalendarsState={viewableCalendarsState}
-                  className="p-1 w-[20%]"
+                  className="p-1 max-w-min"
                 />
-                <div className="ml-auto w-[85%] max-h-[100%] bg-white relative">
+                <div className="ml-1 w-full max-h-[100%] bg-white relative">
                   <CalendarEditorWeek
                     style={
                       "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"

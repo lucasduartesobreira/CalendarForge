@@ -10,6 +10,7 @@ import { ListContainer } from "../shared/list-view/list";
 import { Button } from "../shared/button-view/buttons";
 import { Titles } from "../shared/title-view/titles";
 import { EventsDisplayedContext } from "../calendar-editor-week-view/calendarEditorWeek";
+import { MiniCalendar } from "../calendar-mini-calendar/miniCalendar";
 
 export const EditorSideBar = (
   args: HTMLDivExtended<
@@ -81,36 +82,39 @@ export const EditorSideBar = (
   return (
     <div {...arg} className={`${arg.className}`}>
       {storages.isSome() && calendars.isSome() && actions.isSome() && (
-        <ListContainer
-          titleSection={<Titles.Normal name="Calendars" />}
-          buttonSection={
-            <Button.Primary
-              className="w-full p-1 sticky bottom-0"
-              innerRef={refButton}
-              onClick={() => setOpen(!open)}
-              value="New"
-              sizeType="xl"
-            />
-          }
-          className="p-1"
-        >
-          {calendarsFound.map((calendar) => {
-            const viewableCalendars = calendars.unwrap();
-
-            const defaultChecked = viewableCalendars.get(calendar.id) ?? true;
-
-            return (
-              <CalendarSidebarView
-                key={calendar.id}
-                actions={actions}
-                calendar={calendar}
-                defaultChecked={defaultChecked}
-                selectCalendar={setSelectedCalendar}
-                distribution={eventsDistribution.get(calendar.id) ?? 0}
+        <>
+          <MiniCalendar className="p-1 first:mb-1" />
+          <ListContainer
+            titleSection={<Titles.Normal name="Calendars" />}
+            buttonSection={
+              <Button.Primary
+                className="w-full p-1 sticky bottom-0"
+                innerRef={refButton}
+                onClick={() => setOpen(!open)}
+                value="New"
+                sizeType="xl"
               />
-            );
-          })}
-        </ListContainer>
+            }
+            className="p-1"
+          >
+            {calendarsFound.map((calendar) => {
+              const viewableCalendars = calendars.unwrap();
+
+              const defaultChecked = viewableCalendars.get(calendar.id) ?? true;
+
+              return (
+                <CalendarSidebarView
+                  key={calendar.id}
+                  actions={actions}
+                  calendar={calendar}
+                  defaultChecked={defaultChecked}
+                  selectCalendar={setSelectedCalendar}
+                  distribution={eventsDistribution.get(calendar.id) ?? 0}
+                />
+              );
+            })}
+          </ListContainer>
+        </>
       )}
       {open && (
         <CreateCalendarForm setOpen={setOpen} refs={O.Some([refButton])} />
@@ -140,7 +144,7 @@ const CalendarSidebarView = ({
   distribution: number;
 }) => {
   return (
-    <li className="flex items-center gap-2 w-full relative">
+    <li className="flex items-center w-full relative max-w-[12rem]">
       <input
         type="checkbox"
         onChange={(event) => {
@@ -149,11 +153,11 @@ const CalendarSidebarView = ({
         defaultChecked={defaultChecked}
         className="px-[2px]"
       />
-      <div className="text-neutral-600 p-1 max-w-[70%] whitespace-nowrap overflow-hidden">
+      <div className="text-neutral-600 p-1 whitespace-nowrap overflow-hidden truncate">
         {calendar.name}
       </div>
       <div className="ml-auto text-neutral-600 p-1 max-w-fit whitespace-nowrap text-center align-start">
-        {distribution * 100}%
+        {Math.round(distribution * 100 * 100) / 100}%
       </div>
       <Button.Secondary
         onClick={() => {
