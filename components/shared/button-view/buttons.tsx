@@ -5,10 +5,14 @@ import { twMerge } from "tailwind-merge";
 const ButtonSecondary = ({
   value,
   sizeType,
+  className,
   ...props
 }: HTMLDivExtended<HTMLButtonElement, { value: string; sizeType: "ml" }>) => {
   return (
-    <button {...props} className={`${props.className} ml-auto text-yellow-500`}>
+    <button
+      {...props}
+      className={twMerge(`ml-auto text-yellow-500`, className)}
+    >
       {value}
     </button>
   );
