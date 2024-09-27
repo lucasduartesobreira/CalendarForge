@@ -21,7 +21,6 @@ import { DraggedEvent } from "@/components/shared/day-view/dayEventsContent";
 import CalendarEditorWeek, {
   EventsDisplayedContext,
 } from "@/components/calendar-editor-week-view/calendarEditorWeek";
-import { EditorSideBar } from "@/components/calendar-editor-sidebar/sideBar";
 import {
   ActionSelected,
   CalendarModeContext,
@@ -133,53 +132,55 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
     O.None(),
   );
 
-  return calendarMode
-    .map((mode) =>
-      mode === "normal" ? (
-        <>
-          <CreateEventFormOpenCtx.Provider value={openCreateFormState}>
-            <SideBar
-              viewableCalendarsState={viewableCalendarsState}
-              className="p-1 max-w-min"
-            />
-            <div className="ml-1 w-full max-h-[100%] bg-white">
-              <CalendarWeek
-                style={
-                  "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
-                }
-                startDate={startDate}
+  return (
+    <>
+      <SelectedEvents.Provider value={O.Some(selectedEvents)}>
+        <SelectedRefs.Provider value={O.Some(selectedRefs)}>
+          <ActionSelected.Provider value={selectedAction}>
+            <CreateEventFormOpenCtx.Provider value={openCreateFormState}>
+              <SideBar
                 viewableCalendarsState={viewableCalendarsState}
+                className="p-1 max-w-min"
               />
-            </div>
-            <CreateEventButton />
-          </CreateEventFormOpenCtx.Provider>
-        </>
-      ) : mode === "editor" ? (
-        <SelectedEvents.Provider value={O.Some(selectedEvents)}>
-          <SelectedRefs.Provider value={O.Some(selectedRefs)}>
-            <ActionSelected.Provider value={selectedAction}>
-              <CreateEventFormOpenCtx.Provider value={openCreateFormState}>
-                <EditorSideBar
+              <div className="ml-1 w-full max-h-[100%] bg-white relative">
+                {calendarMode
+                  .map((mode) =>
+                    mode === "normal" ? (
+                      <CalendarWeek
+                        key={"calendarweek"}
+                        style={
+                          "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+                        }
+                        startDate={startDate}
+                        viewableCalendarsState={viewableCalendarsState}
+                      />
+                    ) : mode === "editor" ? (
+                      <CalendarEditorWeek
+                        key={"calendarweekeditor"}
+                        style={
+                          "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+                        }
+                        startDate={startDate}
+                        viewableCalendarsState={viewableCalendarsState}
+                      />
+                    ) : null,
+                  )
+                  .unwrapOrElse(() => null)}
+                <CalendarEditorWeek
+                  style={
+                    "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+                  }
+                  startDate={startDate}
                   viewableCalendarsState={viewableCalendarsState}
-                  className="p-1 max-w-min"
                 />
-                <div className="ml-1 w-full max-h-[100%] bg-white relative">
-                  <CalendarEditorWeek
-                    style={
-                      "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
-                    }
-                    startDate={startDate}
-                    viewableCalendarsState={viewableCalendarsState}
-                  />
-                </div>
-                <CreateEventButton />
-              </CreateEventFormOpenCtx.Provider>
-            </ActionSelected.Provider>
-          </SelectedRefs.Provider>
-        </SelectedEvents.Provider>
-      ) : null,
-    )
-    .unwrapOrElse(() => null);
+              </div>
+              <CreateEventButton />
+            </CreateEventFormOpenCtx.Provider>
+          </ActionSelected.Provider>
+        </SelectedRefs.Provider>
+      </SelectedEvents.Provider>
+    </>
+  );
 };
 
 const useDate = () => {

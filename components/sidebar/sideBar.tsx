@@ -22,6 +22,7 @@ import { Button } from "../shared/button-view/buttons";
 import { Titles } from "../shared/title-view/titles";
 import { MiniCalendar } from "../calendar-mini-calendar/miniCalendar";
 import { CalendarModeContext } from "../calendar-editor-week-view/contexts";
+import { EventsDisplayedContext } from "../calendar-editor-week-view/calendarEditorWeek";
 
 const useViewableCalendars = ({
   viewableCalendarsState,
@@ -104,7 +105,7 @@ const SideBarContainer = ({
   );
 };
 
-const CalendarsCard = ({
+const CalendarsNormalCard = ({
   viewableCalendarsState,
 }: {
   viewableCalendarsState: O.Option<
@@ -141,7 +142,7 @@ const CalendarsCard = ({
         const defaultChecked = viewableCalendars.get(calendar.id) ?? true;
 
         return (
-          <CalendarSidebarView
+          <CalendarListItemNormal
             key={calendar.id}
             actions={isCalendarViewable}
             calendar={calendar}
@@ -154,8 +155,87 @@ const CalendarsCard = ({
   );
 };
 
+const useEventsDistribution = () => {
+  const [eventsDistribution, setEventDistribution] = useState(
+    new Map<string, number>(),
+  );
+
+  const displayedEvents = useContext(EventsDisplayedContext);
+
+  useEffect(() => {
+    displayedEvents.map(([events]) => {
+      setEventDistribution(
+        events.reduce((acc, value) => {
+          const foundCalendarCount = acc.get(value.calendar_id) ?? 0;
+          return acc.set(
+            value.calendar_id,
+            foundCalendarCount + 1 / events.length,
+          );
+        }, new Map<string, number>()),
+      );
+    });
+  }, [displayedEvents]);
+
+  return {
+    distribution: eventsDistribution,
+  };
+};
+
+const CalendarsEditorCard = ({
+  viewableCalendarsState,
+}: {
+  viewableCalendarsState: O.Option<
+    [
+      Omit<Map<string, boolean>, "set" | "clear" | "delete">,
+      Actions<string, boolean>,
+    ]
+  >;
+}) => {
+  const { distribution: eventsDistribution } = useEventsDistribution();
+
+  const { isCalendarViewable, calendars, calendarsFound } =
+    useViewableCalendars({ viewableCalendarsState });
+
+  const { setOpen, setSelectedCalendar, refButton } = useContext(
+    SideBarContainerFormContext,
+  );
+
+  return (
+    <ListContainer
+      titleSection={<Titles.Normal name="Calendars" />}
+      buttonSection={
+        <Button.Primary
+          className="w-full p-1 sticky bottom-0"
+          innerRef={refButton.isSome() ? refButton.unwrap() : undefined}
+          onClick={() => setOpen(!open)}
+          value="New"
+          sizeType="xl"
+        />
+      }
+      className="p-1"
+    >
+      {calendarsFound.map((calendar) => {
+        const viewableCalendars = calendars.unwrap();
+
+        const defaultChecked = viewableCalendars.get(calendar.id) ?? true;
+
+        return (
+          <CalendarListItemEditor
+            key={calendar.id}
+            actions={isCalendarViewable}
+            calendar={calendar}
+            defaultChecked={defaultChecked}
+            selectCalendar={setSelectedCalendar}
+            distribution={eventsDistribution.get(calendar.id) ?? 0}
+          />
+        );
+      })}
+    </ListContainer>
+  );
+};
+
 const ModeCard = ({}) => {
-  const [, setCalendarMode] = useContext(CalendarModeContext);
+  const [calendarMode, setCalendarMode] = useContext(CalendarModeContext);
   return (
     <div
       className={`inline-flex items-center justify-center w-full p-1 min-w-fit bg-white rounded-xl shadow-lg border-[1px] border-neutral-200 overflow-hidden text-neutral-600`}
@@ -165,12 +245,16 @@ const ModeCard = ({}) => {
         <input
           type="checkbox"
           className="sr-only peer"
-          checked={false}
+          checked={calendarMode
+            .map((mode) => mode === "editor")
+            .unwrapOrElse(() => false)}
           onChange={() => {
-            setCalendarMode(O.Some("editor"));
+            setCalendarMode((mode) =>
+              mode.map((mode) => (mode === "normal" ? "editor" : "normal")),
+            );
           }}
         />
-        <div className="w-10 h-5 border-primary-100 border-[2px] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-primary-300 peer-checked:after:bg-primary-300 after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-primary-200 after:border-primary-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-200" />
+        <div className="w-10 h-5 border-primary-100 border-[2px] peer-focus:outline-none rounded-full peer peer-checked:after:start-[24px] rtl:peer-checked:after:-translate-x-1/2 peer-checked:after:border-primary-300 peer-checked:after:bg-primary-300 after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-primary-200 after:border-primary-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-100" />
         <span className="ml-1 text-sm text-neutral-600 select-none">
           {"Normal"}
         </span>
@@ -178,6 +262,8 @@ const ModeCard = ({}) => {
     </div>
   );
 };
+
+const NullComponent = (_props: any) => <></>;
 
 const SideBar = ({
   viewableCalendarsState,
@@ -193,16 +279,27 @@ const SideBar = ({
     >;
   }
 >) => {
+  const [calendarMode] = useContext(CalendarModeContext);
+  console.log(calendarMode);
+  const CalendarCard = calendarMode
+    .map((mode) =>
+      mode === "editor"
+        ? CalendarsEditorCard
+        : mode === "normal"
+        ? CalendarsNormalCard
+        : NullComponent,
+    )
+    .unwrapOrElse(() => NullComponent);
   return (
     <SideBarContainer {...args}>
       <ModeCard />
       <MiniCalendar className="p-1" />
-      <CalendarsCard viewableCalendarsState={viewableCalendarsState} />
+      <CalendarCard viewableCalendarsState={viewableCalendarsState} />
     </SideBarContainer>
   );
 };
 
-const CalendarSidebarView = ({
+const CalendarListItemNormal = ({
   actions,
   calendar,
   defaultChecked,
@@ -231,6 +328,47 @@ const CalendarSidebarView = ({
           setSelectedCalendar(O.Some(calendar));
         }}
         className="ml-auto p-1 flex-none"
+        value="Edit"
+        sizeType="ml"
+      />
+    </li>
+  );
+};
+
+const CalendarListItemEditor = ({
+  actions,
+  calendar,
+  defaultChecked,
+  distribution,
+  selectCalendar: setSelectedCalendar,
+}: {
+  actions: O.Option<Actions<string, boolean>>;
+  calendar: Calendar;
+  defaultChecked: boolean;
+  selectCalendar: (value: O.Option<Calendar>) => void;
+  distribution: number;
+}) => {
+  return (
+    <li className="flex items-center w-full relative max-w-[12rem]">
+      <input
+        type="checkbox"
+        onChange={(event) => {
+          actions.unwrap().set(calendar.id, event.target.checked);
+        }}
+        defaultChecked={defaultChecked}
+        className="px-[2px]"
+      />
+      <div className="text-neutral-600 p-1 whitespace-nowrap overflow-hidden truncate">
+        {calendar.name}
+      </div>
+      <div className="ml-auto text-neutral-600 p-1 max-w-fit whitespace-nowrap text-center align-start">
+        {Math.round(distribution * 100 * 100) / 100}%
+      </div>
+      <Button.Secondary
+        onClick={() => {
+          setSelectedCalendar(O.Some(calendar));
+        }}
+        className="p-1 flex-none ml-1"
         value="Edit"
         sizeType="ml"
       />
