@@ -11,7 +11,6 @@ import {
   useDataStorage,
 } from "@/hooks/dataHook";
 import { useMap } from "@/hooks/mapHook";
-import { WeekNavigation } from "@/components/calendar-navbar/navBar";
 import * as O from "@/utils/option";
 import {
   CalendarEvent,
@@ -32,22 +31,6 @@ import {
 import { useShortcut } from "@/hooks/useShortcut";
 import { ShortcutBuilder } from "@/utils/shortcuts";
 import { SelectedDateContext } from "@/components/calendar-navbar/selectedDateContext";
-
-const NavBarContainer = ({
-  children,
-  className,
-}: {
-  children: any;
-  className?: string;
-}) => {
-  return (
-    <div
-      className={`flex-none rounded-b-md flex w-full relative h-[42px] bg-primary-500 items-center ${className}`}
-    >
-      {children}
-    </div>
-  );
-};
 
 const FlexContent = ({ children }: { children: any }) => {
   return <div className="flex relative overflow-hidden h-full">{children}</div>;
@@ -220,7 +203,6 @@ const Home = () => {
   const data = useDataStorage();
   const [startDate, setStartDate] = useDate();
   const draggedHook = useState<O.Option<CalendarEvent>>(O.None());
-  const [menuType, setMenuType] = useState<"calendar" | "projects">("calendar");
   const [recurringEventsManager, setManager] = useState<
     O.Option<RecurringEventsManager>
   >(O.None());
