@@ -140,7 +140,6 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
           <CreateEventFormOpenCtx.Provider value={openCreateFormState}>
             <SideBar
               viewableCalendarsState={viewableCalendarsState}
-              startDate={startDate}
               className="p-1 max-w-min"
             />
             <div className="ml-1 w-full max-h-[100%] bg-white">
