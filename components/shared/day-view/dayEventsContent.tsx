@@ -334,43 +334,21 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
   ] as const;
 };
 
-const DraggableCalendarEvent = ({
-  event,
-  conflicts,
-  day,
-  index,
-  setSelectedEvent,
-}: {
-  event: CalendarEvent;
-  conflicts: Map<string, number>;
-  day: number;
-  index: number;
-  setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
-}) => {
-  const [, setDragged] = useContext(DraggedEvent);
-
-  const [Checkbox, completedTask, ref] = TaskCompleteCheckboxFactory(
-    false,
-    event.task_id,
-  );
-
-  const { isDragging, onMouseUp, ...dragAndDropHandlers } = useDragAndDrop({
-    onDrag: () => {
-      setDragged(O.Some(event));
-    },
-    onDragEnd: () => {
-      setDragged(O.None());
-    },
-    blockedRef: ref != null ? O.Some(ref) : O.None(),
-  });
-
-  const [isResizing, newHeight, ResizeDiv] = useResize({ event, day });
+const useSelected = (
+  event: CalendarEvent,
+  onMouseUp: DivType["onMouseUp"],
+  state: "dragging" | "resizing" | "normal",
+) => {
   const selectedEventsCtx = useContext(SelectedEvents);
   const selectedRefsCtx = useContext(SelectedRefs);
   const [, setSelectedAction] = useContext(ActionSelected);
 
   const compRef: DivType["ref"] = useRef(null);
   const dragAndSelectHandler: DivType["onMouseUp"] = (mouseEvent) => {
+    if (state !== "normal") {
+      return;
+    }
+
     selectedEventsCtx
       .flatMap((selectedEvents) =>
         selectedRefsCtx.map(
@@ -403,8 +381,48 @@ const DraggableCalendarEvent = ({
         },
       );
 
-    onMouseUp(mouseEvent);
+    onMouseUp?.(mouseEvent);
   };
+
+  return { dragAndSelectHandler, compRef };
+};
+
+const DraggableCalendarEvent = ({
+  event,
+  conflicts,
+  day,
+  index,
+  setSelectedEvent,
+}: {
+  event: CalendarEvent;
+  conflicts: Map<string, number>;
+  day: number;
+  index: number;
+  setSelectedEvent: (value: O.Option<CalendarEvent>) => void;
+}) => {
+  const [, setDragged] = useContext(DraggedEvent);
+
+  const [Checkbox, completedTask, ref] = TaskCompleteCheckboxFactory(
+    false,
+    event.task_id,
+  );
+
+  const { isDragging, onMouseUp, ...dragAndDropHandlers } = useDragAndDrop({
+    onDrag: () => {
+      setDragged(O.Some(event));
+    },
+    onDragEnd: () => {
+      setDragged(O.None());
+    },
+    blockedRef: ref != null ? O.Some(ref) : O.None(),
+  });
+
+  const [isResizing, newHeight, ResizeDiv] = useResize({ event, day });
+  const { dragAndSelectHandler, compRef } = useSelected(
+    event,
+    onMouseUp,
+    isResizing ? "resizing" : isDragging ? "dragging" : "normal",
+  );
 
   return (
     <ShowCalendarEvent
