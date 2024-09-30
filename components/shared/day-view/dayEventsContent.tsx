@@ -246,6 +246,35 @@ const relativePositionToHour = (
   return [hours, minutes];
 };
 
+const useResetSelection = () => {
+  const selectedEventsCtx = useContext(SelectedEvents);
+  const selectedEventsRef = useContext(SelectedRefs);
+
+  const removeSelected = useMemo(
+    () => () => {
+      selectedEventsCtx
+        .map(([, setSelectedEvents]) =>
+          selectedEventsRef.map(([, setSelectedRefs]) => ({
+            setSelectedRefs,
+            setSelectedEvents,
+          })),
+        )
+        .flatten()
+        .map(({ setSelectedRefs, setSelectedEvents }) => {
+          setSelectedEvents(() => {
+            return new Map();
+          });
+          setSelectedRefs(() => {
+            return new Map();
+          });
+        });
+    },
+    [selectedEventsRef, selectedEventsCtx],
+  );
+
+  return removeSelected;
+};
+
 const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
   const startDate = useMemo(() => new Date(event.startDate), [event]);
   const endDate = useMemo(() => new Date(event.endDate), [event]);
