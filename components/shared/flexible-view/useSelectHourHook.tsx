@@ -9,6 +9,7 @@ import {
   computeMousePosition,
   startAndHeight,
 } from "../day-view/dayEventsContent";
+import { useResetSelection } from "@/components/calendar-editor-week-view/hooks";
 
 export const useSelectHours = () => {
   const [creatingEventForm, setCreateEventFormOpen] = useContext(
@@ -40,10 +41,13 @@ export const useSelectHours = () => {
   type EventListenerFN<K extends keyof WindowEventMap> = Parameters<
     typeof window.addEventListener<K>
   >[1];
+
+  const resetSelection = useResetSelection();
   const mouseDownFactory =
     (dayInMilliseconds: number, day: number) =>
     (hour: number, quarter: number) => {
       if (creatingEventForm.isSome()) return;
+      resetSelection();
 
       const start =
         dayInMilliseconds + hour * 60 * 60 * 1000 + quarter * 15 * 60 * 1000;

@@ -3,6 +3,7 @@ import {
   SelectedEvents,
   SelectedRefs,
 } from "@/components/calendar-editor-week-view/contexts";
+import { useResetSelection } from "@/components/calendar-editor-week-view/hooks";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent, EventColors } from "@/services/events/events";
 import * as O from "@/utils/option";
@@ -243,35 +244,6 @@ const relativePositionToHour = (
   const minutes = Math.round((hoursAndMinutes - hours) * 60);
 
   return [hours, minutes];
-};
-
-const useResetSelection = () => {
-  const selectedEventsCtx = useContext(SelectedEvents);
-  const selectedEventsRef = useContext(SelectedRefs);
-
-  const removeSelected = useMemo(
-    () => () => {
-      selectedEventsCtx
-        .map(([, setSelectedEvents]) =>
-          selectedEventsRef.map(([, setSelectedRefs]) => ({
-            setSelectedRefs,
-            setSelectedEvents,
-          })),
-        )
-        .flatten()
-        .map(({ setSelectedRefs, setSelectedEvents }) => {
-          setSelectedEvents(() => {
-            return new Map();
-          });
-          setSelectedRefs(() => {
-            return new Map();
-          });
-        });
-    },
-    [selectedEventsRef, selectedEventsCtx],
-  );
-
-  return removeSelected;
 };
 
 const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
