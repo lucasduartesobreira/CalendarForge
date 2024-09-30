@@ -288,7 +288,6 @@ const SideBar = ({
   }
 >) => {
   const [calendarMode] = useContext(CalendarModeContext);
-  console.log(calendarMode);
   const CalendarCard = calendarMode
     .map((mode) =>
       mode === "editor"
