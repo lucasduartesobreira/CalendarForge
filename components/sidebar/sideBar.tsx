@@ -256,7 +256,15 @@ const ModeCard = ({}) => {
         />
         <div className="w-10 h-5 border-primary-100 border-[2px] peer-focus:outline-none rounded-full peer peer-checked:after:start-[24px] rtl:peer-checked:after:-translate-x-1/2 peer-checked:after:border-primary-300 peer-checked:after:bg-primary-300 after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-primary-200 after:border-primary-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary-100" />
         <span className="ml-1 text-sm text-neutral-600 select-none">
-          {"Normal"}
+          {calendarMode
+            .map((mode) =>
+              mode == "normal"
+                ? "Normal"
+                : mode === "editor"
+                ? "Editor"
+                : "Normal",
+            )
+            .unwrapOrElse(() => "Normal")}
         </span>
       </label>
     </div>
