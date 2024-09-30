@@ -166,13 +166,6 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
                     ) : null,
                   )
                   .unwrapOrElse(() => null)}
-                <CalendarEditorWeek
-                  style={
-                    "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
-                  }
-                  startDate={startDate}
-                  viewableCalendarsState={viewableCalendarsState}
-                />
               </div>
               <CreateEventButton />
             </CreateEventFormOpenCtx.Provider>
