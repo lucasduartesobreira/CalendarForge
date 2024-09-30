@@ -356,7 +356,7 @@ const CalendarListItemEditor = ({
   distribution: number;
 }) => {
   return (
-    <li className="flex items-center w-full relative max-w-[12rem]">
+    <li className="flex items-center w-full relative max-w-[11rem]">
       <input
         type="checkbox"
         onChange={(event) => {
