@@ -159,6 +159,11 @@ const useDragAndDrop = ({
 }) => {
   const [timeout, setTout] = useState<O.Option<number>>(O.None());
   const [isDragging, setIsDragging] = useState(false);
+  const resetSelection = useResetSelection();
+
+  useEffect(() => {
+    isDragging && resetSelection();
+  }, [resetSelection, isDragging]);
 
   const onMouseDown: DivType["onMouseDown"] = (e) => {
     const isChild = blockedRef.map(
