@@ -100,6 +100,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
   closeOnDelete = true,
   blockedRefs,
   ChangeEventTypeSwitch,
+  onChangeForm,
 }: {
   initialFormState: T;
   setOpen: (value: boolean) => void;
@@ -117,6 +118,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
     isTask: boolean;
     setIsTask: (value: boolean) => void;
   }>;
+  onChangeForm?: (value: T) => void;
 }) => {
   const { storages } = useContext(StorageContext);
   const [form, setForm] = useState<T>(initialFormState);
@@ -139,6 +141,10 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
       setCalendars(await calendarsStorage.all()),
     );
   }, []);
+
+  useEffect(() => {
+    onChangeForm?.(form);
+  }, [form, onChangeForm]);
 
   const handleChangeText =
     <
