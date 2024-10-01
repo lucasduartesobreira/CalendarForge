@@ -1,7 +1,6 @@
-import { CreateEventFormOpenCtx } from "@/components/event-create-form/createEvent";
 import { CreateEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DAY_HEADER_HEIGHT,
   HOUR_BLOCK_HEIGHT,
@@ -10,11 +9,10 @@ import {
   startAndHeight,
 } from "../day-view/dayEventsContent";
 import { useResetSelection } from "@/components/calendar-editor-week-view/hooks";
+import { useFormHandler } from "@/components/form-handler/formHandler";
 
 export const useSelectHours = () => {
-  const [creatingEventForm, setCreateEventFormOpen] = useContext(
-    CreateEventFormOpenCtx,
-  );
+  const setForm = useFormHandler();
 
   const [createNewEventData, setCreatingNewEvent] = useState<
     O.Option<Pick<CreateEvent, "startDate" | "endDate"> & { day: number }>
@@ -22,21 +20,34 @@ export const useSelectHours = () => {
   const [push, setPush] = useState(false);
 
   useEffect(() => {
-    if (push) {
-      setCreateEventFormOpen(createNewEventData);
-      setPush(false);
-    }
+    createNewEventData.map((eventData) => {
+      if (push) {
+        setForm(
+          "createEvent",
+          {
+            startDate: eventData.startDate,
+            endDate: eventData.endDate,
+          },
+          O.None(),
+          (form) => {
+            setCreatingNewEvent((oldDates) =>
+              oldDates.map(({ day }) => ({
+                startDate: form.startDate,
+                endDate: form.endDate,
+                day,
+              })),
+            );
+          },
+          () => {
+            setCreatingNewEvent(O.None());
+            // TODO: fix this to just detect when it's clicking again on the calendar view
+            setTimeout(() => setPush(false), 50);
+          },
+        );
+        setPush(false);
+      }
+    });
   }, [push]);
-
-  useEffect(() => {
-    setCreatingNewEvent(
-      creatingEventForm.map((form) => ({
-        startDate: form.startDate ?? -1,
-        endDate: form.endDate ?? -1,
-        day: new Date(form.startDate ?? -1).getTime(),
-      })),
-    );
-  }, [creatingEventForm]);
 
   type EventListenerFN<K extends keyof WindowEventMap> = Parameters<
     typeof window.addEventListener<K>
@@ -46,7 +57,6 @@ export const useSelectHours = () => {
   const mouseDownFactory =
     (dayInMilliseconds: number, day: number) =>
     (hour: number, quarter: number) => {
-      if (creatingEventForm.isSome()) return;
       resetSelection();
 
       const start =
