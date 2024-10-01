@@ -13,7 +13,7 @@ import { CreateEventForm } from "../event-create-form/createEvent";
 import { CreateCalendarForm } from "../calendar-create-form/createCalendar";
 import UpdateCalendarForm from "../calendar-update-form/updateCalendar";
 import { UseStateReturn } from "@/utils/types";
-import { CalendarEvent } from "@/services/events/events";
+import { CalendarEvent, CreateEvent } from "@/services/events/events";
 import { Calendar, CreateCalendar } from "@/services/calendar/calendar";
 
 const forms = {
@@ -30,14 +30,17 @@ const forms = {
     form: ({
       initialForm,
       setOpen,
+      onChangeForm,
     }: {
-      initialForm: CalendarEvent;
+      initialForm: CreateEvent;
       setOpen: Dispatch<SetStateAction<boolean>>;
+      onChangeForm?: (form: CreateEvent) => void;
     }) => (
       <CreateEventForm
         setOpen={setOpen}
         initialForm={initialForm}
         blockdRefs={None()}
+        onChangeForm={onChangeForm}
       />
     ),
   },
@@ -72,13 +75,14 @@ const forms = {
       initialForm: any;
       setOpen: Dispatch<SetStateAction<boolean>>;
       refsBlocked: Option<RefObject<any>>;
+      onChangeForm?: (form: object) => void;
     }) => JSX.Element;
   }
 >;
 
 type FormInput<T extends keyof typeof forms> = {
   updateEvent: CalendarEvent;
-  createEvent: CalendarEvent;
+  createEvent: CreateEvent;
   createCalendar: CreateCalendar;
   updateCalendar: Calendar;
 }[T];
@@ -86,11 +90,29 @@ type FormCtx = Option<{
   formType: keyof typeof forms;
   formInput: object;
   refsBlocked: Option<RefObject<any>>;
+  onChangeForm?: (form: any) => void;
+  onClose?: () => void;
 }>;
 
+const initialFormState: CreateEvent = {
+  title: "",
+  endDate: Date.now() + 60 * 60 * 1000,
+  startDate: Date.now(),
+  description: "",
+  calendar_id: "",
+  notifications: [],
+  color: "#7a5195",
+};
+
+const initialCalendar: CreateCalendar = {
+  name: "",
+  timezone: 0,
+  default: false,
+};
+
 const defaultForm = {
-  createEvent: {} as CalendarEvent,
-  createCalendar: {} as CreateCalendar,
+  createEvent: initialFormState,
+  createCalendar: initialCalendar,
   updateCalendar: null,
   updateEvent: null,
 } as const satisfies {
@@ -111,25 +133,53 @@ export const useFormHandler = () => {
   function setActiveForm<FormType extends keyof typeof forms>(
     formType: FormType,
     input: FormInput<FormType>,
+  ): void;
+  function setActiveForm<FormType extends keyof typeof forms>(
+    formType: FormType,
+    input: Partial<FormInput<FormType>>,
+  ): void;
+  function setActiveForm<FormType extends keyof typeof forms>(
+    formType: FormType,
+    input: Partial<FormInput<FormType>>,
     refsBlocked: Option<RefObject<any>>,
   ): void;
   function setActiveForm<FormType extends keyof typeof forms>(
     formType: FormType,
-    input?: FormInput<FormType>,
+    input: Partial<FormInput<FormType>>,
+    refsBlocked: Option<RefObject<any>>,
+    onChangeForm: (form: FormInput<FormType>) => void,
+  ): void;
+  function setActiveForm<FormType extends keyof typeof forms>(
+    formType: FormType,
+    input: Partial<FormInput<FormType>>,
+    refsBlocked: Option<RefObject<any>>,
+    onChangeForm: (form: FormInput<FormType>) => void,
+    onClose: () => void,
+  ): void;
+  function setActiveForm<FormType extends keyof typeof forms>(
+    formType: FormType,
+    input?: Partial<FormInput<FormType>>,
     refsBlocked: Option<RefObject<any>> = None(),
+    onChangeForm?: (form: FormInput<FormType>) => void,
+    onClose?: () => void,
   ) {
-    const initialForm = input ?? defaultForm[formType];
-    if (initialForm != null) {
-      setForm((form) =>
-        form.isSome()
-          ? form
-          : Some({
-              formType,
-              formInput: initialForm,
-              refsBlocked,
-            }),
-      );
+    const dForm = defaultForm[formType];
+    if (dForm == null && input == null) {
+      return;
     }
+    const fixedDForm = dForm ?? {};
+    const fixedInput = input ?? {};
+    setForm((form) =>
+      form.isSome()
+        ? form
+        : Some({
+            formType,
+            formInput: { ...fixedDForm, ...fixedInput },
+            refsBlocked,
+            onChangeForm,
+            onClose,
+          }),
+    );
   }
 
   return setActiveForm;
@@ -141,15 +191,19 @@ export const FormHandler = ({ children }: PropsWithChildren) => {
     <formCtx.Provider value={[activeForm, setForm]}>
       {children}
       {activeForm
-        .map(({ formType, formInput, refsBlocked }) => {
+        .map(({ formType, formInput, refsBlocked, onChangeForm, onClose }) => {
           const Form = forms[formType].form;
 
           return (
             <Form
               key={"main-form"}
               initialForm={formInput as any}
-              setOpen={() => setForm(None())}
+              setOpen={() => {
+                onClose?.();
+                setForm(None());
+              }}
               refsBlocked={refsBlocked}
+              onChangeForm={onChangeForm}
             />
           );
         })
