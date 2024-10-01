@@ -6,6 +6,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import UpdateEventForm from "@/components/event-update-form/updateEvent";
 import { Actions } from "@/hooks/mapHook";
 import { FlexibleView, ViewSize } from "../shared/flexible-view/flexibleView";
+import { useFormHandler } from "../form-handler/formHandler";
 
 const CALENDAR_WEEK_CONTAINER_ID = "calendar-week-container";
 
@@ -26,9 +27,6 @@ const CalendarWeek = ({
   const { storages: storages, listeners } = useContext(StorageContext);
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<O.Option<CalendarEvent>>(
-    O.None(),
-  );
   useEffect(() => {
     if (storages.isSome() && viewableCalendarsState.isSome()) {
       const { eventsStorage } = storages.unwrap();
@@ -92,10 +90,14 @@ const CalendarWeek = ({
     [startDate],
   );
 
+  const setForm = useFormHandler();
+
   return (
     <>
       <FlexibleView
-        selectEvent={setSelectedEvent}
+        selectEvent={(a) => {
+          a.map((calendarEvent) => setForm("updateEvent", calendarEvent));
+        }}
         style={style}
         days={memoedRange.map(({ dayOfWeek, ...rest }) => ({
           ...rest,
@@ -106,15 +108,6 @@ const CalendarWeek = ({
         }))}
         id={CALENDAR_WEEK_CONTAINER_ID}
       />
-      {selectedEvent.mapOrElse(
-        () => null,
-        (selectedEvent) => (
-          <UpdateEventForm
-            setOpen={() => setSelectedEvent(O.None())}
-            initialForm={selectedEvent}
-          />
-        ),
-      )}
     </>
   );
 };

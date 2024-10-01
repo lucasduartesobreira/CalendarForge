@@ -18,6 +18,7 @@ import { DayViewContent } from "../shared/day-view/dayContent";
 import { Selection } from "../editor-selection-view/editorSelection";
 import { ActionHeader } from "../editor-actions-header/actionsHeader";
 import { SelectedEvents, SelectedRefs } from "./contexts";
+import { useFormHandler } from "../form-handler/formHandler";
 
 const CALENDAR_WEEK_CONTAINER_ID = "calendar-week-container";
 
@@ -168,16 +169,19 @@ const CalendarEditorWeek = ({
 
   const allSelectedEvents = useContext(SelectedEvents);
   const allSelectedEventsRefs = useContext(SelectedRefs);
+  const setForm = useFormHandler();
 
   return (
     <>
       <FlexibleView
         selectEvent={(a) => {
-          setSelectedEvent(a);
-          allSelectedEvents.map((eventsSelected) =>
-            eventsSelected[1](new Map()),
-          );
-          allSelectedEventsRefs.map((refs) => refs[1](new Map()));
+          a.map((calendarEvent) => {
+            allSelectedEvents.map((eventsSelected) =>
+              eventsSelected[1](new Map()),
+            );
+            allSelectedEventsRefs.map((refs) => refs[1](new Map()));
+            setForm("updateEvent", calendarEvent);
+          });
         }}
         style={style}
         days={memoedRange.map(({ dayOfWeek, ...rest }) => ({
@@ -201,15 +205,6 @@ const CalendarEditorWeek = ({
         <Selection />
       </FlexibleView>
       <ActionHeader />
-      {selectedEvent.mapOrElse(
-        () => null,
-        (selectedEvent) => (
-          <UpdateEventForm
-            setOpen={() => setSelectedEvent(O.None())}
-            initialForm={selectedEvent}
-          />
-        ),
-      )}
     </>
   );
 };
