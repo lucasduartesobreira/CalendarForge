@@ -1,10 +1,8 @@
 import { StorageContext } from "@/hooks/dataHook";
 import {
   ComponentPropsWithoutRef,
-  Dispatch,
   PropsWithChildren,
   RefObject,
-  SetStateAction,
   createContext,
   useContext,
   useEffect,
@@ -13,9 +11,7 @@ import {
 } from "react";
 import * as O from "@/utils/option";
 import { Calendar } from "@/services/calendar/calendar";
-import UpdateCalendarForm from "@/components/calendar-update-form/updateCalendar";
 import { Actions } from "@/hooks/mapHook";
-import { CreateCalendarForm } from "@/components/calendar-create-form/createCalendar";
 import { HTMLDivExtended } from "@/utils/types";
 import { ListContainer } from "../shared/list-view/list";
 import { Button } from "../shared/button-view/buttons";
@@ -23,6 +19,7 @@ import { Titles } from "../shared/title-view/titles";
 import { MiniCalendar } from "../calendar-mini-calendar/miniCalendar";
 import { CalendarModeContext } from "../calendar-editor-week-view/contexts";
 import { EventsDisplayedContext } from "../calendar-editor-week-view/calendarEditorWeek";
+import { useFormHandler } from "../form-handler/formHandler";
 
 const useViewableCalendars = ({
   viewableCalendarsState,
@@ -64,22 +61,14 @@ const useViewableCalendars = ({
   return { calendars, calendarsFound, isCalendarViewable };
 };
 
-type Setter<T> = Dispatch<SetStateAction<T>>;
-
 const SideBarContainerFormContext = createContext<{
-  setSelectedCalendar: Setter<O.OptionClass<Calendar>>;
-  setOpen: Setter<boolean>;
   refButton: O.Option<RefObject<any>>;
-}>({ setSelectedCalendar: () => {}, setOpen: () => {}, refButton: O.None() });
+}>({ refButton: O.None() });
 
 const SideBarContainer = ({
   children,
   ...arg
 }: PropsWithChildren<ComponentPropsWithoutRef<"div">>) => {
-  const [open, setOpen] = useState(false);
-  const [selectedCalendar, setSelectedCalendar] = useState<O.Option<Calendar>>(
-    O.None(),
-  );
   const refButton = useRef(null);
   return (
     <div
@@ -87,19 +76,9 @@ const SideBarContainer = ({
       className={`${arg.className} flex flex-col gap-1 min-w-fit flex-none`}
     >
       <SideBarContainerFormContext.Provider
-        value={{ setOpen, setSelectedCalendar, refButton: O.Some(refButton) }}
+        value={{ refButton: O.Some(refButton) }}
       >
         {children}
-        {open && (
-          <CreateCalendarForm setOpen={setOpen} refs={O.Some([refButton])} />
-        )}
-        {selectedCalendar.isSome() && (
-          <UpdateCalendarForm
-            setOpen={(_arg: boolean) => setSelectedCalendar(O.None())}
-            refs={O.None()}
-            initialCalendar={selectedCalendar.unwrap()}
-          />
-        )}
       </SideBarContainerFormContext.Provider>
     </div>
   );
@@ -118,9 +97,9 @@ const CalendarsNormalCard = ({
   const { calendarsFound, calendars, isCalendarViewable } =
     useViewableCalendars({ viewableCalendarsState });
 
-  const { setOpen, setSelectedCalendar, refButton } = useContext(
-    SideBarContainerFormContext,
-  );
+  const { refButton } = useContext(SideBarContainerFormContext);
+
+  const setForm = useFormHandler();
 
   return (
     <ListContainer
@@ -129,7 +108,7 @@ const CalendarsNormalCard = ({
         <Button.Primary
           className="w-full p-1 sticky bottom-0"
           innerRef={refButton.isSome() ? refButton.unwrap() : undefined}
-          onClick={() => setOpen(!open)}
+          onClick={() => setForm("createCalendar", refButton)}
           value="New"
           sizeType="xl"
         />
@@ -147,7 +126,11 @@ const CalendarsNormalCard = ({
             actions={isCalendarViewable}
             calendar={calendar}
             defaultChecked={defaultChecked}
-            selectCalendar={setSelectedCalendar}
+            selectCalendar={(selectedCalendar) =>
+              selectedCalendar.map((calendar) =>
+                setForm("updateCalendar", calendar),
+              )
+            }
           />
         );
       })}
@@ -196,9 +179,9 @@ const CalendarsEditorCard = ({
   const { isCalendarViewable, calendars, calendarsFound } =
     useViewableCalendars({ viewableCalendarsState });
 
-  const { setOpen, setSelectedCalendar, refButton } = useContext(
-    SideBarContainerFormContext,
-  );
+  const { refButton } = useContext(SideBarContainerFormContext);
+
+  const setForm = useFormHandler();
 
   return (
     <ListContainer
@@ -207,7 +190,7 @@ const CalendarsEditorCard = ({
         <Button.Primary
           className="w-full p-1 sticky bottom-0"
           innerRef={refButton.isSome() ? refButton.unwrap() : undefined}
-          onClick={() => setOpen(!open)}
+          onClick={() => setForm("createCalendar", refButton)}
           value="New"
           sizeType="xl"
         />
@@ -225,7 +208,11 @@ const CalendarsEditorCard = ({
             actions={isCalendarViewable}
             calendar={calendar}
             defaultChecked={defaultChecked}
-            selectCalendar={setSelectedCalendar}
+            selectCalendar={(selectedCalendar) =>
+              selectedCalendar.map((calendar) =>
+                setForm("updateCalendar", calendar, refButton),
+              )
+            }
             distribution={eventsDistribution.get(calendar.id) ?? 0}
           />
         );

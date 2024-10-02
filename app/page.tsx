@@ -30,6 +30,7 @@ import {
 import { useShortcut } from "@/hooks/useShortcut";
 import { ShortcutBuilder } from "@/utils/shortcuts";
 import { SelectedDateContext } from "@/components/calendar-navbar/selectedDateContext";
+import { FormHandler } from "@/components/form-handler/formHandler";
 
 const FlexContent = ({ children }: { children: any }) => {
   return <div className="flex relative overflow-hidden h-full">{children}</div>;
@@ -222,7 +223,9 @@ const Home = () => {
               <DraggedEvent.Provider value={draggedHook}>
                 <main className="h-full flex flex-col bg-white">
                   <FlexContent>
-                    <CalendarContent startDate={startDate} />
+                    <FormHandler>
+                      <CalendarContent startDate={startDate} />
+                    </FormHandler>
                   </FlexContent>
                 </main>
               </DraggedEvent.Provider>

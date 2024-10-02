@@ -20,6 +20,7 @@ import { Button } from "../shared/button-view/buttons";
 import { EventForm, EventTypeSwitch } from "../shared/event-forms/eventForm";
 import { useShortcut } from "@/hooks/useShortcut";
 import { ShortcutBuilder } from "@/utils/shortcuts";
+import { useFormHandler } from "../form-handler/formHandler";
 
 const initialFormState: CreateEvent = {
   title: "",
@@ -35,10 +36,12 @@ const CreateEventForm = ({
   setOpen,
   initialForm,
   blockdRefs,
+  onChangeForm,
 }: {
   setOpen: (open: boolean) => void;
   initialForm: CreateEvent;
   blockdRefs: O.Option<RefObject<any>[]>;
+  onChangeForm?: (form: CreateEvent) => void;
 }) => {
   const initialStartDate = new Date(initialForm.startDate);
   const initialEndDate = new Date(initialForm.endDate);
@@ -86,6 +89,7 @@ const CreateEventForm = ({
         }
         templateSelector={TemplateSelector}
         ChangeEventTypeSwitch={EventTypeSwitch(false)}
+        onChangeForm={onChangeForm}
       />
     ),
   );
@@ -172,22 +176,19 @@ const CreateEventButton = () => {
     [updates],
   );
 
+  const setForm = useFormHandler();
+
   return (
     <div className="">
       <Button.Primary
         innerRef={buttonRef}
         sizeType="xl"
         className="absolute bottom-8 right-8 w-24 h-24 z-[1000] rounded-s-full rounded-e-full bg-primary-500"
-        onClick={() => setOpen(open.isSome() ? O.None() : O.Some({}))}
+        onClick={() =>
+          setForm("createEvent", initialFormUpdated, O.Some(buttonRef))
+        }
         value="Create Event"
       />
-      {open.isSome() && (
-        <CreateEventForm
-          setOpen={(open) => setOpen(!open ? O.None() : O.Some({}))}
-          initialForm={initialFormUpdated}
-          blockdRefs={O.Some([buttonRef])}
-        />
-      )}
     </div>
   );
 };

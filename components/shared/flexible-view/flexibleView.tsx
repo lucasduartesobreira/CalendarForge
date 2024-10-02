@@ -100,7 +100,9 @@ export const FlexibleView = ({
               dayOfWeek={dayOfWeek}
               day={day}
               isToday={isToday}
-              onMouseDown={onMouseDownFactory(dayInMilliseconds, day)}
+              onMouseDown={(hour, quarter) =>
+                onMouseDownFactory(hour, quarter, day, dayInMilliseconds)
+              }
             />
             {clientSide && (
               <DayViewContent.DayEvents
@@ -121,14 +123,14 @@ export const FlexibleView = ({
             )}
             {createNewEventData.mapOrElse(
               () => null,
-              ({ startDate, endDate }) => {
+              ({ startDate, endDate, title, color }) => {
                 if (new Date(startDate).getDay() === dayOfWeek - 1)
                   return (
                     <ShowCalendarEvent
                       event={{
-                        title: "",
+                        title: title ?? "",
                         id: "",
-                        color: "#7a5195",
+                        color: color ?? "#7a5195",
                         startDate: startDate,
                         endDate: endDate,
                         description: "",
