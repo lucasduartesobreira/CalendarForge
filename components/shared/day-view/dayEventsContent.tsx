@@ -3,6 +3,7 @@ import {
   SelectedEvents,
   SelectedRefs,
 } from "@/components/calendar-editor-week-view/contexts";
+import { useResetSelection } from "@/components/calendar-editor-week-view/hooks";
 import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent, EventColors } from "@/services/events/events";
 import * as O from "@/utils/option";
@@ -159,6 +160,11 @@ const useDragAndDrop = ({
 }) => {
   const [timeout, setTout] = useState<O.Option<number>>(O.None());
   const [isDragging, setIsDragging] = useState(false);
+  const resetSelection = useResetSelection();
+
+  useEffect(() => {
+    isDragging && resetSelection();
+  }, [resetSelection, isDragging]);
 
   const onMouseDown: DivType["onMouseDown"] = (e) => {
     const isChild = blockedRef.map(
@@ -313,6 +319,8 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
     [isResizing],
   );
 
+  const removeSelected = useResetSelection();
+
   const ResizeDiv = useMemo(() => {
     const Component = () => {
       return (
@@ -320,6 +328,7 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
           className={cursorMode}
           onMouseDown={() => {
             setResizing(true);
+            removeSelected();
           }}
         />
       );
@@ -332,6 +341,59 @@ const useResize = ({ event, day }: { event: CalendarEvent; day: number }) => {
     Math.abs(top - bottom),
     ...[endDate.getDate() === day ? ResizeDiv : undefined],
   ] as const;
+};
+
+const useSelected = (
+  event: CalendarEvent,
+  onMouseUp: DivType["onMouseUp"],
+  state: "dragging" | "resizing" | "normal",
+) => {
+  const selectedEventsCtx = useContext(SelectedEvents);
+  const selectedRefsCtx = useContext(SelectedRefs);
+  const [, setSelectedAction] = useContext(ActionSelected);
+
+  const compRef: DivType["ref"] = useRef(null);
+  const dragAndSelectHandler: DivType["onMouseUp"] = (mouseEvent) => {
+    if (state !== "normal") {
+      return;
+    }
+
+    selectedEventsCtx
+      .flatMap((selectedEvents) =>
+        selectedRefsCtx.map(
+          (selectedRefs) => [selectedEvents, selectedRefs] as const,
+        ),
+      )
+      .map(
+        ([[selectedEvents, setSelected], [selectedRefs, setSelectedRefs]]) => {
+          if (mouseEvent.ctrlKey) {
+            if (selectedEvents.has(event.id)) {
+              selectedEvents.delete(event.id);
+              selectedRefs.delete(event.id);
+            } else {
+              selectedEvents.set(event.id, event);
+              selectedRefs.set(event.id, compRef);
+            }
+
+            setSelected(selectedEvents);
+            setSelectedRefs(selectedRefs);
+            setSelectedAction(O.None());
+          } else {
+            selectedEvents.clear();
+            selectedRefs.clear();
+            setSelected(selectedEvents.set(event.id, event));
+            setSelectedRefs(selectedRefs.set(event.id, compRef));
+            setSelectedAction(O.None());
+          }
+
+          return selectedEvents;
+        },
+      );
+
+    onMouseUp?.(mouseEvent);
+  };
+
+  return { dragAndSelectHandler, compRef };
 };
 
 const DraggableCalendarEvent = ({
@@ -365,46 +427,11 @@ const DraggableCalendarEvent = ({
   });
 
   const [isResizing, newHeight, ResizeDiv] = useResize({ event, day });
-  const selectedEventsCtx = useContext(SelectedEvents);
-  const selectedRefsCtx = useContext(SelectedRefs);
-  const [, setSelectedAction] = useContext(ActionSelected);
-
-  const compRef: DivType["ref"] = useRef(null);
-  const dragAndSelectHandler: DivType["onMouseUp"] = (mouseEvent) => {
-    selectedEventsCtx
-      .flatMap((selectedEvents) =>
-        selectedRefsCtx.map(
-          (selectedRefs) => [selectedEvents, selectedRefs] as const,
-        ),
-      )
-      .map(
-        ([[selectedEvents, setSelected], [selectedRefs, setSelectedRefs]]) => {
-          if (mouseEvent.ctrlKey) {
-            if (selectedEvents.has(event.id)) {
-              selectedEvents.delete(event.id);
-              selectedRefs.delete(event.id);
-            } else {
-              selectedEvents.set(event.id, event);
-              selectedRefs.set(event.id, compRef);
-            }
-
-            setSelected(selectedEvents);
-            setSelectedRefs(selectedRefs);
-            setSelectedAction(O.None());
-          } else {
-            selectedEvents.clear();
-            selectedRefs.clear();
-            setSelected(selectedEvents.set(event.id, event));
-            setSelectedRefs(selectedRefs.set(event.id, compRef));
-            setSelectedAction(O.None());
-          }
-
-          return selectedEvents;
-        },
-      );
-
-    onMouseUp(mouseEvent);
-  };
+  const { dragAndSelectHandler, compRef } = useSelected(
+    event,
+    onMouseUp,
+    isResizing ? "resizing" : isDragging ? "dragging" : "normal",
+  );
 
   return (
     <ShowCalendarEvent
