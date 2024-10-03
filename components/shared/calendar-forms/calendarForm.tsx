@@ -51,6 +51,8 @@ export const CalendarForm = <T extends CreateCalendar | Calendar>({
             setForm((form) => ({ ...form, name: e.target.value }));
           }}
           value={form.name}
+          required
+          minLength={1}
           className="mt-2"
         />
         <label
