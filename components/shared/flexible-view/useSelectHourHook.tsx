@@ -12,7 +12,8 @@ import { useResetSelection } from "@/components/calendar-editor-week-view/hooks"
 import { useFormHandler } from "@/components/form-handler/formHandler";
 
 export const useSelectHours = () => {
-  const { setActiveForm: setForm } = useFormHandler();
+  const { setActiveForm: setForm, forceReset: forceResetForm } =
+    useFormHandler();
 
   const [createNewEventData, setCreatingNewEvent] = useState<
     O.Option<
@@ -155,6 +156,7 @@ export const useSelectHours = () => {
     dayInMilliseconds: number,
   ) => {
     resetSelection();
+    forceResetForm();
 
     const start =
       dayInMilliseconds + hour * 60 * 60 * 1000 + quarter * 15 * 60 * 1000;

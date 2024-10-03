@@ -184,7 +184,11 @@ export const useFormHandler = () => {
     );
   }
 
-  return { setActiveForm, isFormSet };
+  const forceReset = () => {
+    setForm(None());
+  };
+
+  return { setActiveForm, isFormSet, forceReset };
 };
 export const FormHandler = ({ children }: PropsWithChildren) => {
   const [activeForm, setForm] = useState<FormCtx>(None());
