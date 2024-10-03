@@ -184,8 +184,8 @@ export const useFormHandler = () => {
     );
   }
 
-  const forceReset = () => {
-    setForm(None());
+  const forceReset = (filter?: (form: FormCtx) => boolean) => {
+    if (filter == null || filter(form)) setForm(None());
   };
 
   return { setActiveForm, isFormSet, forceReset };
