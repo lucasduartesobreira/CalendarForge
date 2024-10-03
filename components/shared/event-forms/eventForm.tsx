@@ -171,7 +171,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const target = new Date(event.target.value);
       form[prop] = target.getTime();
-      setForm(form);
+      if (form.endDate > form.startDate) setForm({ ...form });
     };
 
   const [markdownPreview, setMarkdownPreview] = useState(
