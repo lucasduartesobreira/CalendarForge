@@ -48,8 +48,7 @@ export const CalendarForm = <T extends CreateCalendar | Calendar>({
           type="text"
           placeholder="Name"
           onChange={(e) => {
-            form.name = e.target.value;
-            setForm(form);
+            setForm((form) => ({ ...form, name: e.target.value }));
           }}
           value={form.name}
           className="mt-2"
@@ -62,10 +61,12 @@ export const CalendarForm = <T extends CreateCalendar | Calendar>({
             className="text-text-primary mx-2 bg-neutral-200 rounded-md"
             onChange={(e) => {
               const timezone = Number(e.target.value);
-              if (timezone >= -12 && timezone <= 12)
-                form.timezone = timezone as Timezones;
-
-              setForm(form);
+              if (timezone >= -12 && timezone <= 12) {
+                setForm((form) => ({
+                  ...form,
+                  timezone: timezone as Timezones,
+                }));
+              }
             }}
             defaultValue={form.timezone}
           >
