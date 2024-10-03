@@ -12,7 +12,7 @@ import { useResetSelection } from "@/components/calendar-editor-week-view/hooks"
 import { useFormHandler } from "@/components/form-handler/formHandler";
 
 export const useSelectHours = () => {
-  const setForm = useFormHandler();
+  const { setActiveForm: setForm } = useFormHandler();
 
   const [createNewEventData, setCreatingNewEvent] = useState<
     O.Option<
@@ -131,7 +131,6 @@ export const useSelectHours = () => {
     }
   }, [
     setCreatingNewEvent,
-    setForm,
     selectingState.endDate,
     selectingState.startDate,
     selectingState.state,

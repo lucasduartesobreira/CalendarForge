@@ -3,7 +3,6 @@ import { StorageContext } from "@/hooks/dataHook";
 import { CalendarEvent } from "@/services/events/events";
 import * as O from "@/utils/option";
 import { useContext, useEffect, useMemo, useState } from "react";
-import UpdateEventForm from "@/components/event-update-form/updateEvent";
 import { Actions } from "@/hooks/mapHook";
 import { FlexibleView, ViewSize } from "../shared/flexible-view/flexibleView";
 import { useFormHandler } from "../form-handler/formHandler";
@@ -90,7 +89,7 @@ const CalendarWeek = ({
     [startDate],
   );
 
-  const setForm = useFormHandler();
+  const { setActiveForm: setForm } = useFormHandler();
 
   return (
     <>

@@ -11,7 +11,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import UpdateEventForm from "@/components/event-update-form/updateEvent";
 import { Actions } from "@/hooks/mapHook";
 import { FlexibleView, ViewSize } from "../shared/flexible-view/flexibleView";
 import { DayViewContent } from "../shared/day-view/dayContent";
@@ -48,9 +47,6 @@ const CalendarEditorWeek = ({
   const { storages: storages, listeners } = useContext(StorageContext);
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<O.Option<CalendarEvent>>(
-    O.None(),
-  );
 
   const displayedEventsCtx = useContext(EventsDisplayedContext);
   useEffect(() => {
@@ -169,7 +165,7 @@ const CalendarEditorWeek = ({
 
   const allSelectedEvents = useContext(SelectedEvents);
   const allSelectedEventsRefs = useContext(SelectedRefs);
-  const setForm = useFormHandler();
+  const { setActiveForm: setForm } = useFormHandler();
 
   return (
     <>

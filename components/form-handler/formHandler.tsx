@@ -6,6 +6,8 @@ import {
   SetStateAction,
   createContext,
   useContext,
+  useEffect,
+  useMemo,
   useState,
 } from "react";
 import UpdateEventForm from "../event-update-form/updateEvent";
@@ -124,7 +126,9 @@ const defaultForm = {
 const formCtx = createContext<UseStateReturn<FormCtx>>([None(), () => {}]);
 
 export const useFormHandler = () => {
-  const [, setForm] = useContext(formCtx);
+  const [form, setForm] = useContext(formCtx);
+
+  const isFormSet = useMemo(() => form.isSome(), [form]);
 
   function setActiveForm<FormType extends keyof typeof forms>(
     formType: FormType,
@@ -169,20 +173,18 @@ export const useFormHandler = () => {
     }
     const fixedDForm = dForm ?? {};
     const fixedInput = input ?? {};
-    setForm((form) =>
-      form.isSome()
-        ? form
-        : Some({
-            formType,
-            formInput: { ...fixedDForm, ...fixedInput },
-            refsBlocked,
-            onChangeForm,
-            onClose,
-          }),
+    setForm(() =>
+      Some({
+        formType,
+        formInput: { ...fixedDForm, ...fixedInput },
+        refsBlocked,
+        onChangeForm,
+        onClose,
+      }),
     );
   }
 
-  return setActiveForm;
+  return { setActiveForm, isFormSet };
 };
 export const FormHandler = ({ children }: PropsWithChildren) => {
   const [activeForm, setForm] = useState<FormCtx>(None());
