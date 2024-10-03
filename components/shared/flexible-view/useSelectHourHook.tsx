@@ -156,7 +156,12 @@ export const useSelectHours = () => {
     dayInMilliseconds: number,
   ) => {
     resetSelection();
-    forceResetForm();
+    forceResetForm((form) =>
+      form.mapOrElse(
+        () => true,
+        ({ formType }) => formType !== "createEvent",
+      ),
+    );
 
     const start =
       dayInMilliseconds + hour * 60 * 60 * 1000 + quarter * 15 * 60 * 1000;
