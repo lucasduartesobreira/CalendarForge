@@ -18,18 +18,18 @@ const dayToName = {
 };
 
 const monthName = {
-  0: "January",
-  1: "February",
-  2: "March",
-  3: "April",
+  0: "Jan",
+  1: "Feb",
+  2: "Mar",
+  3: "Apr",
   4: "May",
-  5: "June",
-  6: "July",
-  7: "August",
-  8: "September",
-  9: "October",
-  10: "November",
-  11: "December",
+  5: "Jun",
+  6: "Jul",
+  7: "Aug",
+  8: "Sep",
+  9: "Oct",
+  10: "Nov",
+  11: "Dec",
 } as const;
 
 const Nav = ({
@@ -43,6 +43,10 @@ const Nav = ({
 }) => {
   const month = useMemo(
     () => startDate.getMonth() as keyof typeof monthName,
+    [startDate],
+  );
+  const year = useMemo(
+    () => startDate.getFullYear() as keyof typeof monthName,
     [startDate],
   );
 
@@ -59,7 +63,7 @@ const Nav = ({
   return (
     <nav className="pl-2 pr-2 ml-1 mr-1 pt-1 mt-1 flex w-full gap-1 items-center text-neutral-400 select-none">
       <a className="mr-auto font-medium text-neutral-600 ">
-        {monthName[month]}
+        {monthName[month]}, {year}
       </a>
       <Undo2
         className={twMerge(
