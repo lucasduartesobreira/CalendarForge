@@ -99,7 +99,7 @@ const CalendarsNormalCard = ({
 
   const { refButton } = useContext(SideBarContainerFormContext);
 
-  const setForm = useFormHandler();
+  const { setActiveForm: setForm } = useFormHandler();
 
   return (
     <ListContainer
@@ -181,7 +181,7 @@ const CalendarsEditorCard = ({
 
   const { refButton } = useContext(SideBarContainerFormContext);
 
-  const setForm = useFormHandler();
+  const { setActiveForm: setForm } = useFormHandler();
 
   return (
     <ListContainer

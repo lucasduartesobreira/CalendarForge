@@ -176,7 +176,7 @@ const CreateEventButton = () => {
     [updates],
   );
 
-  const setForm = useFormHandler();
+  const { setActiveForm: setForm } = useFormHandler();
 
   return (
     <div className="">
