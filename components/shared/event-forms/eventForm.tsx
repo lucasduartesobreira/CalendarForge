@@ -209,6 +209,8 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
         className="mt-2"
         onChange={handleChangeText("title")}
         type="text"
+        required
+        minLength={1}
       />
       <ChangeEventTypeSwitch setIsTask={setIsTask} isTask={isTask} />
       <label className="text-sm text-neutral-500 flex-initial w-full">
