@@ -1,5 +1,18 @@
-import { ChevronLeft, ChevronRight, Home } from "lucide-react";
-import { useContext, useEffect, useMemo, useState } from "react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Home,
+} from "lucide-react";
+import {
+  ComponentPropsWithoutRef,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { SelectedDateContext } from "../calendar-navbar/selectedDateContext";
 import {
   lastWeekMidnight,
@@ -25,33 +38,74 @@ export const CalendarHeader = () => {
       : "visible";
   }, [dateNow, date]);
 
+  const [collapseHeader, setDisplay] = useState(true);
+
+  const collapseContent = useMemo(
+    () => (collapseHeader ? "hidden opacity-0" : "opacity-100"),
+    [collapseHeader],
+  );
+  const CollapseIcon = useMemo(
+    () => (collapseHeader ? ChevronDown : ChevronUp),
+    [collapseHeader],
+  );
+  const paddingChange = useMemo(
+    () => (collapseHeader ? "py-0 -mb-[4px]" : ""),
+    [collapseHeader],
+  );
+
   return (
-    <div className="ml-[4px] mr-[16px] py-[4px] border rounded-b-md drop-shadow-md text-gray-600 inline-flex align-center px-[4px] gap-2">
-      <button
-        className="inline-flex justify-center align-center w-6 h-6 text-primary-500 hover:bg-gray-100 rounded-md"
+    <div
+      className={twMerge(
+        "relative ml-[4px] mr-[16px] py-[4px] border rounded-b-md drop-shadow-md min-h-2 text-gray-600 inline-flex align-center px-[4px] gap-2 transition-all ease-out",
+        paddingChange,
+      )}
+    >
+      <IconButton
+        className={"w-auto h-auto self-center"}
+        onClick={() => setDisplay((hide) => !hide)}
+      >
+        <CollapseIcon size={16} />
+      </IconButton>
+      <IconButton
+        className={twMerge("ml-auto", todayButtonHidden, collapseContent)}
+        onClick={() => setDate(() => sundayInTheWeek(new Date(dateNow)))}
+      >
+        <Home />
+      </IconButton>
+      <IconButton
+        className={twMerge(collapseContent)}
         onClick={() => {
           setDate((date) => lastWeekMidnight(date));
         }}
       >
         <ChevronLeft />
-      </button>
-      <button
-        className="inline-flex justify-center align-center w-6 h-6 text-primary-500 hover:bg-gray-100 rounded-md"
+      </IconButton>
+      <IconButton
+        className={twMerge(collapseContent)}
         onClick={() => {
           setDate((date) => nextWeekMidnight(date));
         }}
       >
         <ChevronRight />
-      </button>
-      <button
-        className={twMerge(
-          "inline-flex justify-center align-center w-6 h-6 text-primary-500 hover:bg-gray-100 rounded-md ",
-          todayButtonHidden,
-        )}
-        onClick={() => setDate(() => sundayInTheWeek(new Date(dateNow)))}
-      >
-        <Home />
-      </button>
+      </IconButton>
     </div>
+  );
+};
+
+const IconButton = ({
+  className,
+  children,
+  ...props
+}: PropsWithChildren<ComponentPropsWithoutRef<"button">>) => {
+  return (
+    <button
+      className={twMerge(
+        "inline-flex justify-center align-center w-6 h-6 text-primary-500 hover:bg-gray-100 rounded-md",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </button>
   );
 };
