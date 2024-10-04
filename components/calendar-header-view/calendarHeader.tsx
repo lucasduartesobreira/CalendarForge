@@ -155,7 +155,12 @@ const PlayAndStop = ({ hideStyling }: { hideStyling: string }) => {
       >
         <Square />
       </IconButton>
-      <span className="mr-auto text-center text-align-center my-auto">
+      <span
+        className={twMerge(
+          "mr-auto text-center text-align-center my-auto",
+          hideStyling,
+        )}
+      >
         {spentMillieconds > 60000
           ? `${Math.floor(spentMillieconds / 60000)} m`
           : `${spentMillieconds / 1000} s`}
