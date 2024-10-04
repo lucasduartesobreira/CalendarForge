@@ -31,6 +31,7 @@ import { useShortcut } from "@/hooks/useShortcut";
 import { ShortcutBuilder } from "@/utils/shortcuts";
 import { SelectedDateContext } from "@/components/calendar-navbar/selectedDateContext";
 import { FormHandler } from "@/components/form-handler/formHandler";
+import { CalendarHeader } from "@/components/calendar-header-view/calendarHeader";
 
 const FlexContent = ({ children }: { children: any }) => {
   return <div className="flex relative overflow-hidden h-full">{children}</div>;
@@ -143,7 +144,8 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
                 viewableCalendarsState={viewableCalendarsState}
                 className="p-1 max-w-min"
               />
-              <div className="ml-1 w-full max-h-[100%] bg-white relative">
+              <div className="ml-1 w-full max-h-[100%] bg-white relative flex flex-col">
+                <CalendarHeader />
                 {calendarMode
                   .map((mode) =>
                     mode === "normal" ? (
