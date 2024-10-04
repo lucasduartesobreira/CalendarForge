@@ -4,6 +4,8 @@ import {
   ChevronRight,
   ChevronUp,
   Home,
+  Play,
+  Square,
 } from "lucide-react";
 import {
   ComponentPropsWithoutRef,
@@ -11,6 +13,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useReducer,
   useState,
 } from "react";
 import { SelectedDateContext } from "../calendar-navbar/selectedDateContext";
@@ -20,6 +23,151 @@ import {
   sundayInTheWeek,
 } from "@/utils/date";
 import { twMerge } from "tailwind-merge";
+import { useFormHandler } from "../form-handler/formHandler";
+import { None } from "@/utils/option";
+
+type State =
+  | {
+      state: "stopped";
+      recording: false;
+      startDate: null;
+      endDate: null;
+      spentTimeInMilliseconds: number;
+    }
+  | {
+      state: "recording";
+      recording: true;
+      startDate: number;
+      endDate: null;
+      spentTimeInMilliseconds: number;
+    }
+  | {
+      state: "saving";
+      recording: false;
+      startDate: number;
+      endDate: number;
+      spentTimeInMilliseconds: number;
+    };
+
+const PlayAndStop = ({ hideStyling }: { hideStyling: string }) => {
+  const [recordingState, dispatch] = useReducer(
+    (
+      recordingState: State,
+      action: { type: "start" | "stop" | "finish" | "update" },
+    ): State => {
+      const { type } = action;
+      const { state } = recordingState;
+
+      if (type === "update" && state === "recording") {
+        const { startDate, spentTimeInMilliseconds } = recordingState;
+        return {
+          state: "recording",
+          recording: true,
+          startDate,
+          endDate: null,
+          spentTimeInMilliseconds: spentTimeInMilliseconds + 1000,
+        };
+      }
+
+      if (type === "start" && state === "stopped") {
+        return {
+          state: "recording",
+          recording: true,
+          startDate: Date.now(),
+          spentTimeInMilliseconds: 0,
+          endDate: null,
+        };
+      }
+
+      if (type === "stop" && state === "recording") {
+        const { startDate, spentTimeInMilliseconds } = recordingState;
+        return {
+          state: "saving",
+          recording: false,
+          startDate,
+          endDate: startDate + spentTimeInMilliseconds,
+          spentTimeInMilliseconds: 0,
+        };
+      }
+
+      return {
+        state: "stopped",
+        recording: false,
+        startDate: null,
+        endDate: null,
+        spentTimeInMilliseconds: 0,
+      };
+    },
+    {
+      recording: false,
+      state: "stopped",
+      startDate: null,
+      endDate: null,
+      spentTimeInMilliseconds: 0,
+    },
+  );
+
+  const {
+    recording,
+    state,
+    startDate,
+    endDate,
+    spentTimeInMilliseconds: spentMillieconds,
+  } = useMemo(() => recordingState, [recordingState]);
+
+  const { setActiveForm: setForm } = useFormHandler();
+
+  useEffect(() => {
+    if (state === "saving") {
+      setForm(
+        "createEvent",
+        { startDate, endDate },
+        None(),
+        () => {},
+        () => {
+          dispatch({ type: "finish" });
+        },
+      );
+    }
+  }, [state]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (recording) {
+        dispatch({ type: "update" });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [state]);
+
+  return (
+    <>
+      <IconButton
+        className={twMerge("ml-auto ", hideStyling, recording ? "hidden" : "")}
+        onClick={() => dispatch({ type: "start" })}
+      >
+        <Play />
+      </IconButton>
+      <IconButton
+        className={twMerge("ml-auto", hideStyling, !recording ? "hidden" : "")}
+        onClick={() => dispatch({ type: "stop" })}
+      >
+        <Square />
+      </IconButton>
+      <span
+        className={twMerge(
+          "mr-auto text-center text-align-center my-auto",
+          hideStyling,
+        )}
+      >
+        {spentMillieconds > 60000
+          ? `${Math.floor(spentMillieconds / 60000)} m`
+          : `${spentMillieconds / 1000} s`}
+      </span>
+    </>
+  );
+};
 
 export const CalendarHeader = () => {
   const [date, setDate] = useContext(SelectedDateContext);
@@ -66,8 +214,9 @@ export const CalendarHeader = () => {
       >
         <CollapseIcon size={16} />
       </IconButton>
+      <PlayAndStop hideStyling={collapseContent} />
       <IconButton
-        className={twMerge("ml-auto", todayButtonHidden, collapseContent)}
+        className={twMerge(todayButtonHidden, collapseContent)}
         onClick={() => setDate(() => sundayInTheWeek(new Date(dateNow)))}
       >
         <Home />
