@@ -28,51 +28,7 @@ const weekGridClasses = [
   "grid-cols-[auto_50px_repeat(7,minmax(128px,1fr))]",
 ] as const;
 
-export const FlexibleView = ({
-  days,
-  selectEvent: setSelectedEvent,
-  style,
-  id,
-  children,
-}: PropsWithChildren<{
-  style: string;
-  days: {
-    events: CalendarEvent[];
-    dayOfWeek: ViewSize;
-    day: number;
-    dayInMilliseconds: number;
-    isToday: boolean;
-    dateAtMidNight: Date;
-    fakeEvents?: CalendarEvent[];
-  }[];
-  selectEvent: (value: O.Option<CalendarEvent>) => void;
-  id: string;
-}> & { children?: ReactNode | ReactNode[] }) => {
-  useEffect(() => {
-    const calendarWeekContainer = document.getElementById(id);
-    if (calendarWeekContainer) {
-      calendarWeekContainer.scrollTop = 512;
-    }
-  }, [id]);
-
-  const [clientSide, setClientSide] = useState(false);
-
-  useEffect(() => {
-    setClientSide(true);
-    return () => setClientSide(false);
-  }, []);
-
-  const { onMouseDownFactory, createNewEventData } = useSelectHours();
-
-  if (!weekGridClasses.at(days.length - 1)) {
-    days.splice(weekGridClasses.length, days.length - weekGridClasses.length);
-  }
-
-  const hasChildren = children != null ? 1 : 0;
-
-  const weekGridClass = weekGridClasses.at(days.length + hasChildren - 1);
-  const [dragged] = useContext(DraggedEvent);
-
+const useDisplayedRecordingEvent = () => {
   const [recordingEvent, setEventRecordingData] = useState<
     O.Option<{
       startDate: number;
@@ -131,6 +87,56 @@ export const FlexibleView = ({
       );
     },
   });
+
+  return recordingEvent;
+};
+
+export const FlexibleView = ({
+  days,
+  selectEvent: setSelectedEvent,
+  style,
+  id,
+  children,
+}: PropsWithChildren<{
+  style: string;
+  days: {
+    events: CalendarEvent[];
+    dayOfWeek: ViewSize;
+    day: number;
+    dayInMilliseconds: number;
+    isToday: boolean;
+    dateAtMidNight: Date;
+    fakeEvents?: CalendarEvent[];
+  }[];
+  selectEvent: (value: O.Option<CalendarEvent>) => void;
+  id: string;
+}> & { children?: ReactNode | ReactNode[] }) => {
+  useEffect(() => {
+    const calendarWeekContainer = document.getElementById(id);
+    if (calendarWeekContainer) {
+      calendarWeekContainer.scrollTop = 512;
+    }
+  }, [id]);
+
+  const [clientSide, setClientSide] = useState(false);
+
+  useEffect(() => {
+    setClientSide(true);
+    return () => setClientSide(false);
+  }, []);
+
+  const { onMouseDownFactory, createNewEventData } = useSelectHours();
+
+  if (!weekGridClasses.at(days.length - 1)) {
+    days.splice(weekGridClasses.length, days.length - weekGridClasses.length);
+  }
+
+  const hasChildren = children != null ? 1 : 0;
+
+  const weekGridClass = weekGridClasses.at(days.length + hasChildren - 1);
+  const [dragged] = useContext(DraggedEvent);
+
+  const recordingEvent = useDisplayedRecordingEvent();
 
   return (
     <div
