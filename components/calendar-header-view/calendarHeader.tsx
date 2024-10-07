@@ -13,7 +13,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useReducer,
   useState,
 } from "react";
 import { SelectedDateContext } from "../calendar-navbar/selectedDateContext";
@@ -23,123 +22,13 @@ import {
   sundayInTheWeek,
 } from "@/utils/date";
 import { twMerge } from "tailwind-merge";
-import { useFormHandler } from "../form-handler/formHandler";
-import { None } from "@/utils/option";
-
-type State =
-  | {
-      state: "stopped";
-      recording: false;
-      startDate: null;
-      endDate: null;
-      spentTimeInMilliseconds: number;
-    }
-  | {
-      state: "recording";
-      recording: true;
-      startDate: number;
-      endDate: null;
-      spentTimeInMilliseconds: number;
-    }
-  | {
-      state: "saving";
-      recording: false;
-      startDate: number;
-      endDate: number;
-      spentTimeInMilliseconds: number;
-    };
+import { useEventRecorder } from "./useEventRecorder";
 
 const PlayAndStop = ({ hideStyling }: { hideStyling: string }) => {
-  const [recordingState, dispatch] = useReducer(
-    (
-      recordingState: State,
-      action: { type: "start" | "stop" | "finish" | "update" },
-    ): State => {
-      const { type } = action;
-      const { state } = recordingState;
+  const [recordingState, dispatch] = useEventRecorder();
 
-      if (type === "update" && state === "recording") {
-        const { startDate, spentTimeInMilliseconds } = recordingState;
-        return {
-          state: "recording",
-          recording: true,
-          startDate,
-          endDate: null,
-          spentTimeInMilliseconds: spentTimeInMilliseconds + 1000,
-        };
-      }
-
-      if (type === "start" && state === "stopped") {
-        return {
-          state: "recording",
-          recording: true,
-          startDate: Date.now(),
-          spentTimeInMilliseconds: 0,
-          endDate: null,
-        };
-      }
-
-      if (type === "stop" && state === "recording") {
-        const { startDate, spentTimeInMilliseconds } = recordingState;
-        return {
-          state: "saving",
-          recording: false,
-          startDate,
-          endDate: startDate + spentTimeInMilliseconds,
-          spentTimeInMilliseconds: 0,
-        };
-      }
-
-      return {
-        state: "stopped",
-        recording: false,
-        startDate: null,
-        endDate: null,
-        spentTimeInMilliseconds: 0,
-      };
-    },
-    {
-      recording: false,
-      state: "stopped",
-      startDate: null,
-      endDate: null,
-      spentTimeInMilliseconds: 0,
-    },
-  );
-
-  const {
-    recording,
-    state,
-    startDate,
-    endDate,
-    spentTimeInMilliseconds: spentMillieconds,
-  } = useMemo(() => recordingState, [recordingState]);
-
-  const { setActiveForm: setForm } = useFormHandler();
-
-  useEffect(() => {
-    if (state === "saving") {
-      setForm(
-        "createEvent",
-        { startDate, endDate },
-        None(),
-        () => {},
-        () => {
-          dispatch({ type: "finish" });
-        },
-      );
-    }
-  }, [state]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (recording) {
-        dispatch({ type: "update" });
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [state]);
+  const { recording, spentTimeInMilliseconds: spentMillieconds } =
+    recordingState;
 
   return (
     <>

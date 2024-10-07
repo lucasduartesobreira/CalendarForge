@@ -32,6 +32,7 @@ import { ShortcutBuilder } from "@/utils/shortcuts";
 import { SelectedDateContext } from "@/components/calendar-navbar/selectedDateContext";
 import { FormHandler } from "@/components/form-handler/formHandler";
 import { CalendarHeader } from "@/components/calendar-header-view/calendarHeader";
+import { EventRecorderProvider } from "@/components/calendar-header-view/useEventRecorder";
 
 const FlexContent = ({ children }: { children: any }) => {
   return <div className="flex relative overflow-hidden h-full">{children}</div>;
@@ -140,37 +141,39 @@ const CalendarContent = ({ startDate }: { startDate: Date }) => {
         <SelectedRefs.Provider value={O.Some(selectedRefs)}>
           <ActionSelected.Provider value={selectedAction}>
             <CreateEventFormOpenCtx.Provider value={openCreateFormState}>
-              <SideBar
-                viewableCalendarsState={viewableCalendarsState}
-                className="p-1 max-w-min"
-              />
-              <div className="ml-1 w-full max-h-[100%] bg-white relative flex flex-col">
-                <CalendarHeader />
-                {calendarMode
-                  .map((mode) =>
-                    mode === "normal" ? (
-                      <CalendarWeek
-                        key={"calendarweek"}
-                        style={
-                          "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
-                        }
-                        startDate={startDate}
-                        viewableCalendarsState={viewableCalendarsState}
-                      />
-                    ) : mode === "editor" ? (
-                      <CalendarEditorWeek
-                        key={"calendarweekeditor"}
-                        style={
-                          "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
-                        }
-                        startDate={startDate}
-                        viewableCalendarsState={viewableCalendarsState}
-                      />
-                    ) : null,
-                  )
-                  .unwrapOrElse(() => null)}
-              </div>
-              <CreateEventButton />
+              <EventRecorderProvider>
+                <SideBar
+                  viewableCalendarsState={viewableCalendarsState}
+                  className="p-1 max-w-min"
+                />
+                <div className="ml-1 w-full max-h-[100%] bg-white relative flex flex-col">
+                  <CalendarHeader />
+                  {calendarMode
+                    .map((mode) =>
+                      mode === "normal" ? (
+                        <CalendarWeek
+                          key={"calendarweek"}
+                          style={
+                            "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+                          }
+                          startDate={startDate}
+                          viewableCalendarsState={viewableCalendarsState}
+                        />
+                      ) : mode === "editor" ? (
+                        <CalendarEditorWeek
+                          key={"calendarweekeditor"}
+                          style={
+                            "h-[100%] max-h-[100%] m-[4px] rounded-b-md shadow-md bg-white"
+                          }
+                          startDate={startDate}
+                          viewableCalendarsState={viewableCalendarsState}
+                        />
+                      ) : null,
+                    )
+                    .unwrapOrElse(() => null)}
+                </div>
+                <CreateEventButton />
+              </EventRecorderProvider>
             </CreateEventFormOpenCtx.Provider>
           </ActionSelected.Provider>
         </SelectedRefs.Provider>
