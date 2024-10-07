@@ -210,7 +210,7 @@ const Home = () => {
   }, [data.storages]);
 
   const [calendarMode, setChecked] = useState<O.Option<"editor" | "normal">>(
-    O.Some("editor"),
+    O.Some("normal"),
   );
   const displayedEventsContext = useState<CalendarEvent[]>([]);
 
