@@ -50,7 +50,7 @@ const PlayAndStop = ({ hideStyling }: { hideStyling: string }) => {
       </IconButton>
       <span
         className={twMerge(
-          "mr-auto text-center text-align-center my-auto",
+          "text-sm mr-auto inline-flex text-center align-start justify-center items-center my-auto",
           hideStyling,
         )}
       >
