@@ -1,4 +1,4 @@
-import { CalendarEvent } from "@/services/events/events";
+import { CalendarEvent, EventColors } from "@/services/events/events";
 import * as O from "@/utils/option";
 import {
   PropsWithChildren,
@@ -11,6 +11,8 @@ import { DayViewContent } from "../day-view/dayContent";
 import { DayDropZone } from "../day-view/dayBackground";
 import { DraggedEvent, ShowCalendarEvent } from "../day-view/dayEventsContent";
 import { useSelectHours } from "./useSelectHourHook";
+import { useEventRecorder } from "@/components/calendar-header-view/useEventRecorder";
+import { useFormHandler } from "@/components/form-handler/formHandler";
 
 export const AcceptedDaysValue = [1, 2, 3, 4, 5, 6, 7] as const;
 export type ViewSize = (typeof AcceptedDaysValue)[number];
@@ -25,6 +27,69 @@ const weekGridClasses = [
   "grid-cols-[50px_repeat(7,minmax(128px,1fr))]",
   "grid-cols-[auto_50px_repeat(7,minmax(128px,1fr))]",
 ] as const;
+
+const useDisplayedRecordingEvent = () => {
+  const [recordingEvent, setEventRecordingData] = useState<
+    O.Option<{
+      startDate: number;
+      endDate: number;
+      day: number;
+      title?: string;
+      color?: (typeof EventColors)[number];
+    }>
+  >(O.None());
+
+  const { setActiveForm: setForm } = useFormHandler();
+
+  useEventRecorder({
+    onRecording: (recordingState) => {
+      const { spentTimeInMilliseconds, startDate } = recordingState;
+
+      recordingEvent.mapOrElse(
+        () => {
+          setEventRecordingData(
+            O.Some({
+              startDate,
+              endDate: startDate + 60 * 1000,
+              day: new Date().getDate(),
+            }),
+          );
+        },
+        ({ day }) => {
+          if ((spentTimeInMilliseconds % 15) * 60 * 1000 === 0) {
+            setEventRecordingData(
+              O.Some({
+                startDate,
+                endDate: startDate + spentTimeInMilliseconds,
+                day,
+              }),
+            );
+          }
+        },
+      );
+    },
+    onSaving: (recordingState, dispatch) => {
+      const { startDate, endDate } = recordingState;
+
+      setForm(
+        "createEvent",
+        { startDate, endDate },
+        O.None(),
+        (event) => {
+          setEventRecordingData((old) =>
+            old.map((state) => ({ ...state, ...event })),
+          );
+        },
+        () => {
+          setEventRecordingData(O.None());
+          dispatch({ type: "finish" });
+        },
+      );
+    },
+  });
+
+  return recordingEvent;
+};
 
 export const FlexibleView = ({
   days,
@@ -70,6 +135,8 @@ export const FlexibleView = ({
 
   const weekGridClass = weekGridClasses.at(days.length + hasChildren - 1);
   const [dragged] = useContext(DraggedEvent);
+
+  const recordingEvent = useDisplayedRecordingEvent();
 
   return (
     <div
@@ -122,6 +189,32 @@ export const FlexibleView = ({
               />
             )}
             {createNewEventData.mapOrElse(
+              () => null,
+              ({ startDate, endDate, title, color }) => {
+                if (new Date(startDate).getDay() === dayOfWeek - 1)
+                  return (
+                    <ShowCalendarEvent
+                      event={{
+                        title: title ?? "",
+                        id: "",
+                        color: color ?? "#7a5195",
+                        startDate: startDate,
+                        endDate: endDate,
+                        description: "",
+                        calendar_id: "",
+                        notifications: [],
+                      }}
+                      conflicts={new Map()}
+                      day={day}
+                      index={0}
+                      setSelectedEvent={() => {}}
+                    />
+                  );
+
+                return null;
+              },
+            )}
+            {recordingEvent.mapOrElse(
               () => null,
               ({ startDate, endDate, title, color }) => {
                 if (new Date(startDate).getDay() === dayOfWeek - 1)
