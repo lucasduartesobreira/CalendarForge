@@ -39,10 +39,14 @@ const PlayAndStop = ({ hideStyling }: { hideStyling: string }) => {
         <Play />
       </IconButton>
       <IconButton
-        className={twMerge("ml-auto", hideStyling, !recording ? "hidden" : "")}
+        className={twMerge(
+          "ml-auto text-red-500",
+          hideStyling,
+          !recording ? "hidden" : "",
+        )}
         onClick={() => dispatch({ type: "stop" })}
       >
-        <Square />
+        <Square className="fill-red-500" />
       </IconButton>
       <span
         className={twMerge(
