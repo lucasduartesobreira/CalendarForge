@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   authors: [
     { name: "Lucas D Sobreira", url: "https://github.com/lucasduartesobreira" },
   ],
+  openGraph: {
+    title: "Calendar Forge",
+    description: "The Calendar to Forge your week",
+  },
 };
 
 export default function RootLayout({
