@@ -41,6 +41,7 @@ export const CalendarForm = <T extends CreateCalendar | Calendar>({
           onSubmit(form);
           setOpen(false);
         }}
+        id="calendar-form"
       >
         <FormHeader setOpen={setOpen} />
         <InputText
@@ -108,6 +109,7 @@ export const CalendarForm = <T extends CreateCalendar | Calendar>({
           {onDelete && (
             <div className="w-full flex items-center justify-center gap-2 px-4">
               <InputButtons.Delete
+                type="button"
                 className="bg-red-500 font-semibold w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
                 setOpen={setOpen}
                 onDelete={() => {
@@ -120,6 +122,7 @@ export const CalendarForm = <T extends CreateCalendar | Calendar>({
           <InputButtons.Primary
             type="submit"
             className="w-full left-0 font-semibold"
+            form="calendar-form"
             value={"Save"}
           />
         </div>

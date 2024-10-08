@@ -65,7 +65,7 @@ const UpdateNotificationForm = ({
       </label>
       <button
         className="ml-auto font-mono text-red-500"
-        type="submit"
+        type="button"
         value={"-"}
         onClick={() => {
           onDelete();

@@ -5,8 +5,10 @@ import {
   HTMLFormExtended,
   RequiredPropsWithChildren,
 } from "@/utils/types";
-import { PropsWithChildren, RefObject } from "react";
+import { PropsWithChildren, RefObject, useEffect, useMemo } from "react";
 import { Option } from "@/utils/option";
+import { useShortcut } from "@/hooks/useShortcut";
+import { ShortcutBuilder } from "@/utils/shortcuts";
 
 export const PopupForm = ({
   setOpen,
@@ -27,6 +29,14 @@ export const PopupForm = ({
     innerRef?: RefObject<any>;
   }>
 >) => {
+  const handleOnSubmit = useMemo(
+    () => () => {
+      onSubmit();
+      if (closeOnSubmit) setOpen(false);
+    },
+    [onSubmit, closeOnSubmit, setOpen],
+  );
+
   return (
     <OutsideClick
       {...backgroundDiv}
@@ -42,8 +52,7 @@ export const PopupForm = ({
           onSubmit={(ev) => {
             ev.preventDefault();
             ev.stopPropagation();
-            onSubmit();
-            if (closeOnSubmit) setOpen(false);
+            handleOnSubmit();
           }}
           ref={innerRef}
           className={`text-neutral-500 bg-white rounded-xl shadow-lg overflow-hidden relative flex flex-col gap-2 p-4 justify-center ${props.className} `}
@@ -110,6 +119,7 @@ export const FormHeader = ({
         className={`${
           onDelete == null ? "ml-auto" : ""
         } mr-3 text-neutral-500 text-xs`}
+        type="button"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
