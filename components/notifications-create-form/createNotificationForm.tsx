@@ -55,11 +55,10 @@ export const NewEventNotificationForm = ({
       </label>
       <button
         className="ml-auto font-mono text-primary-500"
-        type="submit"
+        type="button"
+        form="event-form-global"
         value={"+"}
         onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
           const newId = Buffer.from(Date.now().toString()).toString("base64");
           newNotification.id = newId;
           onSubmit(newNotification);

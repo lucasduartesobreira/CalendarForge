@@ -51,6 +51,7 @@ export const EventTypeSwitch = (locked: boolean) => {
         sizeType="lg"
         className="text-center align-text-center font-semibold px-2 py-0.5"
         disabled={!isTask}
+        type="button"
         onClick={
           locked
             ? (e) => {
@@ -69,6 +70,7 @@ export const EventTypeSwitch = (locked: boolean) => {
         sizeType="lg"
         className="text-center align-text-center font-semibold px-2 py-0.5"
         disabled={isTask}
+        type="button"
         onClick={
           locked
             ? (e) => {
@@ -196,6 +198,55 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
       closeOnSubmit={closeOnSubmit}
       id="event-form-global"
     >
+      <div className="absolute w-full bottom-0 flex flex-col gap-[4px] left-0">
+        {(onDelete || onTemplate || onDuplicate) && (
+          <div className="w-full flex items-center justify-center gap-2 px-4">
+            {onDelete && (
+              <InputButtons.Delete
+                className="bg-red-500 font-semibold max-w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
+                setOpen={setOpen}
+                closeOnDelete={closeOnDelete}
+                onDelete={() => {
+                  onDelete(form, isTask ? "task" : "event");
+                }}
+                form="event-form-global"
+                type="button"
+                text="Delete"
+              />
+            )}
+            {onDuplicate && (
+              <InputButtons.Warning
+                setOpen={setOpen}
+                className="w-full font-bold"
+                onWarning={() => {
+                  onDuplicate(form, isTask ? "task" : "event");
+                }}
+                text="Duplicate"
+                type="button"
+                form="event-form-global"
+              />
+            )}
+            {onTemplate && (
+              <InputButtons.Tertiary
+                setOpen={setOpen}
+                className="w-full font-base"
+                onWarning={() => {
+                  onTemplate(form, isTask ? "task" : "event");
+                }}
+                text="Make Template"
+                type="button"
+                form="event-form-global"
+              />
+            )}
+          </div>
+        )}
+        <InputButtons.Primary
+          type="submit"
+          className="w-full left-0 font-semibold"
+          value={"Save"}
+          form="event-form-global"
+        />
+      </div>
       <FormHeader setOpen={setOpen}>
         {TemplateSelector && (
           <TemplateSelector
@@ -225,7 +276,7 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
               placeholder="Description"
               defaultValue={form.description}
               onChange={(e) => {
-                e.stopPropagation();
+                e.preventDefault();
                 e.stopPropagation();
                 const value = e.target.value;
                 setForm({ ...form, description: value });
@@ -363,9 +414,6 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
                                   : ""
                               }`}
                               onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-
                                 const { recurring_settings } = form;
                                 if (
                                   recurring_settings?.frequencyType === "weekly"
@@ -534,52 +582,6 @@ export const EventForm = <T extends Omit<CalendarEvent, "id"> | CalendarEvent>({
             setForm({ ...form });
           }}
           resetNotification={initialNotification}
-        />
-      </div>
-      <div className="absolute w-full bottom-0 flex flex-col gap-[4px] left-0">
-        {(onDelete || onTemplate || onDuplicate) && (
-          <div className="w-full flex items-center justify-center gap-2 px-4">
-            {onDelete && (
-              <InputButtons.Delete
-                className="bg-red-500 font-semibold max-w-[25%] rounded-xl text-text-inverse px-2 py-1 text-sm"
-                setOpen={setOpen}
-                closeOnDelete={closeOnDelete}
-                onDelete={() => {
-                  onDelete(form, isTask ? "task" : "event");
-                }}
-                form="event-form-global"
-                text="Delete"
-              />
-            )}
-            {onDuplicate && (
-              <InputButtons.Warning
-                setOpen={setOpen}
-                className="w-full font-bold"
-                onWarning={() => {
-                  onDuplicate(form, isTask ? "task" : "event");
-                }}
-                text="Duplicate"
-                form="event-form-global"
-              />
-            )}
-            {onTemplate && (
-              <InputButtons.Tertiary
-                setOpen={setOpen}
-                className="w-full font-base"
-                onWarning={() => {
-                  onTemplate(form, isTask ? "task" : "event");
-                }}
-                text="Make Template"
-                form="event-form-global"
-              />
-            )}
-          </div>
-        )}
-        <InputButtons.Primary
-          type="submit"
-          className="w-full left-0 font-semibold"
-          value={"Save"}
-          form="event-form-global"
         />
       </div>
     </PopupForm>

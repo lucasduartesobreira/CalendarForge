@@ -5,8 +5,10 @@ import {
   HTMLFormExtended,
   RequiredPropsWithChildren,
 } from "@/utils/types";
-import { PropsWithChildren, RefObject, useMemo } from "react";
+import { PropsWithChildren, RefObject, useEffect, useMemo } from "react";
 import { Option } from "@/utils/option";
+import { useShortcut } from "@/hooks/useShortcut";
+import { ShortcutBuilder } from "@/utils/shortcuts";
 
 export const PopupForm = ({
   setOpen,
@@ -117,7 +119,7 @@ export const FormHeader = ({
         className={`${
           onDelete == null ? "ml-auto" : ""
         } mr-3 text-neutral-500 text-xs`}
-        type="reset"
+        type="button"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
