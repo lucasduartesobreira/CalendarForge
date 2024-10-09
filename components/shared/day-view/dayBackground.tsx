@@ -323,7 +323,7 @@ export const Background = ({
 }) => {
   return (
     <div
-      className={`grid grid-rows-[auto,repeat(24,64px)] absolute w-full bg-white text-neutral-300`}
+      className={`z-[5000] relative grid grid-rows-[auto,repeat(24,64px)] bg-white text-neutral-300`}
     >
       {header || (
         <div className="flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-700 justify-center items-center top-0 shadow-lg border-[1px] border-neutral-200 overflow-hidden" />
