@@ -344,7 +344,7 @@ const CalendarListItemEditor = ({
   distribution: number;
 }) => {
   return (
-    <li className="flex items-center w-full relative max-w-[11rem]">
+    <li className="flex items-center w-full relative max-w-[11rem] group">
       <input
         type="checkbox"
         onChange={(event) => {
@@ -363,8 +363,8 @@ const CalendarListItemEditor = ({
         onClick={() => {
           setSelectedCalendar(O.Some(calendar));
         }}
-        className="p-1 flex-none ml-1"
-        value="Edit"
+        className="ml-auto p-1 flex-none invisible group-hover:visible group-select:visible"
+        value={<SquarePen size={16} strokeWidth={3} />}
         sizeType="ml"
       />
     </li>
