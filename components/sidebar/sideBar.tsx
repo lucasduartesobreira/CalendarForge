@@ -20,6 +20,7 @@ import { MiniCalendar } from "../calendar-mini-calendar/miniCalendar";
 import { CalendarModeContext } from "../calendar-editor-week-view/contexts";
 import { EventsDisplayedContext } from "../calendar-editor-week-view/calendarEditorWeek";
 import { useFormHandler } from "../form-handler/formHandler";
+import { SquarePen } from "lucide-react";
 
 const useViewableCalendars = ({
   viewableCalendarsState,
@@ -322,7 +323,7 @@ const CalendarListItemNormal = ({
           setSelectedCalendar(O.Some(calendar));
         }}
         className="ml-auto p-1 flex-none"
-        value="Edit"
+        value={<SquarePen size={16} strokeWidth={3} />}
         sizeType="ml"
       />
     </li>

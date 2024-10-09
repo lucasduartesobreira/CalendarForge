@@ -1,5 +1,5 @@
 import { HTMLButtonExtended, HTMLDivExtended } from "@/utils/types";
-import { RefObject } from "react";
+import { ReactNode, RefObject } from "react";
 import { twMerge } from "tailwind-merge";
 
 const ButtonSecondary = ({
@@ -7,7 +7,10 @@ const ButtonSecondary = ({
   sizeType,
   className,
   ...props
-}: HTMLDivExtended<HTMLButtonElement, { value: string; sizeType: "ml" }>) => {
+}: HTMLDivExtended<
+  HTMLButtonElement,
+  { value: string | ReactNode; sizeType: "ml" }
+>) => {
   return (
     <button
       {...props}
