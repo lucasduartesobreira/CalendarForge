@@ -306,7 +306,7 @@ const CalendarListItemNormal = ({
   selectCalendar: (value: O.Option<Calendar>) => void;
 }) => {
   return (
-    <li className="flex items-center w-full relative max-w-[12rem]">
+    <li className="flex items-center w-full relative max-w-[12rem] group">
       <input
         type="checkbox"
         onChange={(event) => {
@@ -322,7 +322,7 @@ const CalendarListItemNormal = ({
         onClick={() => {
           setSelectedCalendar(O.Some(calendar));
         }}
-        className="ml-auto p-1 flex-none"
+        className="ml-auto p-1 flex-none invisible group-hover:visible group-select:visible"
         value={<SquarePen size={16} strokeWidth={3} />}
         sizeType="ml"
       />
