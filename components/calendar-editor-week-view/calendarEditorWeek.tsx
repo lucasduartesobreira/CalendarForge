@@ -199,9 +199,9 @@ const CalendarEditorWeek = ({
             )}
             header={
               <div className="inline-flex row-start-1 row-span-1 h-[48px] w-full sticky bg-white text-neutral-600 justify-center items-center top-0 shadow-lg border-[1px] border-neutral-200 group">
-                <span className="font-semibold bg-background text-xs invisible group-hover:visible absolute top-full left-[10%] z-[5000] inline-block rounded-md border border-primary-500 text-text-inverse bg-primary-500 p-2 flex flex-col gap-1">
-                  <CircleHelp size={16}></CircleHelp>
-                  Calendarios com mais eventos em cada hora
+                <span className="transition-all ease-out font-semibold bg-background text-xs invisible group-hover:visible absolute top-full left-[10%] z-[5000] inline-block rounded-md border border-primary-500 text-text-inverse bg-primary-500 p-2 flex flex-col gap-1 w-20 group-hover:w-28 text-pretty">
+                  <CircleHelp size={16} />
+                  Calendar with more events for each hour.
                 </span>
                 <ChartNoAxesCombined size={24} />
               </div>
